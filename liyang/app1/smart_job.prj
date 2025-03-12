@@ -1,0 +1,88 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="2235518137" file="C:\Users\yang.li61\Desktop\vscode\app1\smart_job.prj" location="C:\Users\yang.li61\Desktop\vscode\app1" name="smart_job" target="target.mlapps" target-name="打包为 App">
+    <param.appname>smart_job</param.appname>
+    <param.authnamewatermark>Felix li</param.authnamewatermark>
+    <param.email />
+    <param.company />
+    <param.icon>${PROJECT_ROOT}\smart_job_resources\icon_24.png</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\smart_job_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\smart_job_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\smart_job_resources\icon_16.png</file>
+    </param.icons>
+    <param.summary>日常应用</param.summary>
+    <param.description />
+    <param.screenshot>C:\Users\yang.li61\AppData\Local\Temp\tp17c1d659_6084_44a6_8bfb_14336c8250ad.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>a94d3e26-4306-4e1a-a5e3-aa3901b7fe43</param.guid>
+    <unset>
+      <param.email />
+      <param.company />
+      <param.description />
+      <param.version />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\app1.mlapp</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\exp1.m</file>
+      <file>D:\copy_from_old_desk\SVN_Project\02_smart-VTM-ClimateSw\02_HY11&amp;HS11\06_ModuleDesign\02_模型配置工具\02_autosar4\+AUTOSAR4\@Parameter\Parameter.m</file>
+    </fileset.depfun>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\picture</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file location="C:\Users\yang.li61\Desktop\vscode" name="app1" optional="false">C:\Users\yang.li61\Desktop\vscode\app1</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>D:\Program Files\MATLAB\R2022b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="fixedpoint" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

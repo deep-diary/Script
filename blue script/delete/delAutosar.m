@@ -1,0 +1,1 @@
+autosar.api.delete(bdroot);
