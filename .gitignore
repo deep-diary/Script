@@ -1,0 +1,47 @@
+# MATLAB 自动生成的文件
+*.asv
+*.m~
+*.mex*
+*.mat
+slprj/
+sccprj/
+codegen/
+*.slxc
+
+# MATLAB 编译文件
+*.p
+*.fig
+
+# MATLAB 自动保存文件
+*.autosave
+
+# MATLAB 仿真结果和缓存
+*.slxc
+*.r20*
+*.slx.original
+*.mdl.original
+*.mdlp
+*.sldd
+*.slxp
+*.slx.r*
+*.mdl.r*
+
+# MATLAB 项目文件
+*.prj
+Resources/Project
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器临时文件
+*~
+*.swp
+*.swo
+
+# 日志文件
+*.log
+
+# 其他临时文件
+temp/
+tmp/ 
