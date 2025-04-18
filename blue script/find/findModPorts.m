@@ -7,17 +7,13 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
 %      pathMd       - 模型路径或句柄 (字符串或数值)
 %
 %   可选参数（名值对）:
-%      'getType'    - 返回端口的属性类型 (字符串), 默认值: 'path'
+%      'getType'    - 返回端口的属性类型 (字符串), 默认值: 'Path'
 %                     可选值: 'path'(完整路径), 'Name'(端口名称), 'Handle'(句柄)等
-%      'skipTrig'   - 是否跳过触发端口 (逻辑值), 默认值: false
 %      'FiltUnconnected' - 是否只返回未连接的端口 (逻辑值), 默认值: false
-%      'returnNames' - 是否直接返回端口名称列表 (逻辑值), 默认值: false
 %
 %   输出参数:
 %      ModelName    - 模型名称 (字符串)
 %      PortsIn      - 输入端口列表 (元胞数组)
-%                     当returnNames=true时，返回端口名称列表
-%                     当returnNames=false时，返回端口路径或指定属性
 %      PortsOut     - 输出端口列表 (元胞数组)
 %                     格式同PortsIn
 %      PortsSpecial - 特殊端口信息 (变量)
@@ -27,9 +23,10 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
 %      支持过滤未连接的端口和跳过触发端口。
 %
 %   示例:
-%      [name, inPorts, outPorts] = findModPorts(gcs, 'returnNames', true)
-%      [name, inPorts, outPorts] = findModPorts(gcb, 'getType', 'Name')
-%      [name, inPorts, outPorts] = findModPorts(gcs, 'FiltUnconnected', true)
+%      [name, inPorts, outPorts] = findModPorts(gcb, 'getType', 'Path');
+%      [name, inPorts, outPorts] = findModPorts(gcb, 'getType', 'Name');
+%      [name, inPorts, outPorts] = findModPorts(gcb, 'getType', 'OutDataTypeStr');
+%      [name, inPorts, outPorts] = findModPorts(gcs, 'FiltUnconnected', true);
 %
 %   参见: FIND_SYSTEM, GET_PARAM, BDROOT
 %
@@ -40,23 +37,16 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
     %% 输入参数处理
     p = inputParser;
     addRequired(p, 'pathMd', @(x)validateattributes(x,{'char','string','double'},{'nonempty'}));
-    addParameter(p, 'getType', 'path', @ischar);
+    addParameter(p, 'getType', 'Path', @ischar);
     addParameter(p, 'skipTrig', false, @islogical);
     addParameter(p, 'FiltUnconnected', false, @islogical);
-    addParameter(p, 'returnNames', false, @islogical);
     
     parse(p, pathMd, varargin{:});
     
     pathMd = p.Results.pathMd;
     getType = p.Results.getType;
-    skipTrig = p.Results.skipTrig;
     FiltUnconnected = p.Results.FiltUnconnected;
-    returnNames = p.Results.returnNames;
     
-    % 如果要直接返回名称，则设置getType为'Name'
-    if returnNames
-        getType = 'Name';
-    end
 
     %% 找到所有端口
     [ModelName, validPath] = findValidPath(pathMd);
@@ -104,13 +94,13 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
     end
     
     % 忽略function call触发端口
-    if ~isempty(PortsIn) && (skipTrig || ...
-       (length(PortsIn) >= 1 && strcmp(get_param(PortsIn{1}, 'OutputFunctionCall'), 'on')))
-        PortsIn = PortsIn(2:end);
-    end
+%     if ~isempty(PortsIn) && (skipTrig || ...
+%        (length(PortsIn) >= 1 && strcmp(get_param(PortsIn{1}, 'OutputFunctionCall'), 'on')))
+%         PortsIn = PortsIn(2:end);
+%     end
 
     % 如果不是返回路径，则获取指定的属性
-    if ~strcmp(getType, 'path')
+    if ~strcmp(getType, 'Path')
         PortsInTemp = {};
         PortsOutTemp = {};
         
@@ -125,24 +115,19 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
         PortsIn = PortsInTemp;
         PortsOut = PortsOutTemp;
     end
-end
 
-function [ModelName, validPath] = findValidPath(pathMd)
-    % 获取有效的模型路径和名称
-    try
-        % 尝试获取模型名称
-        ModelName = get_param(pathMd, 'Name');
-        validPath = pathMd;
-    catch
-        % 如果失败，可能是句柄，尝试转换
-        try
-            validPath = getfullname(pathMd);
-            ModelName = get_param(validPath, 'Name');
-        catch
-            % 如果仍然失败，使用当前系统
-            validPath = gcs;
-            ModelName = get_param(validPath, 'Name');
-            warning('无法识别路径，使用当前系统: %s', validPath);
-        end
+    % 显示提示信息
+    fprintf('----------------------------------------:\n');
+    fprintf('输入端口:\n');
+    for i = 1:length(PortsIn)
+        fprintf('    %s\n', PortsIn{i});
     end
+    fprintf('-----------------------------:\n');
+    fprintf('输出端口:\n');
+    for i = 1:length(PortsOut)
+        fprintf('    %s\n', PortsOut{i});
+    end
+    fprintf('----------------------------------------:\n');
+    
+    
 end

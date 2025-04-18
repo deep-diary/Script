@@ -11,6 +11,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
 %      'bgColor'     - 背景颜色 [R G B] (数组), 默认值: [0.9 0.9 0.9]
 %      'includeCnt'  - 是否包含序号 (逻辑值), 默认值: false
 %      'userData'    - 用户数据 (任意类型), 默认值: 'modInfo'
+%      'DCMfileName' - DCM文件名 (字符串), 默认值: 'HY11_PCMU_Tm_OTA3_V6050327_All.DCM'
 %
 %   输出参数:
 %      portsInNames  - 输入端口名称列表 (元胞数组)
@@ -26,6 +27,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
 %
 %   示例:
 %      [inPortNames, outPortNames, params] = createSubmodInfo()
+%      [inPortNames, outPortNames, params] = createSubmodInfo('DCMfileName','HY11_PCMU_Tm_OTA3_V6050327_All.DCM')
 %      [inPortNames, outPortNames, params] = createSubmodInfo('fontSize', 14)
 %      [~, ~, params] = createSubmodInfo('path', 'myModel/subsystem1', 'includeCnt', true)
 %
@@ -56,6 +58,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
     addParameter(p, 'createNote', true, @islogical); % 是否创建注释模块
     addParameter(p, 'annotationName', 'SubmodInfo', @ischar); % 注释模块名称
     addParameter(p, 'userData', 'modInfo', @(x)true); % 用户数据，默认为'modInfo'
+    addParameter(p, 'DCMfileName', 'HY11_PCMU_Tm_OTA3_V6050327_All.DCM', @ischar); % DCM文件名
     
     parse(p, varargin{:});
     
@@ -68,7 +71,8 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
     createNote = p.Results.createNote;
     annotationName = p.Results.annotationName;
     userData = p.Results.userData;
-    
+    DCMfileName = p.Results.DCMfileName;
+
     %% 获取子模型信息
     try
         % 获取模型名称
@@ -90,7 +94,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
             removeExistingAnnotation(path, annotationName, userData);
             
             % 生成信息文本
-            infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt);
+            infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName);
             
             % 创建或更新注释模块
             createAnnotationBlock(path, infoText, position, fontSize, fgColor, bgColor, annotationName, userData);
@@ -124,54 +128,66 @@ function removeExistingAnnotation(path, annotationName, userData)
     end
 end
 
-function infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt)
+function infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName)
     % 生成信息文本
-    infoText = ['<模型信息: ' modelName '>' char(10) char(10)];
+    infoText = ['<模型信息: ' modelName '>' newline newline];
     
     % 添加输入端口信息
-    infoText = [infoText '【输入端口】' char(10)];
+    infoText = [infoText newline '【输入端口】' newline];
     if ~isempty(portsInNames)
         for i = 1:length(portsInNames)
             if includeCnt
-                infoText = [infoText num2str(i) '. ' portsInNames{i} char(10)];
+                infoText = [infoText num2str(i) '. ' portsInNames{i} newline];
             else
-                infoText = [infoText portsInNames{i} char(10)];
+                infoText = [infoText portsInNames{i} newline];
             end
         end
     else
-        infoText = [infoText '无输入端口' char(10)];
+        infoText = [infoText '无输入端口' newline];
     end
     
     % 添加输出端口信息
-    infoText = [infoText char(10) '【输出端口】' char(10)];
+    infoText = [infoText newline '【输出端口】' newline];
     if ~isempty(portsOutNames)
         for i = 1:length(portsOutNames)
             if includeCnt
-                infoText = [infoText num2str(i) '. ' portsOutNames{i} char(10)];
+                infoText = [infoText num2str(i) '. ' portsOutNames{i} newline];
             else
-                infoText = [infoText portsOutNames{i} char(10)];
+                infoText = [infoText portsOutNames{i} newline];
             end
         end
     else
-        infoText = [infoText '无输出端口' char(10)];
+        infoText = [infoText '无输出端口' newline];
     end
     
     % 添加标定量信息
-    infoText = [infoText char(10) '【标定量】' char(10)];
+    infoText = [infoText newline '【标定量】' newline];
     if ~isempty(calibParams)
         for i = 1:length(calibParams)
-            if includeCnt
-                infoText = [infoText num2str(i) '. ' calibParams{i} char(10)];
+            ParamName = calibParams{i};
+
+            if strcmp(ParamName(1), 'c')
+                % 从DCM文件中找到Param对应的值
+                ParamValue = findDCMValueByName(DCMfileName,ParamName);
+                if includeCnt
+                    infoText = [infoText num2str(i) '. ' ParamName '=' num2str(ParamValue) newline];
+                else
+                    infoText = [infoText ParamName '=' num2str(ParamValue) newline];
+                end
             else
-                infoText = [infoText calibParams{i} char(10)];
+                if includeCnt
+                    infoText = [infoText num2str(i) '. ' ParamName  newline];
+                else
+                    infoText = [infoText ParamName  newline];
+                end
             end
         end
     else
-        infoText = [infoText '无标定量' char(10)];
+        infoText = [infoText '无标定量' newline];
     end
     
     % 添加创建时间
-    infoText = [infoText char(10) '创建时间: ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
+    infoText = [infoText newline '创建时间: ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
 end
 
 function createAnnotationBlock(path, infoText, position, fontSize, fgColor, bgColor, annotationName, userData)

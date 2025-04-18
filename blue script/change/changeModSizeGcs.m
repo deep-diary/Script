@@ -28,7 +28,7 @@ function changeModSizeGcs(varargin)
     %% 输入参数处理
     p = inputParser;
     addParameter(p, 'wid', 400, @(x)validateattributes(x,{'numeric'},{'positive','scalar'}));
-    addParameter(p, 'xStp', 400, @(x)validateattributes(x,{'numeric'},{'positive','scalar'}));
+    addParameter(p, 'xStp', 800, @(x)validateattributes(x,{'numeric'},{'positive','scalar'}));
     addParameter(p, 'yStp', 60, @(x)validateattributes(x,{'numeric'},{'positive','scalar'}));
     addParameter(p, 'rows', 0, @(x)validateattributes(x,{'numeric'},{'nonnegative','scalar'}));
     

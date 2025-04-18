@@ -39,7 +39,7 @@ function annotationBlocks = findAnnotation(varargin)
     addParameter(p, 'UserData', [], @(x)true); % 允许任何类型
     addParameter(p, 'Text', [], @(x)isempty(x) || ischar(x) || isstring(x));
     addParameter(p, 'Name', [], @(x)isempty(x) || ischar(x) || isstring(x));
-    addParameter(p, 'ShowInfo', false, @islogical);
+    addParameter(p, 'ShowInfo', true, @islogical);
     
     parse(p, varargin{:});
     
@@ -95,7 +95,7 @@ function annotationBlocks = findAnnotation(varargin)
         
         % 显示注释信息
         if ShowInfo && ~isempty(annotationBlocks)
-            displayAnnotationInfo(annotationBlocks);
+            displayAnnotationInfo(annotationBlocks)
         end
         
         % 如果没有找到注释模块，显示提示

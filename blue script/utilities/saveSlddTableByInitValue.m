@@ -5,7 +5,7 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
 %       stData:  表格数据
 %       DataVCU: VCU sldd数据
 % 返回： DataPCMU: null
-% 范例： saveSlddTableByInitValue(ModelName, DataPCMU, 'dataType','1D')
+% 范例： saveSlddTableByInitValue(ModelName, DataPCMU, 'dataType','2D')
 % 作者： Blue.ge
 % 日期： 20240805
 %%
@@ -124,7 +124,7 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
         is_Y = false([1 3]);
         is_data = false([1 3]);
         for i=1:3:rows
-%             disp(i)
+            disp(i)
             table = DataPCMU(i:i+2,:);
 
             % solution 1

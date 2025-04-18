@@ -7,7 +7,7 @@ function [data,dataComIn,dataComOut] = findExcelOfficialInterface(excelFileName)
 %       data: 全部有用信息
 %       dataComIn: 所有输入信号，titleList = {'Name', 'Type', 'Width', 'Unit', 'Description', 'Initial'}
 %       dataComOut: 所有输出信号，titleList = {'Name', 'Type', 'Width', 'Unit', 'Description', 'Initial'}
-% 范例： [data dataComIn dataComOut] = findExcelOfficialInterface('PCMU_23N5&23R3_Interface_V12.0 - base.xlsx'),
+% 范例： [data dataComIn dataComOut] = findExcelOfficialInterface('PCMU_23N7_Interface_V13.6.xlsx'),
 % 说明：
 % 作者： Blue.ge
 % 日期： 20231013

@@ -4,7 +4,7 @@ function changeRefModUpdate(varargin)
     % 输入：
     %        pos： 新位置起始点 
     % 返回： newPos: 模型新位置
-    % 范例： changeRefModUpdate('model',{})
+    % 范例： changeRefModUpdate()
     % 状态： 这个用于不太属于改变，后续尝试归于创建模块中
     % 作者： Blue.ge
     % 日期： 20231113
@@ -40,14 +40,13 @@ function changeRefModUpdate(varargin)
     end
 
     %% 更新子模型
-    for i=1:length(model)
-        name = model{i};
-        [~, idx]=find(strcmp(subMods, 'TmComprCtrl') ==1);
-        pos = subPos{idx};
+     for i=1:length(subMods)
+        name = subMods{i};
+        pos = subPos{i};
         path = [root '/' name];
         bk = add_block('built-in/ModelReference', path, ...
          'ModelName', name, 'Position', pos);  
         changeModPos(path, pos(1:2))
-        createModGoto(path, 'mode','both');
+           createModGoto(path, 'mode','both');
     end
 end

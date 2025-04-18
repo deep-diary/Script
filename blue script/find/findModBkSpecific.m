@@ -1,81 +1,109 @@
 function [bkIn, bkOut] = findModBkSpecific(path, varargin)
-%%
-% 目的: find the the sepcific block from the mode
-% 输入：
-%       condition：useless, unconnected
-% 返回：bkIn: 输入模块列表，bkOut: 输出模块列表
-% 范例：[bkIn, bkOut] = findModBkSpecific(gcb, 'condition', 'unconnected') useless, unconnected
-% 说明：找到路径中模型的输入输出端口
-% 作者： Blue.ge
-% 日期：20231117
+%FINDMODBKSPECIFIC 查找模型中特定类型的模块
+%   [BKIN, BKOUT] = FINDMODBKSPECIFIC(PATH) 查找指定模型中的特定模块
+%   [BKIN, BKOUT] = FINDMODBKSPECIFIC(PATH, 'condition', CONDITION) 指定查找条件
+%
+%   输入参数:
+%      path      - 模型路径 (字符串)
+%      condition - 查找条件 (字符串)
+%                 可选值: 'useless' - 查找接地和终止模块
+%                        'unconnected' - 查找未连接的端口
+%
+%   输出参数:
+%      bkIn  - 输入端口名称列表 (元胞数组)
+%      bkOut - 输出端口名称列表 (元胞数组)
+%
+%   功能描述:
+%      1. 获取模型的所有输入输出模块
+%      2. 根据条件筛选特定类型的模块
+%      3. 返回符合条件的端口名称
+%
+%   示例:
+%      % 查找未使用的模块
+%      [bkIn, bkOut] = findModBkSpecific(gcb, 'condition', 'useless')
+%
+%      % 查找未连接的端口
+%      [bkIn, bkOut] = findModBkSpecific(gcb, 'condition', 'unconnected')
+%
+%   注意事项:
+%      1. 输入参数必须是有效的模型路径
+%      2. condition参数必须是'useless'或'unconnected'
+%      3. 返回的是端口名称而不是模块句柄
+%
+%   作者: Blue.ge
+%   版本: 1.1
+%   日期: 20231117
 
-    %%
-    clc
-    %% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'condition','useless');      % 设置变量名和默认参数
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-
+    %% 参数解析
+    p = inputParser;
+    addParameter(p, 'condition', 'useless', @(x) any(validatestring(x, {'useless', 'unconnected'})));
+    parse(p, varargin{:});
     condition = p.Results.condition;
 
-    %%
-    [bkInAll, bkOutAll] = findModBk(path);
-    [ModelName,PortsIn,PortsOut] = findModPorts(path);
-    bkIn = {};
-    bkOut = {};
-
-    %% deal with the input
-    for i=1:length(bkInAll)
-        h = bkInAll(i);
-
-        if strcmp(condition, 'useless')  % useless means ground and terminator
-            if h==-1    
-                continue
-            end
-            name=get_param(PortsIn{i}, 'Name');
-            bkType=get_param(h, 'BlockType');
-            if strcmp(bkType, 'Ground')
-                bkIn = [bkIn,name];
-            end
-        elseif strcmp(condition, 'unconnected')
-            if h~=-1    
-                continue
-            end
-            name=get_param(PortsIn{i}, 'Name');
-            bkIn = [bkIn,name];
-        else
-            error('pls input the right condition, the valiable are: useless, unconnected')
-        end
+    try
+        %% 获取模型信息
+        [bkInAll, bkOutAll] = findModBkConnected(path);
+        [~, PortsIn, PortsOut] = findModPorts(path);
         
-    end
+        % 初始化输出
+        bkIn = {};
+        bkOut = {};
 
-    %% deal with the output
-    for i=1:length(bkOutAll)
-        h = bkOutAll(i);
+        %% 处理输入端口
+        for i = 1:length(bkInAll)
+            h = bkInAll(i);
+            portName = get_param(PortsIn{i}, 'Name');
 
-        if strcmp(condition, 'useless')  % useless means ground and terminator
-            if h==-1    
-                continue
+            if strcmp(condition, 'useless')
+                if h == -1
+                    continue;
+                end
+                blockType = get_param(h, 'BlockType');
+                if strcmp(blockType, 'Ground')
+                    bkIn = [bkIn, portName];
+                end
+            else % unconnected
+                if h ~= -1
+                    continue;
+                end
+                bkIn = [bkIn, portName];
             end
-            name=get_param(PortsOut{i}, 'Name');
-            bkType=get_param(h, 'BlockType');
-            if strcmp(bkType, 'Terminator')
-                bkOut = [bkOut,name];
-            end
-        elseif strcmp(condition, 'unconnected')
-            if h~=-1    
-                continue
-            end
-            name=get_param(PortsOut{i}, 'Name');
-            bkOut = [bkOut,name];
-        else
-            error('pls input the right condition, the valiable are: useless, unconnected')
         end
-        
+        % 显示提示信息
+        fprintf('输入端口-%s:\n', condition);
+        for i = 1:length(bkIn)
+            fprintf('    %s\n', bkIn{i});
+        end
+        %% 处理输出端口
+        for i = 1:length(bkOutAll)
+            h = bkOutAll(i);
+            portName = get_param(PortsOut{i}, 'Name');
+
+            if strcmp(condition, 'useless')
+                if h == -1
+                    continue;
+                end
+                blockType = get_param(h, 'BlockType');
+                if strcmp(blockType, 'Terminator')
+                    bkOut = [bkOut, portName];
+                end
+            else % unconnected
+                if h ~= -1
+                    continue;
+                end
+                bkOut = [bkOut, portName];
+            end
+        end
+        % 显示提示信息
+        fprintf('输出端口-%s:\n', condition);
+        for i = 1:length(bkOut)
+            fprintf('    %s\n', bkOut{i});
+        end
+
+
+    catch ME
+        error('查找特定模块失败: %s', ME.message);
     end
-
-
-
 end
 
 

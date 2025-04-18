@@ -1,4 +1,4 @@
-function names = findDCMNames(filepath)
+function value = findDCMValueByName(filepath,name)
 %FINDDCMNAMES 提取DCM文件中的所有参数名称
 %   NAMES = FINDDCMNAMES(FILEPATH) 从指定的DCM文件中提取所有参数名称
 %
@@ -9,8 +9,9 @@ function names = findDCMNames(filepath)
 %      names        - 包含所有参数名称的列向量元胞数组
 %
 %   示例:
-%      paramNames = findDCMNames('HY11_PCMU_Tm_OTA3_V6030303_Change.DCM');
-%      disp(paramNames);  % 显示所有参数名称
+%      params = findDCMNames('HY11_PCMU_Tm_OTA3_V6030303_Change.DCM')
+%      value = findDCMValueByName('HY11_PCMU_Tm_OTA3_V6030303_Change.DCM','cTmAfCtrl_t_u16DeicingTime')
+%      value = findDCMValueByName('HY11_PCMU_Tm_OTA3_V6030303_Change.DCM','tTmSigProces_t_s32ChillTbatSampPeriod')
 %
 %   参见: FINDDCMPARAM, FINDDCMNAMESCHANGES
 %
@@ -31,12 +32,15 @@ function names = findDCMNames(filepath)
     end
     
     % 提取所有参数名称
-    names = {};
+    value = '';
     for i = 1:length(paramsArr)
         param = paramsArr{i};
         if ~isempty(param)
             for j = 1:length(param)
-                names{end+1, 1} = param(j).name;
+                if strcmp(name,param(j).name)
+                    value = param(j).wert;
+                    return
+                end
             end
         end
     end

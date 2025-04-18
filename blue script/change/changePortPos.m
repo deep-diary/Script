@@ -3,7 +3,7 @@ function changePortPos(varargin)
     % 目的: 将输入输出端口排整齐
     % 输入：  
     % 返回： None
-    % 范例： 执行changePortPos('isEnableIn',true,'isEnableOut',false)
+    % 范例： 执行changePortPos('isEnableIn',true,'isEnableOut',true)
     % 场景： 整理输入输出端口 
     % 作者： Blue.ge
     % 日期： 20240429
