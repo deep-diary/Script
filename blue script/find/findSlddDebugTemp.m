@@ -3,7 +3,7 @@ function DataPCMU = findSlddDebugTemp(path,varargin)
 % 输入：
 %       path: 表格路径
 % 返回： null
-% 范例： DataPCMU = findSlddDebugTemp('interface template.xlsx')
+% 范例： DataPCMU = findSlddDebugTemp('Template_Interface.xlsx')
 % 作者： Blue.ge
 % 日期： 20231026
 %%

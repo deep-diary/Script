@@ -1,64 +1,86 @@
 function [sigCnts, paramCnts] = findSlddLoad(path, varargin)
-%%
-% 目的: 导入sldd 到工作空间
-% 输入：
-%       path: sldd path 或者 模型名称，如果是模型名称，需要指定mode这个参数
-% 可选： mode: 'PCMU' or 'VCU'， 默认为'PCMU'
-%       eclude: {'Inport','Outport'}，默认{}, 可以同时指定多个
-% 返回： sigCnts：成功导入的信号数量；paramCnts：成功导入的参数数量
-% 范例： [sigCnts, paramCnts] = findSlddLoad('TmComprCtrl_DD_PCMU.xlsx')
-%       [sigCnts, paramCnts] = findSlddLoad('TmComprCtrl', 'mode','PCMU')
-% 作者： Blue.ge
-% 日期： 20240205
+%FINDSLDDLOAD 导入SLDD数据到工作空间
+%   [sigCnts, paramCnts] = findSlddLoad(path, varargin) 从Excel文件或模型导入SLDD数据
+%   到工作空间，支持PCMU和VCU两种模式。
+%
+%   输入参数:
+%       path - SLDD文件路径或模型名称
+%       varargin - 可选参数对，包括:
+%           'mode' - 模式选择，'PCMU'或'VCU'，默认为'PCMU'
+%           'exclude' - 需要排除的模块类型，默认为空
+%
+%   输出参数:
+%       sigCnts - 成功导入的信号数量
+%       paramCnts - 成功导入的参数数量
+%
+%   示例:
+%       [sigCnts, paramCnts] = findSlddLoad('TmComprCtrl_DD_PCMU.xlsx')
+%       [sigCnts, paramCnts] = findSlddLoad('TmComprCtrl', 'mode', 'PCMU')
+%       [sigCnts, paramCnts] = findSlddLoad('TmComprCtrl', 'mode', 'PCMU', 'exclude', {'Input', 'Output'})
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-02-05
+%   版本: 1.1
 
-    %% 清空命令区
-    clc    
-    %% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'mode','PCMU');      % 设置变量名和默认参数
-    addParameter(p,'eclude',{});      % 设置变量名和默认参数
-    
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-
-    mode = p.Results.mode;
-    eclude = p.Results.eclude;
-    
-    %% 校验路径
-    % 检查文件扩展名是否为Excel格式
-    isExcelFile = endsWith(path, '.xls') || endsWith(path, '.xlsx');
-    
-    % 显示结果
-    if isExcelFile
-        disp('The path points to an Excel file.');
-    else
-        disp('The path does not point to an Excel file.');
-        path = [path, '_DD_', mode,'.xlsx'];
+    try
+        %% 输入参数处理
+        p = inputParser;
+        addParameter(p, 'mode', 'PCMU', @(x) any(validatestring(x, {'PCMU', 'VCU'})));
+        addParameter(p, 'exclude', {}, @(x) iscell(x) || ischar(x));
+        parse(p, varargin{:});
+        
+        mode = p.Results.mode;
+        exclude = p.Results.exclude;
+        
+        % 确保exclude是元胞数组
+        if ischar(exclude)
+            exclude = {exclude};
+        end
+        
+        %% 校验路径
+        % 检查文件扩展名
+        isExcelFile = endsWith(path, '.xls') || endsWith(path, '.xlsx');
+        
+        if isExcelFile
+            fprintf('正在处理Excel文件: %s\n', path);
+        else
+            fprintf('正在处理模型: %s\n', path);
+            path = [path, '_DD_', mode, '.xlsx'];
+        end
+        
+        % 检查文件是否存在
+        if isempty(which(path))
+            error('文件未包含在项目中，请先将SLDD路径添加到项目中');
+        end
+        
+        %% 确定SLDD类型
+        if contains(path, 'PCMU')
+            fprintf('检测到PCMU格式的SLDD文件\n');
+            mode = 'PCMU';
+        elseif contains(path, 'VCU')
+            fprintf('检测到VCU格式的SLDD文件\n');
+            mode = 'VCU';
+        else
+            error('文件名必须包含PCMU或VCU标识');
+        end
+        
+        %% 加载SLDD数据
+        switch mode
+            case 'PCMU'
+                sigCnts = findSlddLoadSigPCMU(path, 'exclude', exclude);
+                paramCnts = findSlddLoadParamPCMU(path, 'exclude', exclude);
+            case 'VCU'
+                sigCnts = findSlddLoadSigVCU(path, 'exclude', exclude);
+                paramCnts = findSlddLoadParamVCU(path, 'exclude', exclude);
+            otherwise
+                error('模式参数必须是PCMU或VCU');
+        end
+        
+        % 输出导入结果
+        fprintf('成功导入 %d 个信号和 %d 个参数\n', sigCnts, paramCnts);
+        
+    catch ME
+        % 错误处理
+        error('导入SLDD数据时发生错误: %s', ME.message);
     end
-
-    if isempty(which(path))
-        error('the path have not included into the project. try to add the sldd path to the project first')
-    end
-
-    %% 根据路径解析sldd 是属于PCMU 还是VCU
-    if contains(path, 'PCMU')
-        disp('This file is PCMU sldd format.');
-        mode = 'PCMU';
-    elseif contains(path, 'VCU')
-        disp('This file is VCU sldd format.');
-        mode = 'VCU';
-    else
-        error('this file name should contain either PCMU or VCU!')
-    end
-
-    %% 加载sldd
-    if strcmp(mode, 'PCMU')
-        sigCnts = findSlddLoadSigPCMU(path,'eclude',eclude);
-        paramCnts = findSlddLoadParamPCMU(path,'eclude',eclude);
-    elseif strcmp(mode, 'VCU')
-        sigCnts = findSlddLoadSigVCU(path,'eclude',eclude);
-        paramCnts = findSlddLoadParamVCU(path,'eclude',eclude);
-    else
-        error('pls the input the right mode parameters, the chooses are only: PCMU, VCU')
-    end
-
 end

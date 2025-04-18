@@ -77,8 +77,12 @@ function saveSlddTable(ModelName, DataPCMU,  varargin)
             value = data{12};
             valueX = X{12};
 
-            value = str2num(value);
-            valueX = str2num(valueX);
+            if ischar(value)
+                value = str2num(value);
+            end
+            if ischar(valueX)
+                valueX = str2num(valueX);
+            end
             widX = length(valueX);
 
             % 找到输入名字
@@ -134,10 +138,16 @@ function saveSlddTable(ModelName, DataPCMU,  varargin)
             nameY = Y{3};
             value = data{12};
             valueX = X{12};
-            valueY = Y{12};
-            value = str2num(value);
-            valueX = str2num(valueX);
-            valueY = str2num(valueY);
+            valueY = Y{12}; 
+            if ischar(value)
+                value = str2num(value);
+            end
+            if ischar(valueX)
+                valueX = str2num(valueX);
+            end
+            if ischar(valueY)
+                valueY = str2num(valueY);
+            end
             widX = length(valueX);
             widY = length(valueY);
 

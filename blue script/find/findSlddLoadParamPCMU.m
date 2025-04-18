@@ -12,11 +12,11 @@ function loadedCnt = findSlddLoadParamPCMU(path, varargin)
     clc
     %% 输入参数处理
     p = inputParser;            % 函数的输入解析器
-    addParameter(p,'eclude',{'Inport'});      % 设置变量名和默认参数
+    addParameter(p,'exclude',{'Inport'});      % 设置变量名和默认参数
 
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
-    eclude = p.Results.eclude;
+    exclude = p.Results.exclude;
 
     %% 简单判断路径是否存在
     if strcmp(path, '')
@@ -49,7 +49,7 @@ function loadedCnt = findSlddLoadParamPCMU(path, varargin)
         para_attributes = combineddataS1(i,:);
 
         % 判断是否需要排除这个数据
-        if ismember(para_attributes.PortType, eclude)
+        if ismember(para_attributes.PortType, exclude)
             continue
         end
 

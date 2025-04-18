@@ -6,7 +6,7 @@ function [dataType, nameOutPort] = findNameMdOut(Name, varargin)
 %   输入参数:
 %      Name         - 信号名称 (字符串)
 %                     标准格式: '<前缀>_<类型>_<信号名>'
-%                     示例: 'sTmComprCtrl_D_u32AcOffCode'
+%                     示例: 'sTmComprCtrl_D_u32AccmKp'
 %
 %   可选参数（名值对）:
 %      'mode'       - 信号名称处理模式 (字符串), 默认值: 'keep'
@@ -25,10 +25,10 @@ function [dataType, nameOutPort] = findNameMdOut(Name, varargin)
 %
 %   示例:
 %      % 假设当前模型名称为'CurrrentMode'
-%      [type, outName] = findNameMdOut('sTmComprCtrl_D_u32AcOffCode')
-%      % 返回: type = 'D', outName = 'sTmComprCtrl_D_u32AcOffCode'
+%      [type, outName] = findNameMdOut('sTmComprCtrl_D_u32AccmKp')
+%      % 返回: type = 'D', outName = 'sTmComprCtrl_D_u32AccmKp'
 %
-%      [type, outName] = findNameMdOut('sTmComprCtrl_D_u32AcOffCode', 'mode', 'pre')
+%      [type, outName] = findNameMdOut('sTmComprCtrl_D_u32AccmKp', 'mode', 'pre')
 %      % 返回: type = 'D', outName = 'sCurrrentMode_D_u32AcOffCode'
 %
 %   注意事项:
