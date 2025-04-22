@@ -1,87 +1,109 @@
-function  creatIFIn(varargin)
-%%
-% 目的: 创建接口输入模型
-% 输入：
-%       可选参数：
-%       pos： 横坐标，默认为 [0,0]
-% 返回：已经成功创建的记录数量
-% 范例：creatIFIn('sheetNames',{'IF_InportsCommon','IF_InportsDiag','IF_Inports2F'})
-% 说明：1. 打开输入输出子模型，2. 在命令窗口运行此函数
-% 作者： Blue.ge
-% 日期： 20231030
-%%
-    clc
-    %% 参数处理
-    % 获取系统坐标
-    p = inputParser;            % 函数的输入解析器
-    % 输入参数处理
-    addParameter(p,'pos',[0,0]);      % 设置变量名和默认参数 [9000 0]
-    addParameter(p,'excelFileName','Template.xlsx');                      % Interface 模板路径
-    addParameter(p,'sheetNames',{'Inports Common','Inports Diag','Inports 2F'});    % 输入表清单
+function numCreated = creatIFIn(varargin)
+%CREATIFIN 创建接口输入模型
+%   numCreated = creatIFIn() 创建接口输入模型，包括信号创建、解析和端口配置。
+%
+%   可选参数:
+%       'pos' - 模型位置，默认为[0,0]
+%       'excelFileName' - Excel模板文件名，默认为'Template.xlsx'
+%       'sheetNames' - 工作表名称列表，默认为{'Inports Common','Inports Diag','Inports 2F'}
+%
+%   输出参数:
+%       numCreated - 创建的信号总数
+%
+%   示例:
+%       numCreated = creatIFIn()
+%       numCreated = creatIFIn('pos', [1000,0], 'excelFileName', 'MyTemplate.xlsx')
+%       numCreated = creatIFIn('sheetNames', {'IF_InportsCommon','IF_InportsDiag'})
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-06-28
+%   版本: 1.1
 
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-    
-    pos = p.Results.pos;
-    excelFileName = p.Results.excelFileName;
-    sheetNames = p.Results.sheetNames;
-
-    %% 创建模块
-    name = 'TmIn';
-    root = gcs;
-    path = [root '/' name];
-    posMd = [pos pos(1)+500 pos(2)+2000];
-    bk = add_block('built-in/SubSystem', path, ...
-             'Name', name, 'Position', posMd);  
-    open_system(path)
-
-    %% 循环创建对应的interface信号
-    for i=1:length(sheetNames)
-        posX = 1500 * (i-1);
-        numCreated = creatInterface( ...
-            'excelFileName',excelFileName,...
-            'sheetName', sheetNames{i}, ...
-            'posX', posX, ...
-            'mode','inport', ...
-            'sigUse','out');
-        disp([num2str(numCreated),' signals have been created based on: ', sheetNames{1}, '/r/n' ])
+    try
+        %% 参数处理
+        p = inputParser;
+        
+        % 添加参数及其验证
+        addParameter(p, 'pos', [0,0], @(x) isnumeric(x) && numel(x) == 2);
+        addParameter(p, 'excelFileName', 'Template.xlsx', @ischar);
+        addParameter(p, 'sheetNames', {'IF_InportsCommon','IF_InportsDiag','IF_Inports2F'}, @iscell);
+        
+        parse(p, varargin{:});
+        
+        % 获取参数值
+        pos = p.Results.pos;
+        excelFileName = p.Results.excelFileName;
+        sheetNames = p.Results.sheetNames;
+        
+        %% 验证Excel文件
+        if ~exist(excelFileName, 'file')
+            error('Excel模板文件不存在: %s', excelFileName);
+        end
+        
+        %% 创建模块
+        name = 'TmIn';
+        root = gcs;
+        path = [root '/' name];
+        posMd = [pos pos(1)+500 pos(2)+2000];
+        
+        try
+            bk = add_block('built-in/SubSystem', path, ...
+                'Name', name, 'Position', posMd);
+            open_system(path);
+        catch ME
+            error('创建子系统时发生错误: %s', ME.message);
+        end
+        
+        %% 循环创建接口信号
+        totalCreated = 0;
+        for i = 1:length(sheetNames)
+            try
+                posX = 1500 * (i-1);
+                numCreated = creatInterface( ...
+                    'excelFileName', excelFileName, ...
+                    'sheetName', sheetNames{i}, ...
+                    'posX', posX, ...
+                    'mode', 'inport', ...
+                    'sigUse', 'out');
+                
+                totalCreated = totalCreated + numCreated;
+                fprintf('基于工作表 %s 创建了 %d 个信号\n', sheetNames{i}, numCreated);
+            catch ME
+                warning(ME.identifier, '创建工作表 %s 的信号时发生错误: %s', sheetNames{i}, ME.message);
+            end
+        end
+        
+        %% 调整模块位置
+        try
+            changeModPos(path, pos);
+        catch ME
+            warning(ME.identifier, '调整模块位置时发生错误: %s', ME.message);
+        end
+        
+        %% 信号解析
+        try
+            createSigOnLine(path, ...
+                'isEnableIn', false, ...
+                'skipTrig', false, ...
+                'resoveValue', true);
+        catch ME
+            warning(ME.identifier, '信号解析时发生错误: %s', ME.message);
+        end
+        
+        %% 创建端口和Goto模块
+        try
+            open_system(root);
+            createModGoto(path, 'mode', 'outport');
+            createModPorts(path, 'mode', 'inport');
+        catch ME
+            warning(ME.identifier, '创建端口和Goto模块时发生错误: %s', ME.message);
+        end
+        
+        %% 显示完成信息
+        fprintf('接口输入模型创建完成，共创建 %d 个信号\n', totalCreated);
+        numCreated = totalCreated;
+        
+    catch ME
+        error('创建接口输入模型时发生错误: %s', ME.message);
     end
-
-%     numCreated = creatInterface('sheetName', 'Inports Common','posX', 0, 'mode','inport', 'sigUse','out');
-%     numCreated = creatInterface('sheetName', 'Inports Diag','posX', 1500, 'mode','inport', 'sigUse','out');
-%     numCreated = creatInterface('sheetName', 'Inports 2F','posX', 3000, 'mode','inport', 'sigUse','out');
-    changeModPos(path, pos)
-
-    %% 信号解析
-    createSigOnLine(path, ...
-    'isEnableIn',false, ...
-    'skipTrig',false, ...
-    'resoveValue',true)
-
-    %% 创建输入端口和输出Goto
-    open_system(root)
-    createModGoto(path,'mode','outport');
-    createModPorts(path,'mode','inport');
-%     createMode(gcb, ...
-%         'inType','port', ...      % 可选参数 port, ground, from, const, none
-%         'outType','goto', ...       % 可选参数 port, term, goto, disp, none
-%         'wid', 500,...              % 模块宽度
-%         ...                         % 创建 ports 相关配置
-%         'findType','interface',...       % 可选参数 base, interface, None
-%         'add', 'None',...           % 可选参数 blockType, None, etc：SignalConversion
-%         'isDelSuffix',false,...
-%         'suffixStr','_in', ...
-%         'enFirstTrig',false, ...
-%         ...                         % 创建 goto from 相关配置
-%         'inList', [], ...
-%         'outList', [],...
-%         'bkHalfLength', 100,...
-%         ...                         % 创建 信号解析 相关配置
-%         'skipTrig',false,...
-%         'isEnableIn',false,...
-%         'isEnableOut',false,...
-%         'resoveValue',false,...
-%         'logValue',false,...
-%         'testValue',false,...
-%         'dispName', false...
-%         )
 end

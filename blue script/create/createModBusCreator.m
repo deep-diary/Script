@@ -4,7 +4,7 @@ function createModBusCreator(mdPath,  creatorPath)
 % 输入：
 %       模型路径
 % 返回：None
-% 范例：createModBusCreator(gcb, creatorPath)
+% 范例：createModBusCreator(gcb, 'NA')
 % 说明：1. 鼠标点击在子模型上，2. 在命令窗口运行此函数
 % 作者： Blue.ge
 % 日期： 20240513

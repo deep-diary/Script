@@ -1,101 +1,119 @@
-function creatRefVCU(modelName,varargin)
-%%
-    % 目的: 创建VCU配置的模型引用
-    % 输入：modelName： 模型名称
-    % 返回： None
-    % 范例： creatRefVCU('TmSovCtrl')  % TmComprCtrl  RefTest
-    % 作者： Blue.ge
-    % 日期： 20240204
-%%
-    clc
-    %% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'SLDD','None');      % 设置变量名和默认参数
-    addParameter(p,'DCM','None');      % 设置变量名和默认参数
+function creatRefVCU(modelName, varargin)
+%CREATEREFVCU 创建VCU配置的模型引用
+%   creatRefVCU(modelName) 为指定的模型创建VCU配置的模型引用。
+%
+%   输入参数:
+%       modelName - 模型名称，例如 'TmSovCtrl'
+%
+%   可选参数:
+%       'SLDD' - 自定义SLDD文件路径，默认为 'None'
+%       'DCM' - DCM文件路径，默认为 'None'
+%
+%   示例:
+%       creatRefVCU('TmSovCtrl')
+%       creatRefVCU('TmComprCtrl', 'SLDD', 'custom_DD.xlsx')
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-02-04
+%   版本: 1.1
 
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-    SLDD = p.Results.SLDD;
-    DCM = p.Results.DCM;
-    %% 加载sldd
-    slddPathArch = 'TmSwArch_DD_VCU.xlsx';
+    try
+        %% 输入参数处理
+        p = inputParser;
+        addParameter(p, 'SLDD', 'None');
+        addParameter(p, 'DCM', 'None');
+        parse(p, varargin{:});
+        
+        slddPath = p.Results.SLDD;
+        dcmPath = p.Results.DCM;
+        
+        %% 加载SLDD文件
+        slddPathArch = 'TmSwArch_DD_VCU.xlsx';
+        
+        % 指定模型SLDD路径
+        if strcmp(slddPath, 'None')
+            slddPathMod = [modelName, '_DD_VCU.xlsx'];
+        else
+            slddPathMod = slddPath;
+        end
+        
+        % 根据DCM更新SLDD
+        if ~strcmp(dcmPath, 'None')
+            changeArchSldd(dcmPath, slddPathMod);
+        end
+        
+        %% 加载SLDD数据
+        findSlddLoad(slddPathArch);
+        findSlddLoad(slddPathMod);
+        
+        %% 配置采样时间参数
+        cTmSwArch_t_s32SampleTime = Simulink.Parameter(0.1);
+        cTmSwArch_t_s32SampleTime.DataType = 'single';
+        
+        %% 创建或打开引用模型
+        refModelName = 'subModRefVCU';
+        createOrOpenModel(refModelName);
+        
+        %% 清理模型
+        delGcsAll();
+        
+        %% 配置模型位置
+        stpX = 0;
+        posOrg = [0 0 500 5000];
+        pos = posOrg + [stpX * 4, 0, stpX * 4, 0];
+        
+        %% 添加模型引用
+        root = gcs;
+        modelPath = [root, '/', modelName];
+        
+        add_block('built-in/ModelReference', modelPath, ...
+            'ModelName', modelName, 'Position', pos);
+        
+        changeModPos(modelPath, pos);
+        
+        %% 配置ERT
+        changeCfgErt(modelName);
+        changeCfgErt(refModelName);
+        
+        %% 清理代码生成目录
+        cleanCodeGenDirectory();
+        
+        fprintf('VCU模型引用创建完成: %s\n', modelName);
+        
+    catch ME
+        error('创建VCU模型引用时发生错误: %s', ME.message);
+    end
+end
 
-    % 指定模型sldd 路径
-    if strcmp(SLDD, 'None')
-        slddPathMod = [modelName,'_DD_VCU.xlsx'];
+function createOrOpenModel(modelName)
+%CREATEOROPENMODEL 创建或打开模型
+%   如果模型存在则打开，不存在则创建新模型
+
+    if exist([modelName '.slx'], 'file')
+        open_system(modelName);
     else
-        slddPathMod = SLDD;
+        new_system(modelName);
+        save_system(modelName);
+        open_system(modelName);
     end
-    % 是否根据DCM更新SLDD
-    if ~strcmp(DCM, 'None')
-        changeArchSldd(DCM, slddPathMod);
-    end
+end
 
+function cleanCodeGenDirectory()
+%CLEANCODEGENDIRECTORY 清理代码生成目录
 
-    %% 加载sldd
-
-    findSlddLoad(slddPathArch)
-    findSlddLoad(slddPathMod)
-
-    cTmSwArch_t_s32SampleTime = Simulink.Parameter(0.1);
-    cTmSwArch_t_s32SampleTime.DataType = 'single';
-    %% 打开引用模型
-    refModelName = 'subModRefVCU';
-%     autosar.api.delete(refModelName);
-    % 检查模型是否存在
-    if exist([refModelName '.slx'], 'file')
-        % 如果模型存在，则直接打开
-        open_system(refModelName);
-    else
-        % 如果模型不存在，则创建并打开新模型
-        new_system(refModelName);
-        save_system(refModelName);
-        open_system(refModelName);
-    end
-
-    delGcsAll()
-
-    %% 模型生成位置
-    stpX = 0;
-    posOrg = [0 0 500 5000];
-    pos=posOrg+[stpX * 4, 0, stpX * 4,  0];
-
-    %% 3. 生成子模型
-    root=gcs;
-    path=[root,'/', modelName];
-
-    bk = add_block('built-in/ModelReference', path, ...
-     'ModelName', modelName, 'Position', pos); 
-   
-    changeModPos(path, pos)
-
-    %% 配置autosar
-    changeCfgErt(modelName)
-    changeCfgErt(refModelName)
-
-    %% 进入到仿真目录
-%     proj = currentProject;
-%     rootPath = proj.RootFolder;
-%     simPath = fullfile(rootPath,'Simulation', 'subModRef');
-%     if ~exist(simPath, 'dir')
-%         mkdir(simPath);
-%         disp(['创建文件夹: ' simPath]);
-%     end
-%     cd(simPath);
-
-    %% 删除代码生成目录
     proj = currentProject;
     rootPath = proj.RootFolder;
     codeFold = 'CodeGen';
     fLists = dir(codeFold);
-    for i=3:length(fLists)
+    
+    for i = 3:length(fLists)
         T = fLists(i);
-        path = fullfile(rootPath,codeFold,T.name);
+        path = fullfile(rootPath, codeFold, T.name);
         if T.isdir
-            rmdir(path,'s')
+            rmdir(path, 's');
         else
-            delete(path)
+            delete(path);
         end
     end
-
 end
 

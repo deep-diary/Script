@@ -15,9 +15,8 @@ function  nums = creatFromBasedOnUselessGoto(varargin)
     %% 初始化
     % 获取系统坐标
     p = inputParser;            % 函数的输入解析器
-    posBase = [13500,0];     % 输出端口起始位置
     % 输入参数处理
-    addParameter(p,'posBase',posBase);      % 设置变量名和默认参数 [9000 0]
+    addParameter(p,'posBase',[12000,0]);      % 设置变量名和默认参数 [9000 0]
     addParameter(p,'step',30);      % 设置变量名和默认参数
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 

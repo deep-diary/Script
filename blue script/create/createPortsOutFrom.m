@@ -1,5 +1,5 @@
 function [outCnt] = createPortsOutFrom(path, nameMd, varargin)
-%%
+%% 貌似没找到对应的应用场景，后续可能会删除
 % 目的: 通过当前路径的无用的From，这些from是模型的内部信号，通过这些信号，创建外部信号对用的输出端口
 % 输入：
 %       path: 当前路径

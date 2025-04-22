@@ -1,71 +1,123 @@
-function dictionaryObj = createSlddDesignData(modelName,varargin)
-%%
-% 目的: 根据模型名称，将所需的变量导入sldd中，前提是所有用到的变量，需要加载到工作空间中
-% 输入：
-%       Null
-% 返回：mdName: 模型名
-% 范例：dictionaryObj = createSlddDesignData('TmComprCtrl')
-% 说明：需要成功编译模型后才可以执行
-% 作者： Blue.ge
-% 日期： 20240628
-%%
-    clc
+function dictionaryObj = createSlddDesignData(modelName, varargin)
+%CREATESLDDDESIGNDATA 创建或更新模型的数据字典
+%   dictionaryObj = createSlddDesignData(modelName) 根据模型名称创建或更新
+%   对应的数据字典，将工作空间中的变量导入到数据字典中。
+%
+%   输入参数:
+%       modelName - 模型名称
+%
+%   可选参数:
+%       'slddPath' - 数据字典路径，默认为空
+%
+%   输出参数:
+%       dictionaryObj - 数据字典对象
+%
+%   示例:
+%       dictionaryObj = createSlddDesignData('TmComprCtrl')
+%       dictionaryObj = createSlddDesignData('TmComprCtrl', 'slddPath', 'path/to/dictionary.sldd')
+%
+%   说明:
+%       1. 需要先成功编译模型
+%       2. 所有需要导入的变量必须已加载到工作空间中
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-06-28
+%   版本: 1.1
+
+    try
         %% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'slddPath','');      % 设置变量名和默认参数
-
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-
-    slddPath = p.Results.slddPath;
-
-    %% 获取模型所需的变量
-    % 清掉sldd 跟模型的绑定
-    set_param(modelName,'DataDictionary','');
-
-    % Find all variables and enumerated types used in model blocks
-    usedTypesVars = Simulink.findVars(modelName,'IncludeEnumTypes',true);
-
-    % Simulink.defineIntEnumType
-    enumTypesDynamic = strcmp({usedTypesVars.SourceType},'dynamic class');
-
-    sigParams = strcmp({usedTypesVars.SourceType},'base workspace');
-
-    varsToImportIndex = sigParams | enumTypesDynamic;
-
-    varNames = {usedTypesVars(varsToImportIndex).Name}'
-
-
-    %% 将变量导入sldd
-    slddPath = [modelName,'.sldd'];
-    dictionaryObj = createSldd(modelName)  % 创建或者打开模型对应的sldd
-    % Import to the dictionary the model variables defined in the base workspace, and clear the variables from the base workspace
-    [importSuccess,importFailure] = importFromBaseWorkspace(dictionaryObj,...
-     'varList',varNames,'clearWorkspaceVars',true);
-    % Link the dictionary to the model
-    set_param(modelName,'DataDictionary',[modelName,'.sldd']);
-    
-    saveChanges(dictionaryObj)
-    save_system(modelName)
-
-    %% 找到已经加载的枚举变量
-%     % 获取当前工作区中定义的所有类
-%     allClasses = meta.class.getAllClasses;
-%     % 初始化一个空的cell数组来存储枚举类型的名称
-%     enumTypes = {};
-%     
-%     % 遍历所有类，检查是否为枚举类型
-%     for i = 1:length(allClasses)
-%         if allClasses{i}.Enumeration
-%             % 如果是枚举类型，将其名称添加到cell数组中
-%             enumTypes{end+1} = allClasses{i}.Name;
-%         end
-%     end
-%     
-%     % 显示所有已加载的枚举类型
-%     disp('Loaded Enumeration Types:');
-%     disp(enumTypes);
-%     [successfulMigrations, unsuccessfulMigrations] = ...
-%     importEnumTypes(dictionaryObj,enumTypes)
-    
+        p = inputParser;
+        
+        % 添加参数及其验证
+        addParameter(p, 'slddPath', '', @ischar);
+        
+        parse(p, varargin{:});
+        
+        % 获取参数值
+        slddPath = p.Results.slddPath;
+        
+        %% 验证模型
+        if ~bdIsLoaded(modelName)
+            error('模型 %s 未加载', modelName);
+        end
+        
+        fprintf('开始处理模型 %s 的数据字典\n', modelName);
+        
+        %% 解除模型与数据字典的绑定
+        try
+            set_param(modelName, 'DataDictionary', '');
+            fprintf('已解除模型与数据字典的绑定\n');
+        catch ME
+            error('解除模型与数据字典绑定时发生错误: %s', ME.message);
+        end
+        
+        %% 获取模型使用的变量
+        try
+            % 查找所有变量和枚举类型
+            usedTypesVars = Simulink.findVars(modelName, 'IncludeEnumTypes', true);
+            
+            % 识别动态类和基础工作空间中的变量
+            enumTypesDynamic = strcmp({usedTypesVars.SourceType}, 'dynamic class');
+            sigParams = strcmp({usedTypesVars.SourceType}, 'base workspace');
+            varsToImportIndex = sigParams | enumTypesDynamic;
+            
+            % 获取需要导入的变量名
+            varNames = {usedTypesVars(varsToImportIndex).Name}';
+            
+            if isempty(varNames)
+                warning('未找到需要导入的变量');
+            else
+                fprintf('找到 %d 个需要导入的变量\n', length(varNames));
+            end
+        catch ME
+            error('获取模型变量时发生错误: %s', ME.message);
+        end
+        
+        %% 创建或打开数据字典
+        try
+            if isempty(slddPath)
+                slddPath = [modelName, '.sldd'];
+            end
+            
+            dictionaryObj = createSldd(modelName);
+            fprintf('已创建/打开数据字典: %s\n', slddPath);
+        catch ME
+            error('创建/打开数据字典时发生错误: %s', ME.message);
+        end
+        
+        %% 导入变量到数据字典
+        try
+            [importSuccess, importFailure] = importFromBaseWorkspace(dictionaryObj, ...
+                'varList', varNames, 'clearWorkspaceVars', true);
+            
+            if ~isempty(importFailure)
+                warning('以下变量导入失败: %s', strjoin(importFailure, ', '));
+            end
+            
+            fprintf('成功导入 %d 个变量\n', length(importSuccess));
+        catch ME
+            error('导入变量到数据字典时发生错误: %s', ME.message);
+        end
+        
+        %% 保存更改
+        try
+            % 将数据字典绑定到模型
+            set_param(modelName, 'DataDictionary', slddPath);
+            
+            % 保存数据字典
+            saveChanges(dictionaryObj);
+            
+            % 保存模型
+            save_system(modelName);
+            
+            fprintf('数据字典和模型已保存\n');
+        catch ME
+            error('保存更改时发生错误: %s', ME.message);
+        end
+        
+    catch ME
+        error('创建数据字典过程中发生错误: %s', ME.message);
+    end
+end
 
 

@@ -27,7 +27,9 @@ function NameSigLoc = findNameSigLoc(Name)
             nameFrom = get_param(uselessFrom{i}, 'GotoTag');
             if contains(nameFrom, sig)
                 NameSigLoc = nameFrom;
-                break;
+                return;
             end
         end
+        
+        NameSigLoc = strrep(Name,strList{1},bdroot);
 end

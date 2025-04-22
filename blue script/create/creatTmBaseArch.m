@@ -65,7 +65,7 @@ function  creatTmBaseArch(varargin)
     %% 6. 创建 Goto 来匹配无用的From
     creatGotoBasedOnUselessFrom('posBase',[stpX * 10 0])
 
-    save_system(bdroot)
+    save_system(bdroot, 'SaveDirtyReferencedModels','on')
 end
 
 

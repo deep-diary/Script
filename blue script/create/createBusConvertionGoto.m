@@ -4,7 +4,7 @@ function result = createBusConvertionGoto()
 % 输入：
 %       模型路径
 % 返回：None
-% 范例：creatBusSigAll(gcs)
+% createBusConvertionGoto()
 % 说明：
 % 0. 鼠标点击在Selector上，获取Selector句柄
 % 1. 获取bus selector上所有的信号

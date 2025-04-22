@@ -8,7 +8,7 @@ function [createdInput, createdOutput] = createModGoto(path, varargin)
 %       isEnableOut：使能禁止输入，false则不创建输出信号
 % 返回：成功创建好的信号
 % 范例： createModGoto(gcb, 'mode','both')
-% 范例： createModGoto(gcb, 'mode','both','suffixStr','Code')
+% 范例： createModGoto(gcb, 'mode','both','suffixStr','In')
 % 作者： Blue.ge
 % 日期： 20230928
 %%

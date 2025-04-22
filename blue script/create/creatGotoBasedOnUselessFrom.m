@@ -6,7 +6,7 @@ function  nums = creatGotoBasedOnUselessFrom(varargin)
 %       posBase： 横坐标，默认为 [0,0]
 %       step： 信号间隔步长， 默认为30
 % 返回：已经成功创建的记录数量
-% 范例：numCreated = creatGotoBasedOnUselessFrom('posBase', [13500,0])
+% 范例：numCreated = creatGotoBasedOnUselessFrom('posBase', [12500,0])
 % 说明：1. 打开输入输出子模型，2. 在命令窗口运行此函数
 % 作者： Blue.ge
 % 日期： 20231031
@@ -15,9 +15,8 @@ function  nums = creatGotoBasedOnUselessFrom(varargin)
     %% 初始化
     % 获取系统坐标
     p = inputParser;            % 函数的输入解析器
-    posBase = [13500,0];     % 输出端口起始位置
     % 输入参数处理
-    addParameter(p,'posBase',posBase);      % 设置变量名和默认参数 [9000 0]
+    addParameter(p,'posBase',[13500,0]);      % 设置变量名和默认参数 [9000 0]
     addParameter(p,'step',30);      % 设置变量名和默认参数
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 

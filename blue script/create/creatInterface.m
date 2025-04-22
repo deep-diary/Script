@@ -1,423 +1,326 @@
-function  numCreated = creatInterface(varargin)
-%%
-% 目的: 为输入输出interface创建调试接口。
-% 输入：
-%       excelFileName： 模板 excel 路径
-%       sheetName：     表格中的sheet 名字
-%       可选参数：posX： 横坐标，默认为100
-% 返回：已经成功创建的记录数量
-% 范例：numCreated = creatInterface(),
-% 说明：1. 打开输入输出子模型，2. 在命令窗口运行此函数, 此函数支持4种模式
-%       mode=0: 有正常的输入输出，则创建Inport Debug Outport
-%       mode=1: 有输入，没有对应输出，则创建Inport and Terminator
-%       mode=2: 有输出，没有对应输入，则创建Ground and Outport
-%       mode=3: 一个输入，对应多个输出，则分别创建并自动连线
-% 作者： Blue.ge
-% 日期： 20230928
-%%
-    clc
-%% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'excelFileName','Template_Interface.xlsx'); 
-    addParameter(p,'sheetName','Inports Common'); 
-    addParameter(p,'mode','inport');      % 设置变量名和默认参数 可选 in, out
-    addParameter(p,'sigUse','in');      % 设置变量名和默认参数 可选 in, out
-    addParameter(p,'posX',0);      % 设置变量名和默认参数
-    addParameter(p,'posY',0);      % 设置变量名和默认参数
-    addParameter(p,'gndBlock','Constant');      % 设置接地模式， 'Ground', Constant
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
+function numCreated = creatInterface(varargin)
+%CREATINTERFACE 创建接口调试模块
+%   numCreated = creatInterface() 为输入输出接口创建调试模块，支持多种模式。
+%
+%   可选参数:
+%       'excelFileName' - Excel模板文件名，默认为'Template.xlsx'
+%       'sheetName' - 工作表名称，默认为'IF_InportsCommon'
+%       'mode' - 模式选择，可选'inport'或'outport'，默认为'inport'
+%       'sigUse' - 信号使用方式，可选'in'或'out'，默认为'in'
+%       'posX' - 横坐标位置，默认为0
+%       'posY' - 纵坐标位置，默认为0
+%       'gndBlock' - 接地模块类型，可选'Ground'或'Constant'，默认为'Constant'
+%
+%   输出参数:
+%       numCreated - 成功创建的信号数量
+%
+%   模式说明:
+%       mode=0: 正常输入输出，创建Inport Debug Outport
+%       mode=1: 有输入无输出，创建Inport和Terminator
+%       mode=2: 有输出无输入，创建Ground和Outport
+%       mode=3: 一个输入对应多个输出，分别创建并自动连线
+%
+%   示例:
+%       numCreated = creatInterface()
+%       numCreated = creatInterface('mode', 'outport', 'sheetName', 'IF_OutportsCommon')
+%       numCreated = creatInterface('gndBlock', 'Ground', 'posX', 100)
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-06-28
+%   版本: 1.1
 
-    excelFileName = p.Results.excelFileName;
-    sheetName = p.Results.sheetName;
-    mode = p.Results.mode;
-    sigUse = p.Results.sigUse;
-    posX = p.Results.posX;
-    posY = p.Results.posY;
-    gndBlock = p.Results.gndBlock;
-
-%%
-    NAStr = 'NA';
-    [dataTable,sigin,sigout] = readExcelInterface(excelFileName, sheetName);
-    posInit = [posX, posY]; % 输入端口起始位置
-
-    
-    numCreated = 0; % 记录已生成的记录数量
-    isDifType = false;
-
-    %% 查找输入重复的信号
-    [~, siginDu, ~, ~] = findProcessedSig(sigin, NAStr);
-    %% 输入输出一对一
-    for i=1:length(sigin)
-        if ismember(sigin{i}, siginDu)
-            disp('-------------duplicate signal')
-            type = 3; % 一个输入对应多个输出
-            continue
-        end
-        if strcmp(sigin{i},NAStr) && strcmp(sigout{i},NAStr)
-            continue
+    try
+        %% 参数处理
+        p = inputParser;
         
-        elseif strcmp(sigout{i},NAStr)
-            type = 1;  % 创建Inport and Terminator
-        elseif strcmp(sigin{i},NAStr)
-            type = 2;  % 创建Ground and Outport
-        else
-            type = 0;  % 正常模式，创建Inport Debug Outport
-        end
-
-        %% 获取输入输出类型
-
-        if strcmp(mode, 'inport')
-            IFType = findNameIFType(sigin{i});
-            [TmInType,~,~,~,~] = findNameType(sigout{i});
-
-            inType = IFType;
-            outType = TmInType;
-        elseif strcmp(mode, 'outport')
-            [TmOutType,~,~,~,~] = findNameType(sigin{i});
-            IFType = findNameIFType(sigout{i});
-
-            inType = TmOutType;
-            outType = IFType;
-        else
-            error('pls input the right mode, valide name is: inport, outport')
+        % 添加参数及其验证
+        addParameter(p, 'excelFileName', 'Template.xlsx', @ischar);
+        addParameter(p, 'sheetName', 'IF_InportsCommon', @ischar);
+        addParameter(p, 'mode', 'inport', @(x) any(strcmp(x, {'inport', 'outport'})));
+        addParameter(p, 'sigUse', 'in', @(x) any(strcmp(x, {'in', 'out'})));
+        addParameter(p, 'posX', 0, @isnumeric);
+        addParameter(p, 'posY', 0, @isnumeric);
+        addParameter(p, 'gndBlock', 'Constant', @(x) any(strcmp(x, {'Ground', 'Constant'})));
+        
+        parse(p, varargin{:});
+        
+        % 获取参数值
+        excelFileName = p.Results.excelFileName;
+        sheetName = p.Results.sheetName;
+        mode = p.Results.mode;
+        sigUse = p.Results.sigUse;
+        posX = p.Results.posX;
+        posY = p.Results.posY;
+        gndBlock = p.Results.gndBlock;
+        
+        %% 验证Excel文件
+        if ~exist(excelFileName, 'file')
+            error('Excel模板文件不存在: %s', excelFileName);
         end
         
-        % 判断输入输出类型是否一致，不一致，isDifType = true
-        if type == 0 && ~strcmp(inType, outType)
-            isDifType = true;
-        else
-            isDifType = false;
+        %% 读取Excel数据
+        NAStr = 'NA';
+        [dataTable, sigin, sigout] = readExcelInterface(excelFileName, sheetName);
+        if isempty(sigin) || isempty(sigout)
+            error('Excel文件中没有找到有效的信号数据');
         end
-
-
-        % create block
-        posXbase = posInit(1);
-        posY = posInit(2) + 30*numCreated;
-
-        %% type = 0 正常模式，创建Inport Debug Outport
-        if type == 0
-            %% 1. 创建inport 模块
-            posX = posXbase -300;
-            posIn = [posX-15 posY-7 posX+15 posY+7];
-            % 尝试创建模块 built-in/Goto，built-in/Inport, built-in/From
+        
+        posInit = [posX, posY];
+        numCreated = 0;
+        
+        %% 处理重复信号
+        [~, siginDu, ~, ~] = findProcessedSig(sigin, NAStr);
+        
+        %% 处理一对一信号
+        for i = 1:length(sigin)
             try
-                bkIn = add_block('built-in/Inport', [gcs '/' sigin{i}], ...
-                           'Position', posIn, 'OutDataTypeStr', inType);
-            catch
-                bkIn = add_block('built-in/Inport', [gcs '/' sigin{i}], 'MakeNameUnique','on',...
-                           'Position', posIn, 'OutDataTypeStr', inType);
-                set_param(bkIn, "BackgroundColor","green")
-            end
-            if strcmp(inType, 'Inherit: auto')
-                set_param(bkIn, "BackgroundColor","red")
-            end
-    
-            %% 2. 创建debug 模块
-            posX = posXbase;
-            posDb = [posX - 100 posY-10 posX+100 posY+10];
-    %         if strcmp(sheetName, 'Inports')
-            if strcmp(mode, 'inport')
-                if strcmp(sigUse, 'out')
-                    bkDb  = add_block('PCMULib/Interface/Indebug', [gcs '/InDebug'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                else
-                    bkDb  = add_block('PCMULib/Interface/IndebugRvs', [gcs '/InDebugRvs'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                end
-            elseif strcmp(mode, 'outport')  %strcmp(sheetName, 'Outports')
-                if strcmp(sigUse, 'in')
-                    bkDb  = add_block('PCMULib/Interface/Outdebug', [gcs '/OutDebug'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                else
-                    bkDb  = add_block('PCMULib/Interface/OutdebugRvs', [gcs '/OutDebugRvs'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                end
-            else
-                error('pls input the right mode, valide name is: inport, outport')
-            end
-    
-            %% 3. 创建outport 模块  
-            posX = posXbase + 300;
-            posOut = [posX-15 posY-7 posX+15 posY+7];
-            % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-            bkOut = add_block('built-in/Outport', [gcs '/' sigout{i}], ...
-                   'Position', posOut, 'OutDataTypeStr', outType);
-            if strcmp(outType, 'Inherit: auto')
-                set_param(bkOut, "BackgroundColor","red")
-            end
-
-            %% 4. 创建 DataTypeConversion
-            if isDifType && strcmp(mode, 'outport')
-                posX = posXbase + 180;
-                posCov = [posX-25 posY-7 posX+25 posY+7];
-                bkCov  = add_block('built-in/DataTypeConversion', [gcs '/TypeConvs'], ...
-                'MakeNameUnique','on','Position', posCov);
-                if ~strcmp(outType, 'Inherit: auto')
-                    set_param(bkCov,'OutDataTypeStr', outType)
-                end
-            elseif isDifType && strcmp(mode, 'inport')
-                posX = posXbase - 180;
-                posCov = [posX-25 posY-7 posX+25 posY+7];
-                bkCov  = add_block('built-in/DataTypeConversion', [gcs '/TypeConvs'], ...
-                'MakeNameUnique','on','Position', posCov);
-                if ~strcmp(inType, 'Inherit: auto')
-                    set_param(bkCov,'OutDataTypeStr', outType)
-                end
-            else
-
-            end
-
-            %% 5. add line
-            if isDifType && strcmp(mode, 'outport')
-                creatLines([bkIn bkDb bkCov bkOut])
-            elseif isDifType && strcmp(mode, 'inport')
-                creatLines([bkIn bkCov bkDb bkOut])
-            else
-                creatLines([bkIn bkDb bkOut])
-            end
-
-
-        %% type = 1 创建Inport and Terminator
-        elseif type == 1
-            %% 1. 创建inport 模块
-            posX = posXbase -300;
-            posIn = [posX-15 posY-7 posX+15 posY+7];
-            % 尝试创建模块 built-in/Goto，built-in/Inport, built-in/From
-            try
-                bkIn = add_block('built-in/Inport', [gcs '/' sigin{i}], ...
-                           'Position', posIn, 'OutDataTypeStr', inType);
-            catch
-                bkIn = add_block('built-in/Inport', [gcs '/' sigin{i}], 'MakeNameUnique','on',...
-                           'Position', posIn, 'OutDataTypeStr', inType);
-                set_param(bkIn, "BackgroundColor","green")
-            end
-            if strcmp(inType, 'Inherit: auto')
-                set_param(bkIn, "BackgroundColor","red")
-            end
-            %% 2. 创建Terminator
-            posX = posX + 300;
-            posTerm = [posX-10 posY-10 posX+10 posY+10];
-            % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-            bkTerm = add_block('built-in/Terminator', [gcs '/Terminator'], 'MakeNameUnique','on',...
-                   'Position', posTerm);
-                    % add line
-    
-    
-            %% 3. 连线
-            creatLines([bkIn bkTerm])
-
-        %% mode = 2 创建Ground and Outport
-        %% 1. 创建Ground
-        elseif type==2
-            posX = posXbase;
-            posGround = [posX-10 posY-10 posX+10 posY+10];
-            % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-            if strcmp(gndBlock, 'Ground')
-                bkGround = add_block('built-in/Ground', [gcs '/Ground'], 'MakeNameUnique','on',...
-                       'Position', posGround);
-            elseif strcmp(gndBlock, 'Constant')
-                bkGround = add_block('built-in/Constant', [gcs '/Constant'], 'MakeNameUnique','on',...
-                       'Position', posGround, 'Value', '0');
-                if strcmp(outType, 'Inherit: auto')
-                    set_param(bkGround, "OutDataTypeStr",'Inherit: Inherit via back propagation')
-                else
-                    set_param(bkGround, "OutDataTypeStr",outType)
+                % 跳过无效信号
+                if strcmp(sigin{i}, NAStr) && strcmp(sigout{i}, NAStr)
+                    continue;
                 end
                 
-            else
-                error('pls input the right gndBlock. the valiable choose is Constant, Ground')
-            end
-    
-            %% 2. 创建outport 模块  
-            posX = posXbase + 300;
-            posOut = [posX-15 posY-7 posX+15 posY+7];
-            % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-            bkOut = add_block('built-in/Outport', [gcs '/' sigout{i}], ...
-                   'Position', posOut, 'OutDataTypeStr', outType);
-            if strcmp(outType, 'Inherit: auto')
-                set_param(bkOut, "BackgroundColor","red")
-            end
-            %% 3. add line
-            creatLines([bkGround bkOut])
-        end
-        
-        numCreated = numCreated + 1;
-    end
-
-
-
-    %% 输入输出一对二
-    for i=1:length(siginDu)
-
-        %% 获取输入输出类型
-
-        if strcmp(mode, 'inport')
-            IFType = findNameIFType(siginDu{i});
-            inType = IFType;
-            
-        elseif strcmp(mode, 'outport')
-            [TmOutType,~,~,~,~] = findNameType(siginDu{i});
-            inType = TmOutType;
-            
-        else
-            error('pls input the right mode, valide name is: inport, outport')
-        end
-
-        %% create block
-        posXbase = posInit(1);
-        posY = posInit(2) + 30*numCreated;
-        
-        %% 创建inport 模块
-        posX = posXbase -300;
-        posIn = [posX-15 posY-7 posX+15 posY+7];
-        % 尝试创建模块 built-in/Goto，built-in/Inport, built-in/From
-        try
-            bkIn = add_block('built-in/Inport', [gcs '/' siginDu{i}], ...
-                       'Position', posIn, 'OutDataTypeStr', inType);
-        catch
-            bkIn = add_block('built-in/Inport', [gcs '/' siginDu{i}], 'MakeNameUnique','on',...
-                       'Position', posIn, 'OutDataTypeStr', inType);
-            set_param(bkIn, "BackgroundColor","green")
-        end
-        if strcmp(inType, 'Inherit: auto')
-            set_param(bkIn, "BackgroundColor","red")
-        end
-
-        %% 得到输出索引
-        [m,n] = find(strcmp(sigin,siginDu{i}));
-
-%         %% 创建debug 模块
-%         posX = posXbase;
-%         posDb = [posX - 100 posY-10 posX+100 posY+10];
-%         if strcmp(mode, 'inport')
-%             if strcmp(sigUse, 'out')
-%                 bkDb  = add_block('PCMULib/Interface/Indebug', [gcs '/InDebug'], ...
-%                     'MakeNameUnique','on','Position', posDb);
-%             else
-%                 bkDb  = add_block('PCMULib/Interface/IndebugRvs', [gcs '/InDebugRvs'], ...
-%                     'MakeNameUnique','on','Position', posDb);
-%             end
-%         elseif strcmp(mode, 'outport')  %strcmp(sheetName, 'Outports')
-%             if strcmp(sigUse, 'in')
-%                 bkDb  = add_block('PCMULib/Interface/Outdebug', [gcs '/OutDebug'], ...
-%                     'MakeNameUnique','on','Position', posDb);
-%             else
-%                 bkDb  = add_block('PCMULib/Interface/OutdebugRvs', [gcs '/OutDebugRvs'], ...
-%                     'MakeNameUnique','on','Position', posDb);
-%             end
-%         else
-%             error('pls input the right mode, valide name is: inport, outport')
-%         end
-        %% 遍历输出信号
-        for j=1:length(m)
-         % 获取输入输出类型
-        
-            if strcmp(mode, 'inport')
-                [TmInType,~,~,~,~] = findNameType(sigout{m(j)});
-                outType = TmInType;
+                % 确定信号类型
+                if ismember(sigin{i}, siginDu)
+                    type = 3; % 一个输入对应多个输出
+                    continue;
+                elseif strcmp(sigout{i}, NAStr)
+                    type = 1; % 创建Inport和Terminator
+                elseif strcmp(sigin{i}, NAStr)
+                    type = 2; % 创建Ground和Outport
+                else
+                    type = 0; % 正常模式
+                end
                 
-            elseif strcmp(mode, 'outport')
-                IFType = findNameIFType(sigout{m(j)});
-                 outType = IFType;
+                % 获取信号类型
+                [inType, outType, isDifType] = getSignalTypes(sigin{i}, sigout{i}, mode);
                 
-            else
-                error('pls input the right mode, valide name is: inport, outport')
-            end
-            
-            % 判断输入输出类型是否一致，不一致，isDifType = true
-            if ~strcmp(inType, outType)
-                isDifType = true;
-            else
-                isDifType = false;
-            end
-
-
-%             posXbase = posInit(1);
-            posY = posInit(2) + 30*numCreated;
-            %% 判断base输出信号，是否有对应的interface 信号
-            if strcmp(sigout{m(j)}, NAStr)  % '#N/A' 这个会被解析成空
-%             if  isempty(sigout{m(j)})
-                % 创建输入，在接Terminator，直接返回
-                posX = posXbase;
-                posOut = [posX-10 posY-10 posX+10 posY+10];
-                % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-                bkTerm = add_block('built-in/Terminator', [gcs '/Terminator'], 'MakeNameUnique','on',...
-                       'Position', posOut);
-                % add line
-                creatLines([bkIn bkTerm])
-
+                % 创建模块
+                posY = posInit(2) + 30 * numCreated;
+                createSignalBlocks(type, sigin{i}, sigout{i}, inType, outType, isDifType, ...
+                    posInit(1), posY, mode, sigUse, gndBlock);
+                
                 numCreated = numCreated + 1;
-                continue
+            catch ME
+                warning(ME.identifier, '处理信号 %s 时发生错误: %s', sigin{i}, ME.message);
             end
-             %% 创建debug 模块
-            posX = posXbase;
-            posDb = [posX - 100 posY-10 posX+100 posY+10];
-            if strcmp(mode, 'inport')
-                if strcmp(sigUse, 'out')
-                    bkDb  = add_block('PCMULib/Interface/Indebug', [gcs '/InDebug'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                else
-                    bkDb  = add_block('PCMULib/Interface/IndebugRvs', [gcs '/InDebugRvs'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                end
-            elseif strcmp(mode, 'outport')  %strcmp(sheetName, 'Outports')
-                if strcmp(sigUse, 'in')
-                    bkDb  = add_block('PCMULib/Interface/Outdebug', [gcs '/OutDebug'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                else
-                    bkDb  = add_block('PCMULib/Interface/OutdebugRvs', [gcs '/OutDebugRvs'], ...
-                        'MakeNameUnique','on','Position', posDb);
-                end
-            else
-                error('pls input the right mode, valide name is: inport, outport')
-            end
-        
-    
-            %% 创建outport 模块  
-            posX = posXbase + 300;
-            posOut = [posX-15 posY-7 posX+15 posY+7];
-            % 这里增加'MakeNameUnique','on',是因为有些信号，有输出，但interface没有输出 'MakeNameUnique','on',
-            bkOut = add_block('built-in/Outport', [gcs '/' sigout{m(j)}], ...
-                   'Position', posOut, 'OutDataTypeStr', outType);
-            if strcmp(outType, 'Inherit: auto')
-                set_param(bkOut, "BackgroundColor","red")
-            end
-
-            %% 4. 创建 DataTypeConversion
-            if isDifType && strcmp(mode, 'outport')
-                posX = posXbase + 180;
-                posCov = [posX-25 posY-7 posX+25 posY+7];
-                bkCov  = add_block('built-in/DataTypeConversion', [gcs '/TypeConvs'], ...
-                'MakeNameUnique','on','Position', posCov);
-                if ~strcmp(outType, 'Inherit: auto')
-                    set_param(bkCov,'OutDataTypeStr', outType)
-                end
-            elseif isDifType && strcmp(mode, 'inport')
-                posX = posXbase - 180;
-                posCov = [posX-25 posY-7 posX+25 posY+7];
-                bkCov  = add_block('built-in/DataTypeConversion', [gcs '/TypeConvs'], ...
-                'MakeNameUnique','on','Position', posCov);
-                if ~strcmp(inType, 'Inherit: auto')
-                    set_param(bkCov,'OutDataTypeStr', outType)
-                end
-            else
-
-            end
-
-            %% add line
-%             creatLines([bkIn bkDb bkOut])
-            if isDifType && strcmp(mode, 'outport')
-                creatLines([bkIn bkDb bkCov bkOut])
-            elseif isDifType && strcmp(mode, 'inport')
-                creatLines([bkIn bkCov bkDb bkOut])
-            else
-                creatLines([bkIn bkDb bkOut])
-            end
-
-            numCreated = numCreated + 1;
-    
         end
-       
+        
+        %% 处理一对多信号
+        for i = 1:length(siginDu)
+            try
+                % 获取输入类型
+                if strcmp(mode, 'inport')
+                    inType = findNameIFType(siginDu{i});
+                else
+                    [inType, ~, ~, ~, ~] = findNameType(siginDu{i});
+                end
+                
+                % 创建输入模块
+                posY = posInit(2) + 30 * numCreated;
+                createInputBlock(siginDu{i}, inType, posInit(1), posY);
+                
+                % 处理多个输出
+                [m, ~] = find(strcmp(sigin, siginDu{i}));
+                for j = 1:length(m)
+                    try
+                        % 获取输出类型
+                        if strcmp(mode, 'inport')
+                            [outType, ~, ~, ~, ~] = findNameType(sigout{m(j)});
+                        else
+                            outType = findNameIFType(sigout{m(j)});
+                        end
+                        
+                        % 创建输出模块
+                        if ~strcmp(sigout{m(j)}, NAStr)
+                            createOutputBlocks(siginDu{i}, sigout{m(j)}, inType, outType, ...
+                                posInit(1), posY, mode, sigUse);
+                            numCreated = numCreated + 1;
+                        end
+                    catch ME
+                        warning(ME.identifier, '处理输出信号 %s 时发生错误: %s', sigout{m(j)}, ME.message);
+                    end
+                end
+            catch ME
+                warning(ME.identifier, '处理重复信号 %s 时发生错误: %s', siginDu{i}, ME.message);
+            end
+        end
+        
+        fprintf('成功创建 %d 个信号\n', numCreated);
+        
+    catch ME
+        error('创建接口调试模块时发生错误: %s', ME.message);
     end
+end
 
+%% 辅助函数
+function [inType, outType, isDifType] = getSignalTypes(sigin, sigout, mode)
+    if strcmp(mode, 'inport')
+        inType = findNameIFType(sigin);
+        [outType, ~, ~, ~, ~] = findNameType(sigout);
+    else
+        [inType, ~, ~, ~, ~] = findNameType(sigin);
+        outType = findNameIFType(sigout);
+    end
+    
+    isDifType = ~strcmp(inType, outType);
+end
+
+function createSignalBlocks(type, sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse, gndBlock)
+    switch type
+        case 0 % 正常模式
+            createNormalBlocks(sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse);
+        case 1 % Inport和Terminator
+            createInportTerminator(sigin, inType, posXbase, posY);
+        case 2 % Ground和Outport
+            createGroundOutport(sigout, outType, posXbase, posY, gndBlock);
+    end
+end
+
+function createNormalBlocks(sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse)
+    % 创建输入端口
+    posX = posXbase - 300;
+    posIn = [posX-15 posY-7 posX+15 posY+7];
+    bkIn = createBlockWithUniqueName('built-in/Inport', sigin, posIn, inType);
+    
+    % 创建调试模块
+    posX = posXbase;
+    posDb = [posX-100 posY-10 posX+100 posY+10];
+    bkDb = createDebugBlock(mode, sigUse, posDb);
+    
+    % 创建输出端口
+    posX = posXbase + 300;
+    posOut = [posX-15 posY-7 posX+15 posY+7];
+    bkOut = createBlockWithUniqueName('built-in/Outport', sigout, posOut, outType);
+    
+    % 创建类型转换模块（如果需要）
+    if isDifType
+        if strcmp(mode, 'outport')
+            posX = posXbase + 180;
+            posCov = [posX-25 posY-7 posX+25 posY+7];
+            bkCov = createTypeConversionBlock(outType, posCov);
+            creatLines([bkIn bkDb bkCov bkOut]);
+        else
+            posX = posXbase - 180;
+            posCov = [posX-25 posY-7 posX+25 posY+7];
+            bkCov = createTypeConversionBlock(outType, posCov);
+            creatLines([bkIn bkCov bkDb bkOut]);
+        end
+    else
+        creatLines([bkIn bkDb bkOut]);
+    end
+end
+
+function createInportTerminator(sigin, inType, posXbase, posY)
+    % 创建输入端口
+    posX = posXbase - 300;
+    posIn = [posX-15 posY-7 posX+15 posY+7];
+    bkIn = createBlockWithUniqueName('built-in/Inport', sigin, posIn, inType);
+    
+    % 创建Terminator
+    posX = posX + 300;
+    posTerm = [posX-10 posY-10 posX+10 posY+10];
+    bkTerm = createBlockWithUniqueName('built-in/Terminator', 'Terminator', posTerm, '');
+    
+    creatLines([bkIn bkTerm]);
+end
+
+function createGroundOutport(sigout, outType, posXbase, posY, gndBlock)
+    % 创建Ground或Constant
+    posX = posXbase;
+    posGround = [posX-10 posY-10 posX+10 posY+10];
+    if strcmp(gndBlock, 'Ground')
+        bkGround = createBlockWithUniqueName('built-in/Ground', 'Ground', posGround, '');
+    else
+        bkGround = createBlockWithUniqueName('built-in/Constant', 'Constant', posGround, outType);
+        set_param(bkGround, 'Value', '0');
+    end
+    
+    % 创建输出端口
+    posX = posXbase + 300;
+    posOut = [posX-15 posY-7 posX+15 posY+7];
+    bkOut = createBlockWithUniqueName('built-in/Outport', sigout, posOut, outType);
+    
+    creatLines([bkGround bkOut]);
+end
+
+function createInputBlock(sigin, inType, posXbase, posY)
+    posX = posXbase - 300;
+    posIn = [posX-15 posY-7 posX+15 posY+7];
+    createBlockWithUniqueName('built-in/Inport', sigin, posIn, inType);
+end
+
+function createOutputBlocks(sigin, sigout, inType, outType, posXbase, posY, mode, sigUse)
+    % 创建调试模块
+    posX = posXbase;
+    posDb = [posX-100 posY-10 posX+100 posY+10];
+    bkDb = createDebugBlock(mode, sigUse, posDb);
+    
+    % 创建输出端口
+    posX = posXbase + 300;
+    posOut = [posX-15 posY-7 posX+15 posY+7];
+    bkOut = createBlockWithUniqueName('built-in/Outport', sigout, posOut, outType);
+    
+    % 创建类型转换模块（如果需要）
+    isDifType = ~strcmp(inType, outType);
+    if isDifType
+        if strcmp(mode, 'outport')
+            posX = posXbase + 180;
+            posCov = [posX-25 posY-7 posX+25 posY+7];
+            bkCov = createTypeConversionBlock(outType, posCov);
+            creatLines([bkDb bkCov bkOut]);
+        else
+            posX = posXbase - 180;
+            posCov = [posX-25 posY-7 posX+25 posY+7];
+            bkCov = createTypeConversionBlock(outType, posCov);
+            creatLines([bkCov bkDb bkOut]);
+        end
+    else
+        creatLines([bkDb bkOut]);
+    end
+end
+
+function bk = createBlockWithUniqueName(blockType, name, pos, dataType)
+    try
+        bk = add_block(blockType, [gcs '/' name], 'Position', pos);
+        if ~isempty(dataType)
+            set_param(bk, 'OutDataTypeStr', dataType);
+        end
+    catch
+        bk = add_block(blockType, [gcs '/' name], 'MakeNameUnique', 'on', 'Position', pos);
+        if ~isempty(dataType)
+            set_param(bk, 'OutDataTypeStr', dataType);
+        end
+        set_param(bk, 'BackgroundColor', 'green');
+    end
+    if strcmp(dataType, 'Inherit: auto')
+        set_param(bk, 'BackgroundColor', 'red');
+    end
+end
+
+function bk = createDebugBlock(mode, sigUse, pos)
+    if strcmp(mode, 'inport')
+        if strcmp(sigUse, 'out')
+            bk = add_block('PCMULib/Interface/Indebug', [gcs '/InDebug'], ...
+                'MakeNameUnique', 'on', 'Position', pos);
+        else
+            bk = add_block('PCMULib/Interface/IndebugRvs', [gcs '/InDebugRvs'], ...
+                'MakeNameUnique', 'on', 'Position', pos);
+        end
+    else
+        if strcmp(sigUse, 'in')
+            bk = add_block('PCMULib/Interface/Outdebug', [gcs '/OutDebug'], ...
+                'MakeNameUnique', 'on', 'Position', pos);
+        else
+            bk = add_block('PCMULib/Interface/OutdebugRvs', [gcs '/OutDebugRvs'], ...
+                'MakeNameUnique', 'on', 'Position', pos);
+        end
+    end
+end
+
+function bk = createTypeConversionBlock(outType, pos)
+    bk = add_block('built-in/DataTypeConversion', [gcs '/TypeConvs'], ...
+        'MakeNameUnique', 'on', 'Position', pos);
+    if ~strcmp(outType, 'Inherit: auto')
+        set_param(bk, 'OutDataTypeStr', outType);
+    end
 end

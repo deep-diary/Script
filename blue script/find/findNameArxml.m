@@ -24,7 +24,8 @@ function sigName = findNameArxml(portName)
         % 提取前 signalLength 个字符
         sigName = portName(1:signalLength);
     else
-        error('this is not the autosar interface name; which only end with _read or _write')
+        sigName = portName;
+        warning('this is not the autosar interface name; which only end with _read or _write')
     end
     
 

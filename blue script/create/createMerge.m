@@ -1,96 +1,113 @@
 function createMerge(varargin)
-%%
-    % 目的: 对当前路径下的，使能子系统或switch case输出的信号，自动生成Merge
-    % 输入：
-    %       信号列表
-    % 返回： None
-    % 范例： createMerge('step',400,'sigList',{'rTmComprCtrl_B_RdyToChange'})
-    % 作者： Blue.ge
-    % 日期： 20231009
-%%
-    
-    clc
-    %% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'sigList',...
-        {'rTmComprCtrl_Te_s32TempError','rTmComprCtrl_n_u16ComprRpmFF',...
-        'rTmComprCtrl_n_u16ComprRpmKp','rTmComprCtrl_n_u16ComprRpmKi',...
-        'rTmComprCtrl_Te_s32UpErrStop','rTmComprCtrl_Te_s32LowErrStop',...
-        'rTmComprCtrl_n_u16KpUpLimit','rTmComprCtrl_n_u16KpLowLimit',...
-        'rTmComprCtrl_n_u16KiUpLimit','rTmComprCtrl_n_u16KiLowLimit',...
-        'rTmComprCtrl_n_u16DisOverrideValue','rTmComprCtrl_t_u8PIPeriod',...
-        'rTmComprCtrl_B_Enable'
-        } ...
-        );                                      % 设置变量名
-    addParameter(p,'resovleSig',true);          % 是否需要解析merge的信号
+%CREATEMERGE 为当前路径下的使能子系统或switch case输出信号自动生成Merge模块
+%   createMerge() 自动为当前模型中的使能子系统或switch case输出信号创建Merge模块。
+%
+%   可选参数:
+%       'sigList' - 需要创建Merge的信号列表，默认为一组压缩机控制信号
+%       'resovleSig' - 是否需要解析merge的信号，默认为true
+%
+%   示例:
+%       createMerge()
+%       createMerge('sigList', {'rTmComprCtrl_B_RdyToChange'})
+%       createMerge('sigList', {'rTmComprCtrl_B_RdyToChange'}, 'resovleSig', false)
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2023-10-09
+%   版本: 1.1
 
-
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-    sigList = p.Results.sigList;
-    resovleSig = p.Results.resovleSig;
-
-    %% 检查sigList 信号前缀是否一致
-        % 遍历信号
-    sig = sigList{1};
-    sigParts = split(sig,'_');
-    RootName = sigParts{1}(2:end);
-    for i=1: length(sigList)  % 信号列表
-        sig = sigList{i};
-        sigParts = split(sig,'_');
-        RootNameTemp = sigParts{1}(2:end);
-        if ~strcmp(RootNameTemp,RootName)
-            error('all the signals in sigList should have the same prefix, e.g. "TmComprCtrl" in "rTmComprCtrl_Te_s32TempError","rTmComprCtrl_n_u16ComprRpmFF",')
+    try
+        %% 输入参数处理
+        p = inputParser;
+        
+        % 添加参数及其验证
+        addParameter(p, 'sigList', {
+            'rTmComprCtrl_Te_s32TempError', ...
+            'rTmComprCtrl_n_u16ComprRpmFF', ...
+            'rTmComprCtrl_n_u16ComprRpmKp', ...
+            'rTmComprCtrl_n_u16ComprRpmKi', ...
+            'rTmComprCtrl_Te_s32UpErrStop', ...
+            'rTmComprCtrl_Te_s32LowErrStop', ...
+            'rTmComprCtrl_n_u16KpUpLimit', ...
+            'rTmComprCtrl_n_u16KpLowLimit', ...
+            'rTmComprCtrl_n_u16KiUpLimit', ...
+            'rTmComprCtrl_n_u16KiLowLimit', ...
+            'rTmComprCtrl_n_u16DisOverrideValue', ...
+            'rTmComprCtrl_t_u8PIPeriod', ...
+            'rTmComprCtrl_B_Enable'
+            }, @iscell);
+            
+        addParameter(p, 'resovleSig', true, @islogical);
+        
+        parse(p, varargin{:});
+        
+        sigList = p.Results.sigList;
+        resovleSig = p.Results.resovleSig;
+        
+        %% 检查信号前缀一致性
+        sig = sigList{1};
+        sigParts = split(sig, '_');
+        rootName = sigParts{1}(2:end);
+        
+        for i = 1:length(sigList)
+            sig = sigList{i};
+            sigParts = split(sig, '_');
+            rootNameTemp = sigParts{1}(2:end);
+            
+            if ~strcmp(rootNameTemp, rootName)
+                error('信号列表中的所有信号必须具有相同的前缀，例如"TmComprCtrl"在"rTmComprCtrl_Te_s32TempError"和"rTmComprCtrl_n_u16ComprRpmFF"中');
+            end
         end
-    end
-    %% 
-    switchSubPaths = {};
-    switchSubNames = {};
-
-    % 找到包含Action Port 的子系统， 将找到的模型路径保存到switchSub变量中
-    subs = find_system(gcs, 'SearchDepth',1,'BlockType','SubSystem');
-    subs = subs(2:end);  % 去掉本身的子系统
-    for i=1:length(subs)
-        ports=get_param(subs{i}, 'Ports');
-        if ports(8)||ports(3)  % 8: witch case port, 3: enable port
-            switchSubPaths = [switchSubPaths, subs{i}];
-            switchSubNames= [switchSubNames,get_param(subs{i}, 'Name')];
+        
+        %% 查找包含Action Port的子系统
+        switchSubPaths = {};
+        switchSubNames = {};
+        
+        subs = find_system(gcs, 'SearchDepth', 1, 'BlockType', 'SubSystem');
+        subs = subs(2:end);  % 移除当前子系统
+        
+        for i = 1:length(subs)
+            ports = get_param(subs{i}, 'Ports');
+            if ports(8) || ports(3)  % 8: switch case port, 3: enable port
+                switchSubPaths = [switchSubPaths, subs{i}];
+                switchSubNames = [switchSubNames, get_param(subs{i}, 'Name')];
+            end
         end
-    end
-
-    %% 改变模型输出端口的名字
-%     [~,~,OrgSigList] = findModPorts(switchSubPaths{1}, 'getType', 'Name');
-% 
-%     % 根据 switchSubPath, 找到对应的 switchSubName
-% 
-%     for i=1: length(switchSubPaths)
-%         path = switchSubPaths{i};
-%         switchSubName = get_param(path, 'Name');
-%         changeModPortName(path, 'TmComprCtrl', switchSubName)
-% %         sigList = changeModPortName(path, 'TmComprCtrl', switchSubName)
-%     end
-
-    %% 遍历原始信号
-    nums = length(switchSubNames);
-    step = (nums+2) * 30; % merge 信号数量+两边留白， 每个信号间距30
-    pos = get_param(switchSubPaths{1}, 'Position');
-    posBase = [pos(3)+600 pos(2) pos(3)+630 pos(2) + 30*nums];
-
-    % 遍历信号
-    for i=1: length(sigList)  % 信号列表
-        pos = posBase + [0 (i-1)*step 0 (i-1)*step];
-%         pathMerg = [gcs '/' , sig];
-        h = add_block('built-in/Merge', [gcs '/Merge'], 'MakeNameUnique','on',...
-                              'Position', pos, 'Inputs', num2str(nums));
-        % 遍历模型
-        sigs =cell(1,nums);
-        for j=1:length(switchSubNames)
-            mdName = switchSubNames{j};
-            sigs{j} = strrep(sig, RootName, mdName);
+        
+        if isempty(switchSubPaths)
+            error('未找到包含Action Port的子系统');
         end
-        % 创建From    
-        createMergeFrom(h, sigs, sig, 'resovleSig',resovleSig)
+        
+        %% 创建Merge模块
+        numSubs = length(switchSubNames);
+        step = (numSubs + 2) * 30;  % merge信号数量+两边留白，每个信号间距30
+        pos = get_param(switchSubPaths{1}, 'Position');
+        posBase = [pos(3) + 600, pos(2), pos(3) + 630, pos(2) + 30 * numSubs];
+        
+        % 遍历信号列表
+        for i = 1:length(sigList)
+            pos = posBase + [0, (i-1)*step, 0, (i-1)*step];
+            
+            % 创建Merge模块
+            mergeBlock = add_block('built-in/Merge', [gcs '/Merge'], ...
+                'MakeNameUnique', 'on', ...
+                'Position', pos, ...
+                'Inputs', num2str(numSubs));
+            
+            % 生成信号列表
+            sigs = cell(1, numSubs);
+            for j = 1:length(switchSubNames)
+                subName = switchSubNames{j};
+                sigs{j} = strrep(sigList{i}, rootName, subName);
+            end
+            
+            % 创建From模块
+            createMergeFrom(mergeBlock, sigs, sigList{i}, 'resovleSig', resovleSig);
+        end
+        
+        fprintf('成功创建了%d个Merge模块\n', length(sigList));
+        
+    catch ME
+        error('创建Merge模块时发生错误: %s', ME.message);
     end
-
-    
 end
 

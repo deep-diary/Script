@@ -1,61 +1,89 @@
 function createCodeSubMod(mdName, varargin)
-%%
-% 目的: 将生成的代码，整理成代码包发给新能源
-% 输入：
-%       Null
-% 返回：NA
-% 范例：createCodeSubMod('TmComprCtrl','type','VCU')
-% 说明：NA
-% 作者： Blue.ge
-% 日期： 20240510
+%CREATECODESUBMOD 创建子模型代码包
+%   createCodeSubMod(mdName) 为指定的模型创建代码包，并将生成的代码文件整理到相应的目录中。
+%
+%   输入参数:
+%       mdName - 模型名称，例如 'TmSovCtrl'
+%
+%   可选参数:
+%       'type' - 控制器类型，可选值为 'VCU' 或 'PCMU'，默认为 'VCU'
+%
+%   示例:
+%       createCodeSubMod('TmSovCtrl')
+%       createCodeSubMod('TmSovCtrl', 'type', 'PCMU')
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-05-10
+%   版本: 1.1
 
-%%
-    clc
-%% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'type','VCU');      % 'PCMU', 'VCU'
-
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-
-    type = p.Results.type;
-
-%% 1. 根据软件版本，新建文件夹
-    proj = currentProject;
-    rootPath = proj.RootFolder;
-    mdFold = findModPrefix(mdName);
-    folderName = fullfile(rootPath,'SubModel',mdFold,['Code_' type]);
-
-    if ~exist(folderName, 'dir')
+    try
+        %% 输入参数处理
+        p = inputParser;
+        addParameter(p, 'type', 'VCU', @(x) any(validatestring(x, {'VCU', 'PCMU'})));
+        parse(p, varargin{:});
+        
+        ctrlType = p.Results.type;
+        
+        %% 1. 创建目标文件夹
+        proj = currentProject;
+        rootPath = proj.RootFolder;
+        mdFold = findModPrefix(mdName);
+        folderName = fullfile(rootPath, 'SubModel', mdFold, ['Code_' ctrlType]);
+        
+        % 如果文件夹存在则删除重建
+        if exist(folderName, 'dir')
+            rmdir(folderName, 's');
+            fprintf('删除已存在的文件夹: %s\n', folderName);
+        end
         mkdir(folderName);
-        disp(['创建文件夹: ' folderName]);
-    else
-        rmdir(folderName,'s')
-        mkdir(folderName);
-        disp(['文件夹已存在: ' folderName]);
+        fprintf('创建文件夹: %s\n', folderName);
+        
+        %% 2. 获取源代码文件
+        if strcmp(ctrlType, 'VCU')
+            sourcePath = fullfile(rootPath, 'CodeGen', 'slprj/ert/', mdName);
+            sourceSrc = dir(fullfile(sourcePath, '**\*.c'));
+            sourceH = dir(fullfile(sourcePath, '**\*.h'));
+        else % PCMU
+            sourcePath1 = fullfile(rootPath, 'CodeGen', 'slprj/autosar', mdName);
+            sourcePath2 = fullfile(rootPath, 'CodeGen', 'slprj/autosar/_sharedutils');
+            
+            % 获取两个路径下的所有.c和.h文件
+            sourceSrc = [dir(fullfile(sourcePath1, '**\*.c')); ...
+                        dir(fullfile(sourcePath2, '**\*.c'))];
+            sourceH = [dir(fullfile(sourcePath1, '**\*.h')); ...
+                      dir(fullfile(sourcePath2, '**\*.h'))];
+        end
+        
+        % 打印文件列表
+        fprintf('\n源代码文件列表:\n');
+        fprintf('C文件:\n');
+        cellfun(@(x) fprintf('  %s\n', x), {sourceSrc.name});
+        fprintf('\n头文件:\n');
+        cellfun(@(x) fprintf('  %s\n', x), {sourceH.name});
+        
+        %% 3. 复制文件
+        % 复制.c文件
+        for i = 1:length(sourceSrc)
+            file = sourceSrc(i);
+            sourceFile = fullfile(file.folder, file.name);
+            copyfile(sourceFile, folderName);
+            fprintf('复制C文件: %s\n', sourceFile);
+        end
+        
+        % 复制.h文件
+        for i = 1:length(sourceH)
+            file = sourceH(i);
+            sourceFile = fullfile(file.folder, file.name);
+            copyfile(sourceFile, folderName);
+            fprintf('复制头文件: %s\n', sourceFile);
+        end
+        
+        fprintf('\n代码包创建完成: %s\n', folderName);
+        
+    catch ME
+        error('创建子模型代码包时发生错误: %s', ME.message);
     end
-
-%% 2. 新建src,h,a2l文件夹，并复制所有的.c, .h, .a2l文件到其中
-
-    sourcePath = fullfile(rootPath,'CodeGen','slprj/ert/',mdName);
-
-    sourceSrc = dir(fullfile(sourcePath,'**\*.c'));
-    sourceH = dir(fullfile(sourcePath,'**\*.h'));
-    % 复制.c
-    for i=1:length(sourceSrc)
-        T = sourceSrc(i,1);
-        copyfile([T.folder '\' T.name],folderName);
-        disp(['DD复制源：' T.folder '\' T.name]);
-    end
-    % 复制.h
-%     eludeFile = {'Rte_VcThermal.h', 'Rte_Type.h'};
-    for i=1:length(sourceH)
-        T = sourceH(i,1);
-%         if any(strcmp(T.name, eludeFile))  % 这几个文件不复制
-%             continue
-%         end
-        copyfile([T.folder '\' T.name],folderName);
-        disp(['DD复制源：' T.folder '\' T.name]);
-    end
+end
 
 
 

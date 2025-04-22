@@ -1,55 +1,89 @@
 function result = createBusGoto()
-%%
-    % 目的: 点击bus后，为bus信号创建对应的goto模块
-    % 输入：
-    %       None
-    % 返回： None
-    % 范例： createBusGoto()
-    % 作者： Blue.ge
-    % 日期： 20231009
-%%
-    clc
+%CREATEBUSGOTO 为总线信号创建对应的Goto模块
+%   result = createBusGoto() 为当前选中的总线信号创建对应的Goto模块。
+%   该函数会自动为总线中的每个未连接的输出信号创建Goto模块，并建立连接。
+%
+%   输入参数:
+%       无
+%
+%   输出参数:
+%       result - 操作结果，成功返回true，失败返回false
+%
+%   示例:
+%       createBusGoto()
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2023-10-09
+%   版本: 1.1
 
-    % 获取选中的模型
-    selectedBlocks = get(gcbh);
-    busHandle = selectedBlocks.Handle;
-    
-    name = get_param(busHandle, 'Name')
-    parent = get_param(busHandle, 'Parent')
-%     根据bus selector句柄，得到其中的所有信号
-    OutputSignals = get_param(busHandle, 'OutputSignals');
-    signalArray = strsplit(OutputSignals, ',');
-    OutputSignalNames = get_param(busHandle, 'OutputSignalNames');
-    
-    PortConnectivity = get_param(busHandle, 'PortConnectivity');
-
-    
-    % 创建输入端口并连接
-    for i = 1:length(signalArray)
-        % 判断这个端口是否有连接相关的模块，如果有，则返回
-        % 这里需要添加代码
-        % 判断这个端口是否有连接相关的模块，如果有，则跳过此循环
-        % i+1 表示跳过第一个端口，即输入端口
-        if PortConnectivity(i+1).DstBlock ~=-1
-            continue
+    try
+        % 获取当前选中的模块
+        selectedBlocks = get(gcbh);
+        if isempty(selectedBlocks)
+            error('未选中任何模块');
         end
-        name = signalArray{i};
-        bus_pos=PortConnectivity(i+1).Position
-
-        % built-in/Goto，built-in/Inport, built-in/From
-        gotoBlock = add_block('built-in/Goto', [parent '/' name,'_Goto'], ...
-                  'Position', [bus_pos(1)+200, bus_pos(2)-5, bus_pos(1)+250, bus_pos(2)+5]);
-        set_param(gotoBlock, 'GotoTag', name);
-
-%         inportHandle = get_param([parent '/' inportName,'_From'], 'PortHandles');
-        inportHandle = get_param(gotoBlock, 'PortHandles');
-        gotoPos = get_param(inportHandle.Inport,'Position')
-        add_line(parent, [bus_pos(1), bus_pos(2); gotoPos(1), gotoPos(2)]);
-        %         add_line(parent, [inportHandle.Outport '/1'], [busHandle '/' num2str(i)], 'autorouting', 'on');
-        %         add_line(parent, inportHandle.Outport, busHandle, 'autorouting', 'on');
+        
+        busHandle = selectedBlocks.Handle;
+        if isempty(busHandle)
+            error('无法获取总线模块句柄');
+        end
+        
+        % 获取总线模块信息
+        busName = get_param(busHandle, 'Name');
+        parentPath = get_param(busHandle, 'Parent');
+        outputSignals = get_param(busHandle, 'OutputSignals');
+        portConnectivity = get_param(busHandle, 'PortConnectivity');
+        
+        % 检查输出信号
+        if isempty(outputSignals)
+            error('总线模块没有输出信号');
+        end
+        
+        % 分割信号名称
+        signalArray = strsplit(outputSignals, ',');
+        
+        % 为每个未连接的输出信号创建Goto模块
+        for i = 1:length(signalArray)
+            % 跳过已连接的端口
+            if portConnectivity(i+1).DstBlock ~= -1
+                continue;
+            end
+            
+            % 获取信号名称和位置
+            signalName = signalArray{i};
+            busPosition = portConnectivity(i+1).Position;
+            
+            % 提取标签名称
+            tagParts = split(signalName, '.');
+            tag = tagParts{end};
+            
+            % 创建Goto模块
+            gotoBlock = add_block('built-in/Goto', ...
+                [parentPath '/Goto'], ...
+                'GotoTag', tag, ...
+                'MakeNameUnique', 'on', ...
+                'Position', [busPosition(1)+200, busPosition(2)-5, ...
+                            busPosition(1)+250, busPosition(2)+5]);
+            
+            % 获取Goto模块端口句柄
+            gotoPorts = get_param(gotoBlock, 'PortHandles');
+            gotoPosition = get_param(gotoPorts.Inport, 'Position');
+            
+            % 连接总线到Goto模块
+            add_line(parentPath, ...
+                    [busPosition(1), busPosition(2); ...
+                     gotoPosition(1), gotoPosition(2)]);
+        end
+        
+        
+        result = true;
+        fprintf('成功为总线 %s 创建Goto模块\n', busName);
+        
+    catch ME
+        % 错误处理
+        error('创建Goto模块时发生错误: %s', ME.message);
+        result = false;
     end
-
-    result = true;
 end
 
   

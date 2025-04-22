@@ -1,4 +1,5 @@
 function result = createGoto(modelName, inportList, outportList)
+%%%% 弃用！弃用！弃用！
 % modelName是已经打开的模型名称
 % 如果不存在，弹出对话框提示下并直接退出函数
 % 如果确认已经打开，则执行如下操作
@@ -28,7 +29,7 @@ function result = createGoto(modelName, inportList, outportList)
     for i = 1:numel(inports)
         inportHandle = get_param(inports{i}, 'PortHandles');
         portName=get_param(inports{i}, 'Name');
-        portName = getArxmlName(portName);
+        portName = findNameArxml(portName);
 
         % 如果inportList不为空，则做如下判断：
         % 判断输入端口是否在inportList，如果不在，则continue返回

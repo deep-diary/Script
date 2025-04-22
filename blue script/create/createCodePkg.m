@@ -1,92 +1,113 @@
 function createCodePkg(verName, varargin)
-%%
-% 目的: 将生成的代码，整理成代码包发给新能源
-% 输入：
-%       Null
-% 返回：NA
-% 范例：createCodePkg('VcThermal_23N7_V131_3090508')
-% 说明：NA
-% 作者： Blue.ge
-% 日期： 20240510
+%CREATECODEPKG 创建代码包并整理生成的文件
+%   createCodePkg(verName) 根据指定的版本名称创建代码包，并将生成的代码文件(默认根目录下的CodeGen)整理到相应的目录中。
+%
+%   输入参数:
+%       verName - 版本名称，例如 'VcThermal_23N7_V131_3090508'
+%
+%   可选参数:
+%       'SOFT_VERSION' - 软件版本号，默认为 '3090508'
+%       'INTERFACE_VERSION' - 接口版本号，默认为 'V131'
+%       'STAGE' - 开发阶段，默认为 '23N7'
+%       'DCM_NAME' - DCM文件名，默认为 'NA'
+%       'path' - 源代码路径，默认为 'CodeGen'
+%
+%   示例:
+%       createCodePkg('VcThermal_23N7_V131_6666666')
+%
+%   作者: 葛维冬 (Blue Ge)
+%   日期: 2024-05-10
+%   版本: 1.1
 
-%%
-    clc
-%% 输入参数处理
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'SOFT_VERSION','3090508');      % 设置变量名和默认参数
-    addParameter(p,'INTERFACE_VERISON','V131');      % 设置变量名和默认参数
-    addParameter(p,'STAGE','23N7');      % 设置变量名和默认参数
-    addParameter(p,'DCM_NAME','NA');      % 设置变量名和默认参数
-    addParameter(p,'path','CodeGen');      % 设置变量名和默认参数
-
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
-
-    SOFT_VERSION = p.Results.SOFT_VERSION;
-    STAGE = p.Results.STAGE;
-    DCM_NAME = p.Results.DCM_NAME;
-    INTERFACE_VERISON = p.Results.INTERFACE_VERISON;
-    path = p.Results.path;
-
-%% 1. 根据软件版本，新建文件夹
-    proj = currentProject;
-    rootPath = proj.RootFolder;
-%     verName = ['VcThermal_' STAGE '_' INTERFACE_VERISON '_' SOFT_VERSION];
-    
-    folderName = fullfile(rootPath,'CodePackage',verName);
-    if ~exist(folderName, 'dir')
-        mkdir(folderName);
-        disp(['创建文件夹: ' folderName]);
-    else
-        disp(['文件夹已存在: ' folderName]);
-    end
-%     cd(folderName)
-%% 2. 新建src,h,a2l文件夹，并复制所有的.c, .h, .a2l文件到其中
-    srcPath = fullfile(folderName,'src');
-    hPath = fullfile(folderName,'h');
-    a2lPath = fullfile(folderName,'a2l');
-    if ~exist(srcPath, 'dir')
-        mkdir(srcPath);
-    end
-    if ~exist(hPath, 'dir')
-        mkdir(hPath);
-    end
-    if ~exist(a2lPath, 'dir')
-        mkdir(a2lPath);
-    end
-
-    sourcePath = fullfile(rootPath,path);
-
-    sourceSrc = dir(fullfile(sourcePath,'**\*.c'));
-    sourceH = dir(fullfile(sourcePath,'**\*.h'));
-    sourceA2l = dir(fullfile(sourcePath,'**\*.a2l'));
-    % 复制.c
-    for i=1:length(sourceSrc)
-        T = sourceSrc(i,1);
-        copyfile([T.folder '\' T.name],srcPath);
-        disp(['DD复制源：' T.folder '\' T.name]);
-    end
-    % 复制.h
-    eludeFile = {'Rte_VcThermal.h', 'Rte_Type.h'};
-    for i=1:length(sourceH)
-        T = sourceH(i,1);
-        if any(strcmp(T.name, eludeFile))  % 这几个文件不复制
-            continue
+    try
+        %% 输入参数处理
+        p = inputParser;
+        addParameter(p, 'SOFT_VERSION', '3090508');
+        addParameter(p, 'INTERFACE_VERSION', 'V131');
+        addParameter(p, 'STAGE', '23N7');
+        addParameter(p, 'DCM_NAME', 'NA');
+        addParameter(p, 'path', 'CodeGen');
+        
+        parse(p, varargin{:});
+        
+        % 获取解析后的参数
+        softVersion = p.Results.SOFT_VERSION;
+        stage = p.Results.STAGE;
+        dcmName = p.Results.DCM_NAME;
+        interfaceVersion = p.Results.INTERFACE_VERSION;
+        sourcePath = p.Results.path;
+        
+        %% 1. 创建版本文件夹
+        proj = currentProject;
+        rootPath = proj.RootFolder;
+        folderName = fullfile(rootPath, 'CodePackage', verName);
+        
+        if ~exist(folderName, 'dir')
+            mkdir(folderName);
+            fprintf('创建文件夹: %s\n', folderName);
+        else
+            fprintf('文件夹已存在: %s\n', folderName);
         end
-        copyfile([T.folder '\' T.name],hPath);
-        disp(['DD复制源：' T.folder '\' T.name]);
-    end
-    % 复制.a2l
-    for i=1:length(sourceA2l)
-        T = sourceA2l(i,1);
-        copyfile([T.folder '\' T.name],a2lPath);
-        disp(['DD复制源：' T.folder '\' T.name]);
-    end
-
-%% 4. 复制DCM 和软件变更记录到软件包中
-    if ~strcmp(DCM_NAME, 'NA')
-        DCMPath = fullfile(rootPath,'Files',DCM_NAME);
-        if exist(DCMPath,'file')
-            copyfile(DCMPath,folderName);
+        
+        %% 2. 创建并初始化子文件夹
+        subFolders = {'src', 'h', 'a2l'};
+        for i = 1:length(subFolders)
+            subFolderPath = fullfile(folderName, subFolders{i});
+            if ~exist(subFolderPath, 'dir')
+                mkdir(subFolderPath);
+                fprintf('创建子文件夹: %s\n', subFolderPath);
+            end
         end
+        
+        %% 3. 复制源代码文件
+        sourceBasePath = fullfile(rootPath, sourcePath);
+        
+        % 定义文件类型和对应的目标文件夹
+        fileTypes = {
+            {'*.c', 'src'}, 
+            {'*.h', 'h'}, 
+            {'*.a2l', 'a2l'}
+        };
+        
+        % 定义需要排除的.h文件
+        excludeFiles = {'Rte_VcThermal.h', 'Rte_Type.h'};
+        
+        % 复制文件
+        for i = 1:length(fileTypes)
+            fileType = fileTypes{i}{1};
+            targetFolder = fileTypes{i}{2};
+            
+            sourceFiles = dir(fullfile(sourceBasePath, '**', fileType));
+            for j = 1:length(sourceFiles)
+                file = sourceFiles(j);
+                sourceFile = fullfile(file.folder, file.name);
+                targetFile = fullfile(folderName, targetFolder, file.name);
+                
+                % 对于.h文件，检查是否需要排除
+                if strcmp(fileType, '*.h') && any(strcmp(file.name, excludeFiles))
+                    continue;
+                end
+                
+                copyfile(sourceFile, targetFile);
+                fprintf('复制文件: %s -> %s\n', sourceFile, targetFile);
+            end
+        end
+        
+        %% 4. 复制DCM和软件变更记录
+        if ~strcmp(dcmName, 'NA')
+            dcmPath = fullfile(rootPath, 'Files', dcmName);
+            if exist(dcmPath, 'file')
+                copyfile(dcmPath, folderName);
+                fprintf('复制DCM文件: %s -> %s\n', dcmPath, folderName);
+            else
+                warning('DCM文件不存在: %s', dcmPath);
+            end
+        end
+        
+        fprintf('代码包创建完成: %s\n', folderName);
+        
+    catch ME
+        error('创建代码包时发生错误: %s', ME.message);
     end
+end
 
