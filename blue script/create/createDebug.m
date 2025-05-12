@@ -1,6 +1,6 @@
-function cnt = createDebug(path, varargin)
+function portsOutNames = createDebug(path, varargin)
 %CREATEDEBUG 为输出端口创建debug及对应的输入模块
-%   cnt = createDebug(path) 为指定路径下的输出端口创建debug模块和对应的输入模块, 在独立的子模型中执行脚本。
+%   portsOutNames = createDebug(path) 为指定路径下的输出端口创建debug模块和对应的输入模块, 在独立的子模型中执行脚本。
 %
 %   输入参数:
 %       path - 模型路径，例如 gcs
@@ -10,11 +10,11 @@ function cnt = createDebug(path, varargin)
 %       'NameInType' - 输入端口命名方式，可选值为 'tailIn' 或 'findLoc'，默认为 'tailIn'
 %
 %   输出参数:
-%       cnt - 创建的端口数量
+%       portsOutNames - 创建的端口名称
 %
 %   示例:
-%       cnt = createDebug(gcs)
-%       cnt = createDebug(gcs, 'NameInType', 'findLoc')
+%       portsOutNames = createDebug(gcs)
+%       portsOutNames = createDebug(gcs, 'NameInType', 'findLoc')
 %
 %   作者: 葛维冬 (Blue Ge)
 %   日期: 2024-04-29
@@ -112,6 +112,11 @@ function cnt = createDebug(path, varargin)
             'testValue',false,...
             'dispName', false...
             )
+
+        %% 获取输出端口
+        [~, ~, portsOutNames] = findModPorts(path, ...
+            'getType', 'Name', ...
+            'FiltUnconnected', false);
         
     catch ME
         error('创建debug模块时发生错误: %s', ME.message);

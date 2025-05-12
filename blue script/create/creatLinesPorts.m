@@ -4,7 +4,7 @@ function creatLinesPorts(outports, inports)
         if get_param(outports(i), 'Line') == -1 % 未连接的输出端口
             for j = 1:length(inports)
                 if get_param(inports(j), 'Line') == -1 % 未连接的输入端口
-                    add_line(gcs, outports(i), inports(j), 'autorouting', 'on');
+                    add_line(path, outports(i), inports(j), 'autorouting', 'on');
                     return; % 一旦连接，退出函数
                 end
             end

@@ -1,11 +1,12 @@
 function saveSlddTableByInitValue(path, DataPCMU,  varargin)
+%% 待优化
 % 目的: 将sldd的表格初始值导出表格形式
 % 输入：
 %       ModelName: 模型名称
 %       stData:  表格数据
 %       DataVCU: VCU sldd数据
 % 返回： DataPCMU: null
-% 范例： saveSlddTableByInitValue(ModelName, DataPCMU, 'dataType','2D')
+% 范例： saveSlddTableByInitValue('TmComprCtrl_DD_PCMU.xlsx', 'HY11_PCMU_Tm_OTA3_V6060416_All.DCM', 'dataType','2D')
 % 作者： Blue.ge
 % 日期： 20240805
 %%
@@ -23,28 +24,6 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
     override = p.Results.override;
 
     %% 获取sldd 保存路径
-    % 模型名_DD_VCU/PCMU
-    %处理ModelName
-%     if contains(ModelName, "/")
-%         slashes = strfind(ModelName, "/");
-%         ModelName = extractAfter(ModelName, slashes(end));
-%     end
-% 
-%     % 如果是override, 则更新路径, 临时
-%     if override 
-%         fNamePCMU =[ModelName fileNamePCMU];
-%         fNameVCU = [ModelName fileNameVCU] ;
-%         fPCMU = which(fNamePCMU) ;
-%         fVCU = which(fNameVCU) ;
-%         if isempty(fPCMU) || isempty(fVCU)
-%             fPCMU = fullfile(pwd, [ModelName fileNamePCMU]) ;
-%             fVCU = fullfile(pwd, [ModelName fileNameVCU]) ;
-%         end
-%     else
-%         fPCMU = fullfile(pwd, [ModelName fileNamePCMU]) ;
-%         fVCU = fullfile(pwd, [ModelName fileNameVCU]) ;
-%     end
-
     if override 
         fPath = which(path);
     else
@@ -60,57 +39,72 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
     if strcmp(dataType, '1D')
         %% 保存1维表
         
-        rows1D = startsWith(DataPCMU.Name,'tTm');
+        rows1D = startsWith(DataPCMU.Name,'tTm'); % startsWith,contains
         DataPCMU = DataPCMU(rows1D,:);
-        rows = size(DataPCMU,1);
-        stData = cell(rows/2*3,10);
-        for i=1:2:rows
+        rows = size(DataPCMU,1);% 数据加X轴总个数
+%         stData = cell(rows/2*3,10);
+
+%         for i=1:rows
+%             name = strtrim(DataPCMU.Name{i});
+%             is_X(i) = endsWith(name,'_x') | endsWith(name,'_X');
+%             is_data(i)  = ~is_X(i);
+%         end
+
+        is_X = endsWith(DataPCMU.Name,'_x') | endsWith(DataPCMU.Name,'_X');
+        is_data  = ~is_X;
+
+
+        X_t=DataPCMU(is_X,:);
+        data_t = DataPCMU(is_data,:);
+        rows = size(data_t,1); % 数据个数
+
+        for i=1:rows
 %             disp(i)
-            idy = 4*(i-1)/2+1;
-%             idy = idy+1; % 让第一行为空
+            idy = 4*(i-1)+1;
 
-            % confirm the rows
-            row1 = DataPCMU(i,:);
-            row2 = DataPCMU(i+1,:);
-            
-            nameR1 = row1.Name{1};
-            nameR2 = row2.Name{1};
+            data = data_t(i,:);
+            name = strtrim(data.Name{1});
+            X = X_t(contains(X_t.Name,name),:);
 
-            EndXR1 = endsWith(nameR1,'_x') || endsWith(nameR1,'_X');
-            EndXR2 = endsWith(nameR2,'_x') || endsWith(nameR2,'_X');
+            nameX = strtrim(X.Name{1});
 
-            if EndXR1 && ~EndXR2
-                data = row2;
-                X = row1;
-            elseif EndXR2 && ~EndXR1
-                data = row1;
-                X = row2;
-            else
-                error('pls check the data. the Axis value should end with _X or _x ')
-            end
-
-
+            % 去掉字符串前面的空格或者空行
             value = data.IniValue{1};
             valueX = X.IniValue{1};
-
+            
+            % 字符串转数字
             value = str2num(value);
             valueX = str2num(valueX);
-            widX = length(valueX);
 
+            % 如果是浮点数则保留4位小数
+            if any(mod(value,1)~=0)
+                value = round(value,4);
+            end
+            if any(mod(valueX,1)~=0)
+                valueX = round(valueX,4);
+            end
+
+            % 数字转元组
+            value = num2cell(value);
+            valueX = num2cell(valueX);
+
+            widX = length(valueX);
 
             % 第一行
             stData{idy,1} = data.Details{1};  % description
             stData{idy,2} = widX;  % 宽度
 
-            stData{idy+1,1} = X.Name{1};
-            stData(idy+1,2:widX+1) = num2cell(valueX);
+            stData{idy+1,1} = nameX;
+            stData(idy+1,2:widX+1) = valueX;
 
             % 第一行
-            stData{idy+2,1} = data.Name{1};
-            stData(idy+2,2:widX+1) = num2cell(value);
-            
-            
+            stData{idy+2,1} = name;
+            stData(idy+2,2:widX+1) = value;
+
         end
+
+
+
     elseif strcmp(dataType, '2D')
         %% 保存2维表
         rows2D = startsWith(DataPCMU.Name,'mTm');
@@ -119,45 +113,59 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
         idy = 1; % 从第二行开始
         stData = {};
 
-        % 初始化标志列
-        is_X = false([1 3]);
-        is_Y = false([1 3]);
-        is_data = false([1 3]);
-        for i=1:3:rows
-            disp(i)
-            table = DataPCMU(i:i+2,:);
+%         for i=1:rows
+%             name = strtrim(DataPCMU.Name{i});
+%             is_X(i) = endsWith(name,'_x') | endsWith(name,'_X');
+%             is_Y(i)  = endsWith(name,'_y') | endsWith(name,'_Y');
+%             is_data(i)  = ~(is_X(i) | is_Y(i));
+%         end
 
-            % solution 1
-            is_X = endsWith(table.Name,'_x') | endsWith(table.Name,'_X');
-            is_Y = endsWith(table.Name,'_y') | endsWith(table.Name,'_Y');
-            is_data = ~(is_X | is_Y);
+        is_X = endsWith(DataPCMU.Name,'_x') | endsWith(DataPCMU.Name,'_X');
+        is_Y  = endsWith(DataPCMU.Name,'_y') | endsWith(DataPCMU.Name,'_Y');
+        is_data  = ~(is_X | is_Y);
 
-            % solution 2 遍历每行数据并进行判断
-%             for j = 1:3
-%                 if endsWith(v.Name{j},'_x') || endsWith(table.Name{j},'_X')
-%                     is_X(j) = true;
-%                 elseif endsWith(table.Name{j},'_y') || endsWith(table.Name{j},'_Y')
-%                     is_Y(j) = true;
-%                 else
-%                     is_data(j) = true;
-%                 end
-%             end
+        X_t=DataPCMU(is_X,:);
+        Y_t=DataPCMU(is_Y,:);
+        data_t = DataPCMU(is_data,:);
+        rows = size(data_t,1);
+        for i=1:rows
+%             disp(i)
+            data = data_t(i,:);
+            name = strtrim(data.Name{1});
+            X = X_t(contains(X_t.Name,name),:);
+            Y = Y_t(contains(Y_t.Name,name),:);
 
-            data = table(is_data,:);
-            X = table(is_X,:);
-            Y = table(is_Y,:);
-            name = data.Name{1};
-            nameX = X.Name{1};
-            nameY = Y.Name{1};
+            nameX = strtrim(X.Name{1});
+            nameY = strtrim(Y.Name{1});
+
+            % 去掉字符串前面的空格或者空行
             value = data.IniValue{1};
             valueX = X.IniValue{1};
             valueY = Y.IniValue{1};
+            
+            % 字符串转数字
             value = str2num(value);
             valueX = str2num(valueX);
             valueY = str2num(valueY);
+
+            % 如果是浮点数则保留4位小数
+            if any(mod(value,1)~=0)
+                value = round(value,4);
+            end
+            if any(mod(valueX,1)~=0)
+                valueX = round(valueX,4);
+            end
+            if any(mod(valueY,1)~=0)
+                valueY = round(valueY,4);
+            end
+            
+            % 数字转元组
+            value = num2cell(value);
+            valueX = num2cell(valueX);
+            valueY = num2cell(valueY);
+
             widX = length(valueX);
             widY = length(valueY);
-
 
             % 第一行
             stData{idy,2} = nameX;
@@ -166,16 +174,17 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
             % 第二行
             stData{idy+1,1} = nameY;
             stData{idy+1,2} = name;
-            stData(idy+1,3:3+widX-1) = num2cell(valueX);
+            stData(idy+1,3:3+widX-1) = valueX;
             % 第三行
             stData{idy+2,1} = widY;
             % Y轴区域
-            stData(idy+2:idy+2+widY-1,2) = num2cell(valueY);
+            stData(idy+2:idy+2+widY-1,2) = valueY;
             % 数据区
-            stData(idy+2:idy+2+widY-1,3:3+widX-1) = num2cell(value);
+            stData(idy+2:idy+2+widY-1,3:3+widX-1) = value;
         
             idy = idy + widY + 3;
         end
+
     else
         error('pls input the right dataType, the chooses are only: 1D, 2D')
     end

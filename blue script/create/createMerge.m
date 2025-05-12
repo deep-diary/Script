@@ -37,11 +37,13 @@ function createMerge(varargin)
             }, @iscell);
             
         addParameter(p, 'resovleSig', true, @islogical);
+        addParameter(p, 'pos', []);
         
         parse(p, varargin{:});
         
         sigList = p.Results.sigList;
         resovleSig = p.Results.resovleSig;
+        pos = p.Results.pos;
         
         %% 检查信号前缀一致性
         sig = sigList{1};
@@ -80,7 +82,9 @@ function createMerge(varargin)
         %% 创建Merge模块
         numSubs = length(switchSubNames);
         step = (numSubs + 2) * 30;  % merge信号数量+两边留白，每个信号间距30
-        pos = get_param(switchSubPaths{1}, 'Position');
+        if isempty(pos)
+            pos = get_param(switchSubPaths{1}, 'Position');
+        end
         posBase = [pos(3) + 600, pos(2), pos(3) + 630, pos(2) + 30 * numSubs];
         
         % 遍历信号列表

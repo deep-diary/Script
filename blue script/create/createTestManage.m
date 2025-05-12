@@ -1,10 +1,10 @@
-function createTestManage(modeFold, varargin)
+function createTestManage(modelName, varargin)
 %CREATETESTMANAGE 为模块创建测试管理器
-%   createTestManage(modeFold) 为指定模块创建测试管理器，包括测试文件、
+%   createTestManage(modelName) 为指定模块创建测试管理器，包括测试文件、
 %   测试套件和测试用例的创建，以及测试运行和报告导出功能。
 %
 %   输入参数:
-%       modeFold - 模块文件夹名称，例如'04_TmRefriVlvCtrl'
+%       modelName - 模块名称，例如'TmRefriVlvCtrl'
 %
 %   可选参数:
 %       'run' - 是否运行测试，默认为false
@@ -12,9 +12,9 @@ function createTestManage(modeFold, varargin)
 %       'export' - 是否导出测试结果，默认为false
 %
 %   示例:
-%       createTestManage('04_TmRefriVlvCtrl')
-%       createTestManage('06_TmComprCtrl', 'run', true, 'export', true)
-%       createTestManage('06_TmComprCtrl', 'clear', true)
+%       createTestManage('TmRefriVlvCtrl')
+%       createTestManage('TmComprCtrl', 'run', true, 'export', true)
+%       createTestManage('TmComprCtrl', 'clear', true)
 %
 %   作者: 葛维冬 (Blue Ge)
 %   日期: 2024-04-18
@@ -38,15 +38,14 @@ function createTestManage(modeFold, varargin)
         
         %% 验证模块路径
         proj = currentProject;
-        rootPath = proj.RootFolder;
-        subPath = fullfile(rootPath, 'SubModel', modeFold);
+
+        [subPath,name,ext]=fileparts(which(modelName))
         
         if ~exist(subPath, 'dir')
             error('错误的子模块路径: %s', subPath);
         end
         
         %% 设置测试文件路径
-        model = modeFold(4:end); % 从文件夹名中提取模型名
         fileName = [model, '.mldatx'];
         testPath = fullfile(subPath, fileName);
         

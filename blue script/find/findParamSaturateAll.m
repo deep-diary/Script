@@ -24,4 +24,5 @@ function [PathSatur, ParamSatur] = findParamSaturateAll(path)
 %     ParamSatur = ParamSatur';
 %     信号去重
     ParamSatur=unique(ParamSatur);
+    PathSatur= PathSatur';
 end

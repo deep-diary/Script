@@ -97,7 +97,7 @@ function createSwitchCase(varargin)
         %% 创建各个子Case条件
         height = max(30 * length(sigNames), 60);
         posSubCaseBase = [1000, 0, 1400, height];
-        
+        posMerg = posSubCaseBase + [400 0 400 0]
         for i = 1:length(caseNames)
             %% 创建SwitchCaseActionSubsystem
             yShift = caseStp * (height + actionPosYShift + caseGap) * (i-1);
@@ -134,6 +134,11 @@ function createSwitchCase(varargin)
                     'Position', posOut);
             end
             
+            
+            createGotoBasedPorts(path)
+            posGotoBase = posBase + [-800, 0, -800, 0];
+            createGotoUseless('path',path,'posGotoBase',posGotoBase(1:2))
+            
             %% 添加Action From
             portHandles = get_param(subSystem, 'PortHandles');
             ifActionH = portHandles.Ifaction;
@@ -156,7 +161,9 @@ function createSwitchCase(varargin)
         
         %% 创建Merge模块
         if ~isempty(sigNames)
-            createMerge('sigList', sigNames, 'resovleSig', resovleSig);
+            createMerge('sigList', sigNames, ...
+                'resovleSig', resovleSig, ...
+                'pos',posMerg);
         end
         
         fprintf('成功创建了Switch Case结构\n');

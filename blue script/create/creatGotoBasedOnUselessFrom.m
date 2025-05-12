@@ -18,37 +18,44 @@ function  nums = creatGotoBasedOnUselessFrom(varargin)
     % 输入参数处理
     addParameter(p,'posBase',[13500,0]);      % 设置变量名和默认参数 [9000 0]
     addParameter(p,'step',30);      % 设置变量名和默认参数
+    addParameter(p,'path',gcs);      % 设置变量名和默认参数
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
     stp = p.Results.step;
     posBase = p.Results.posBase;
+    path = p.Results.path;
     nums = 0; % 记录已生成的输出端口数量
 
     % 找到没有用的Goto模块
-    uselessFrom = findUselessFrom();
+    uselessFrom = findUselessFrom('path',path);
     for i=1:length(uselessFrom)
         tag = get_param(uselessFrom{i}, 'GotoTag');
+        [dataType, ~, ~, ~, ~] = findNameType(tag);
+
         % 1. 初始化位置
         posX = posBase(1);
-        posY = posBase(2) + (nums-1)*stp;
+        posY = posBase(2) + (i-1)*stp;
         posGnd=[posX-10, posY-10, posX+10, posY+10]; % Ground 位置
         posX=posX+300;
         posGoto=[posX-150, posY-10, posX+150, posY+10]; % Goto 位置
 
         % 2. 创建模块
-        bkGnd = add_block('built-in/Ground', [gcs '/Ground'],...
-            'MakeNameUnique','on', 'Position', posGnd);
-        bkGoto = add_block('built-in/Goto', [gcs '/Goto'],'MakeNameUnique','on', ...
+        bkConst = add_block('built-in/Constant', [path '/Constant'],...
+            'MakeNameUnique','on', ...
+            'Position', posGnd, ...
+            'Value','0', ...
+            'OutDataTypeStr',dataType);
+        bkGoto = add_block('built-in/Goto', [path '/Goto'],'MakeNameUnique','on', ...
                               'Position',posGoto,'GotoTag',tag);
 
         
         % 3. add line
-%         PortHdFrom = get_param(bkGnd, 'PortHandles');
+%         PortHdFrom = get_param(bkConst, 'PortHandles');
 %         portHdTerm = get_param(bkGoto, 'PortHandles');
-%         add_line(gcs, PortHdFrom.Outport, portHdTerm.Inport, 'autorouting', 'on');
+%         add_line(path, PortHdFrom.Outport, portHdTerm.Inport, 'autorouting', 'on');
         
-        hArray = [bkGnd, bkGoto];
-        creatLines(hArray)
+        hArray = [bkConst, bkGoto];
+        createLines(path,hArray)
 
         nums=nums+1;
     end

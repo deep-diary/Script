@@ -18,35 +18,37 @@ function  nums = creatFromBasedOnUselessGoto(varargin)
     % 输入参数处理
     addParameter(p,'posBase',[12000,0]);      % 设置变量名和默认参数 [9000 0]
     addParameter(p,'step',30);      % 设置变量名和默认参数
+    addParameter(p,'path',gcs);      % 设置变量名和默认参数
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
     stp = p.Results.step;
     posBase = p.Results.posBase;
+    path = p.Results.path;
     nums = 0; % 记录已生成的输出端口数量
 
     % 找到没有用的Goto模块
-    uselessGoto = findUselessGoto();
+    uselessGoto = findUselessGoto('path',path);
     for i=1:length(uselessGoto)
         tag = get_param(uselessGoto{i}, 'GotoTag');
         % 1. 初始化位置
         posX = posBase(1);
-        posY = posBase(2) + (nums-1)*stp;
+        posY = posBase(2) + (i-1)*stp;
         posFrom=[posX-150, posY-10, posX+150, posY+10]; % From 位置
         posX=posX+300;
         posTerm=[posX-10, posY-10, posX+10, posY+10]; % Terminator 位置
 
         % 2. 创建模块
-        bkFrom = add_block('built-in/From', [gcs '/From'],'MakeNameUnique','on', ...
+        bkFrom = add_block('built-in/From', [path '/From'],'MakeNameUnique','on', ...
                               'Position',posFrom,'GotoTag',tag);
-        bkTerm = add_block('built-in/Terminator', [gcs '/Terminator'],...
+        bkTerm = add_block('built-in/Terminator', [path '/Terminator'],...
             'MakeNameUnique','on', 'Position', posTerm);
         
         % 3. add line
 %         PortHdFrom = get_param(bkFrom, 'PortHandles');
 %         portHdTerm = get_param(bkTerm, 'PortHandles');
-%         add_line(gcs, PortHdFrom.Outport, portHdTerm.Inport, 'autorouting', 'on');
+%         add_line(path, PortHdFrom.Outport, portHdTerm.Inport, 'autorouting', 'on');
         hArray = [bkFrom, bkTerm];
-        creatLines(hArray)
+        createLines(path,hArray)
         nums=nums+1;
     end
 

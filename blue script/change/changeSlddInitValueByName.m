@@ -27,6 +27,10 @@ function updatedTable = changeSlddInitValueByName(slddTable, name, value)
         end
         % 更新sldd
         for i=1:len
+            % 如果是浮点数则保留4位小数
+            if any(mod(value,1)~=0)
+                value = round(value,4);
+            end
             slddTable.IniValue{idx(i)} = value;
         end      
     else

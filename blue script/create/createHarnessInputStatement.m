@@ -34,15 +34,16 @@ function inAction = createHarnessInputStatement(names,values)
             value = num2str(value);
         end
 
-        % 判断变量是否是逻辑
-        if islogical(value)
-            % 将数字转换成字符串
-            if value
+        % 判断输入变量的数据类型names{i}
+        dataType = findNameType(names{i});
+        if strcmp(dataType,'boolean')
+            if str2num(value)
                 value = 'true';
             else
                 value = 'false';
             end
         end
+
         statement = sprintf('%s = %s;\n', names{i}, value);
         inAction = [inAction statement];
     end

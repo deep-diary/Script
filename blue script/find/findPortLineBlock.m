@@ -19,12 +19,20 @@ function [hPort, hLine, hBlock] = findPortLineBlock(portPath)
     if strcmp(bkType, 'Inport')
     
         hLine=get_param(hPortCon.Outport, 'Line');
+        if hLine == -1
+            hBlock = -1;
+            return
+        end
     
         hBlock = get_param(hLine, 'DstBlockHandle');
     
     elseif strcmp(bkType, 'Outport')
     
-            hLine=get_param(hPortCon.Inport, 'Line');
+        hLine=get_param(hPortCon.Inport, 'Line');
+        if hLine == -   1
+            hBlock = -1;
+            return
+        end
     
         hBlock = get_param(hLine, 'SrcBlockHandle');
     

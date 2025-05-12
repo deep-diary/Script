@@ -57,7 +57,7 @@ function [numInputPorts, numOutputPorts] = createGotoBasedPorts(path, varargin)
             set_param(gotoBlock, 'GotoTag', portName);
             
             % 创建连线
-            creatLines([portHandle, gotoBlock]);
+            createLines(path,[portHandle, gotoBlock]);
             
             fprintf('已为输入端口 %s 创建Goto模块\n', portName);
         end
@@ -78,7 +78,7 @@ function [numInputPorts, numOutputPorts] = createGotoBasedPorts(path, varargin)
             set_param(fromBlock, 'GotoTag', portName);
             
             % 创建连线
-            creatLines([fromBlock, portHandle]);
+            createLines(path,[fromBlock, portHandle]);
             
             fprintf('已为输出端口 %s 创建From模块\n', portName);
         end

@@ -21,7 +21,7 @@ function createHarnessNew(path, varargin)
     addParameter(p,'mask',0);      % 设置变量名和默认参数
     addParameter(p,'tolerance',0.01);      % 设置变量名和默认参数
     addParameter(p,'waitTime',0.1);      % 设置变量名和默认参数
-    addParameter(p,'logValue',false);      % 设置变量名和默认参数
+    addParameter(p,'logValue',true);      % 设置变量名和默认参数
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
     mask = p.Results.mask;

@@ -87,7 +87,7 @@ function createHarnessStep(harnessName,lastStp, varargin)
                     'tolerance',tolerance,...
                     'waitTime',waitTime...
                 );
-                
+
                 [isIncludeArr, inputPkg] = findHarnessInputType(inputValue);
                 if isIncludeArr
                     %% 三级逻辑

@@ -32,9 +32,9 @@ function createModSig(pathMd, varargin)
     testValue = p.Results.testValue;
     dispName = p.Results.dispName;
 
-    % 信号解析，必须要解析信号名
-    if resoveValue
-        dispName =true;
+    % 信号解析，测试等，都需要显示解析信号名
+    if logValue || testValue || resoveValue
+        dispName = true;
     end
 
     %% 找到模型端口

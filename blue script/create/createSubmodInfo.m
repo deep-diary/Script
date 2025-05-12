@@ -1,4 +1,4 @@
-function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
+function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo(varargin)
 %CREATESUBMODINFO 创建包含子模型信息的注释模块并返回收集的信息
 %   [PORTSINNAMES, PORTSOUTNAMES, CALIBPARAMS] = CREATESUBMODINFO() 在当前子模型中创建信息注释模块
 %   [PORTSINNAMES, PORTSOUTNAMES, CALIBPARAMS] = CREATESUBMODINFO('Parameter', Value, ...) 使用指定参数创建
@@ -17,7 +17,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
 %      portsInNames  - 输入端口名称列表 (元胞数组)
 %      portsOutNames - 输出端口名称列表 (元胞数组)
 %      calibParams   - 标定量列表 (元胞数组)
-%
+%      infoText      - 信息文本 (字符串)
 %   功能描述:
 %      1. 收集子模型的输入端口信息
 %      2. 收集子模型的输出端口信息
@@ -79,7 +79,7 @@ function [portsInNames, portsOutNames, calibParams] = createSubmodInfo(varargin)
         modelName = get_param(path, 'Name');
         
         % 获取端口信息 - 直接获取端口名称
-        [~, portsIn, portsOut, portsSpecial] = findModPorts(path, 'returnNames', true);
+        [~, portsIn, portsOut, portsSpecial] = findModPorts(path, 'getType', 'Name');
         
         % 保存端口名称
         portsInNames = portsIn;

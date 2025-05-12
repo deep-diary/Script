@@ -11,6 +11,6 @@ function delGcsAll()
     %%
     clc
     blocks = find_system(gcs, 'SearchDepth', 1, 'Type', 'Block');
-    delete_block(blocks)
+    delete_block(blocks(2:end))  % 保留自身模型
     delUselessLine(gcs)
 end

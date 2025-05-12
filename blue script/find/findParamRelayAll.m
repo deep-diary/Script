@@ -24,4 +24,5 @@ function [PathRelay, ParamRelay] = findParamRelayAll(path)
 %     ParamRelay = ParamRelay';
 %     信号去重
     ParamRelay=unique(ParamRelay);
+    PathRelay = PathRelay';
 end

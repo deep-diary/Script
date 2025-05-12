@@ -28,11 +28,12 @@ function [numGoto, numFrom] = createGotoUseless(varargin)
         p = inputParser;
         
         % 添加参数及其验证
-        addParameter(p, 'posGotoBase', [12500,0], @(x) isnumeric(x) && numel(x) == 2);
-        addParameter(p, 'posFromBase', [12000,0], @(x) isnumeric(x) && numel(x) == 2);
+        addParameter(p, 'posGotoBase', [2500,0], @(x) isnumeric(x) && numel(x) == 2);
+        addParameter(p, 'posFromBase', [2000,0], @(x) isnumeric(x) && numel(x) == 2);
         addParameter(p, 'step', 30, @isnumeric);
         addParameter(p, 'createGoto', true, @islogical);
         addParameter(p, 'createFrom', true, @islogical);
+        addParameter(p, 'path', gcs);
         
         parse(p, varargin{:});
         
@@ -42,13 +43,14 @@ function [numGoto, numFrom] = createGotoUseless(varargin)
         step = p.Results.step;
         createGoto = p.Results.createGoto;
         createFrom = p.Results.createFrom;
+        path = p.Results.path;
         
         %% 创建Goto模块
         numGoto = 0;
         if createGoto
             try
                 fprintf('开始创建Goto模块...\n');
-                numGoto = creatGotoBasedOnUselessFrom('posBase', posGotoBase, 'step', step);
+                numGoto = creatGotoBasedOnUselessFrom('path',path,'posBase', posGotoBase, 'step', step);
                 fprintf('成功创建 %d 个Goto模块\n', numGoto);
             catch ME
                 warning(ME.identifier, '创建Goto模块时发生错误: %s', ME.message);
@@ -60,7 +62,7 @@ function [numGoto, numFrom] = createGotoUseless(varargin)
         if createFrom
             try
                 fprintf('开始创建From模块...\n');
-                numFrom = creatFromBasedOnUselessGoto('posBase', posFromBase, 'step', step);
+                numFrom = creatFromBasedOnUselessGoto('path',path,'posBase', posFromBase, 'step', step);
                 fprintf('成功创建 %d 个From模块\n', numFrom);
             catch ME
                 warning(ME.identifier, '创建From模块时发生错误: %s', ME.message);

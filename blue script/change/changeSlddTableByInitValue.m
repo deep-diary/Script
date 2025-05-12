@@ -33,7 +33,8 @@ function changeSlddTableByInitValue(slddPath)
         % 配置Excel导入选项
         opts = detectImportOptions(slddPath, ...
             'ReadVariableNames', true, ...
-            'Sheet', 'Parameters');
+            'Sheet', 'Parameters',...
+            'VariableNamingRule','preserve');
         
         % 将所有列设置为字符类型
         opts.VariableTypes = repmat({'char'}, 1, length(opts.VariableTypes));

@@ -45,7 +45,7 @@ function createHarness(path, varargin)
         addParameter(p, 'tolerance', 0.01, @(x) isnumeric(x) && x > 0);
         addParameter(p, 'waitTime', 0.05, @(x) isnumeric(x) && x > 0);
         addParameter(p, 'usingAllPorts', false, @islogical);
-        addParameter(p, 'logValue', false, @islogical);
+        addParameter(p, 'logValue', true, @islogical);
         
         parse(p, varargin{:});
         
@@ -63,6 +63,20 @@ function createHarness(path, varargin)
         waitTime = p.Results.waitTime;
         usingAllPorts = p.Results.usingAllPorts;
         logValue = p.Results.logValue;
+
+        %% 输入数值转换
+        % 字符串转换成数值
+        for i=1:length(inValue)
+            lev1Value = inValue{i}
+            for j=1:length(lev1Value)
+                lev2Value = lev1Value{j}
+                for k=1:length(lev2Value)
+                    if ischar(lev2Value{k})
+                        inValue{i}{j}{k} = str2num(lev2Value{k});
+                    end
+                end
+            end
+        end
         
         %% 使用自带的端口信息
         if usingAllPorts

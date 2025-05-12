@@ -31,9 +31,11 @@ function createSigOnLine(pathMd, varargin)
         addParameter(p, 'skipTrig', false, @islogical);
         addParameter(p, 'isEnableIn', true, @islogical);
         addParameter(p, 'isEnableOut', true, @islogical);
-        addParameter(p, 'resoveValue', true, @islogical);
-        addParameter(p, 'logValue', false, @islogical);
+        addParameter(p, 'resoveValue', false, @islogical);
+        addParameter(p, 'logValue', true, @islogical);
         addParameter(p, 'testValue', false, @islogical);
+        addParameter(p, 'dispName', false, @islogical);
+        addParameter(p, 'keepResolve', true, @islogical);
         
         parse(p, varargin{:});
         
@@ -44,6 +46,19 @@ function createSigOnLine(pathMd, varargin)
         resoveValue = p.Results.resoveValue;
         logValue = p.Results.logValue;
         testValue = p.Results.testValue;
+        keepResolve = p.Results.keepResolve;
+        dispName = p.Results.dispName;
+
+        if resoveValue
+            keepResolve = false;
+        end
+
+    
+
+        % 信号解析，测试等，都需要显示解析信号名
+        if logValue || testValue || resoveValue
+            dispName = true;
+        end
         
         %% 验证模型路径
         [modelName, validPath] = findValidPath(pathMd);
@@ -78,6 +93,9 @@ function createSigOnLine(pathMd, varargin)
                             % 获取并设置信号线属性
                             lineHandles = get(portHandle, 'LineHandles');
                             if ~isempty(lineHandles.Outport)
+                                if keepResolve
+                                    resoveValue = get(lineHandles.Outport, 'MustResolveToSignalObject');
+                                end
                                 set(lineHandles.Outport, ...
                                     'Name', portName, ...
                                     'MustResolveToSignalObject', resoveValue, ...
