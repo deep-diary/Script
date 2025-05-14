@@ -66,6 +66,11 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
             name = strtrim(data.Name{1});
             X = X_t(contains(X_t.Name,name),:);
 
+            if isempty(X) 
+                warning('The X axis of %s is not existed',name)
+                continue
+            end
+
             nameX = strtrim(X.Name{1});
 
             % 去掉字符串前面的空格或者空行
@@ -134,6 +139,10 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
             name = strtrim(data.Name{1});
             X = X_t(contains(X_t.Name,name),:);
             Y = Y_t(contains(Y_t.Name,name),:);
+            if isempty(X) || isempty(Y)
+                warning('The X or Y axis of %s is not existed',name)
+                continue
+            end
 
             nameX = strtrim(X.Name{1});
             nameY = strtrim(Y.Name{1});

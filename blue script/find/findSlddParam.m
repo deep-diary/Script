@@ -1,4 +1,4 @@
-function [DataPCMU, DataVCU] = findSlddParam(path,  varargin)
+function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddParam(path,  varargin)
 %%
     % 目的: 获取模型的Paramters, 保存到excel中，用于生成sldd
     % 输入：
@@ -27,7 +27,7 @@ function [DataPCMU, DataVCU] = findSlddParam(path,  varargin)
     [DataPCMU, DataVCU] = findParameterSlddData(path, parameters);
 
     %% 3. 保存sldd
-     saveSldd(path, DataPCMU, DataVCU, 'dataType','Parameters','override',override);
+    [fPCMU, fVCU] = saveSldd(path, DataPCMU, DataVCU, 'dataType','Parameters','override',override);
 
      %% 4. 获取look up table 标定量
     [PathLookup1D, PathLookup2D,Param1DLoopUp, Param2DLoopUp] = findParamLookupAll(bdroot);

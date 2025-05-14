@@ -1,4 +1,4 @@
-function [DataPCMU, DataVCU] = findSlddSig(pathMd,  varargin)
+function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddSig(pathMd,  varargin)
 %%
     % 目的: 获取模型的Signals, 保存到excel中，用于生成sldd
     % 输入：
@@ -36,5 +36,5 @@ function [DataPCMU, DataVCU] = findSlddSig(pathMd,  varargin)
     %% 合并并保存
     DataPCMU = [DataPCMUPort;DataPCMULoc];
     DataVCU = [DataVCUPort;DataVCULoc];
-    saveSldd(ModelName, DataPCMU, DataVCU, 'dataType','Signals','override',override);
+    [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, 'dataType','Signals','override',override);
 end

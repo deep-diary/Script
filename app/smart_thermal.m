@@ -5,7 +5,9 @@ classdef smart_thermal < matlab.apps.AppBase
         UIFigure                      matlab.ui.Figure
         FileMenu                      matlab.ui.container.Menu
         HelpMenu                      matlab.ui.container.Menu
-        DocMenu                       matlab.ui.container.Menu
+        ScriptInstructionMenu         matlab.ui.container.Menu
+        PCMUInstructionMenu           matlab.ui.container.Menu
+        VCUInstructionMenu            matlab.ui.container.Menu
         AboutMenu                     matlab.ui.container.Menu
         Toolbar                       matlab.ui.container.Toolbar
         OpenTemplate                  matlab.ui.container.toolbar.PushTool
@@ -84,11 +86,6 @@ classdef smart_thermal < matlab.apps.AppBase
         creatTmOutButton              matlab.ui.control.Button
         creatIFOutButton              matlab.ui.control.Button
         creatIFInButton               matlab.ui.control.Button
-        createSlddTab                 matlab.ui.container.Tab
-        createSlddDesignDataButton    matlab.ui.control.Button
-        SlddDropDown                  matlab.ui.control.DropDown
-        SubModDropDown_2Label         matlab.ui.control.Label
-        createSlddButton              matlab.ui.control.Button
         DeleteTab                     matlab.ui.container.Tab
         GridLayout                    matlab.ui.container.GridLayout
         UselessOutBlockDropDown       matlab.ui.control.DropDown
@@ -97,7 +94,6 @@ classdef smart_thermal < matlab.apps.AppBase
         UselessInBlockDropDownLabel   matlab.ui.control.Label
         delGcsAllButton               matlab.ui.control.Button
         delUselessPortButton          matlab.ui.control.Button
-        delUselessLineButton          matlab.ui.control.Button
         ChangeTab                     matlab.ui.container.Tab
         SigNeedChgTypeEditField       matlab.ui.control.EditField
         SigNeedChgTypeEditFieldLabel  matlab.ui.control.Label
@@ -117,13 +113,12 @@ classdef smart_thermal < matlab.apps.AppBase
         PortTypeDropDown              matlab.ui.control.DropDown
         PortTypeDropDownLabel         matlab.ui.control.Label
         findModPortsButton            matlab.ui.control.Button
-        findDCMNamesChangesButton     matlab.ui.control.Button
-        findDCMNamesButton            matlab.ui.control.Button
         TestTab                       matlab.ui.container.Tab
-        DelDataSelectButton           matlab.ui.control.Button
-        DelDataAllButton              matlab.ui.control.Button
-        DelParamButton                matlab.ui.control.Button
+        HarnessHistoryParamsPanel     matlab.ui.container.Panel
         HarnessParamsListBox          matlab.ui.control.ListBox
+        CaseTreePanel                 matlab.ui.container.Panel
+        CaseListTree                  matlab.ui.container.Tree
+        DelParamButton                matlab.ui.control.Button
         DemoButton                    matlab.ui.control.Button
         createHarnessButton           matlab.ui.control.Button
         GetPortsButton                matlab.ui.control.Button
@@ -136,18 +131,57 @@ classdef smart_thermal < matlab.apps.AppBase
         AddCaseButton                 matlab.ui.control.Button
         TestCaseTextArea              matlab.ui.control.TextArea
         TestCaseTextAreaLabel         matlab.ui.control.Label
-        CaseListTree                  matlab.ui.container.Tree
-        IntegrationTab                matlab.ui.container.Tab
-        ArxmlToModelButton            matlab.ui.control.Button
-        LoadSlddAllButton             matlab.ui.control.Button
-        SingleModelProcessPanel       matlab.ui.container.Panel
+        SlddTab                       matlab.ui.container.Tab
+        NoteTextArea                  matlab.ui.control.TextArea
+        NoteTextAreaLabel             matlab.ui.control.Label
+        ConfigPanel                   matlab.ui.container.Panel
+        SlddTypeButtonGroup           matlab.ui.container.ButtonGroup
+        VCUButton_2                   matlab.ui.control.RadioButton
+        PCMUButton_2                  matlab.ui.control.RadioButton
+        DcmFilePath                   matlab.ui.control.EditField
+        DefaultDcmButton              matlab.ui.control.Button
+        SlddDropDown                  matlab.ui.control.DropDown
+        SubModDropDown_2Label_3       matlab.ui.control.Label
+        FindDcmPanel                  matlab.ui.container.Panel
+        findDCMValuesChangesButton    matlab.ui.control.Button
+        findDCMNamesChangesButton     matlab.ui.control.Button
+        findDCMNamesButton            matlab.ui.control.Button
+        ChangeSlddPanel               matlab.ui.container.Panel
+        changeArchSlddButton          matlab.ui.control.Button
+        changeSlddInitValueByTableButton  matlab.ui.control.Button
+        changeSlddTableByInitValueButton  matlab.ui.control.Button
+        LoadSlddPanel                 matlab.ui.container.Panel
+        LoadAllSlddButton             matlab.ui.control.Button
+        findSlddLoadPCMUButton        matlab.ui.control.Button
+        findSlddLoadVCUButton         matlab.ui.control.Button
+        CreateExcelSlddPanel          matlab.ui.container.Panel
+        changeExportedSlddButton      matlab.ui.control.Button
+        openSlddButton                matlab.ui.control.Button
         findSlddButton                matlab.ui.control.Button
         findParametersButton          matlab.ui.control.Button
         AreaDropDown                  matlab.ui.control.DropDown
-        SubModDropDown_2Label_2       matlab.ui.control.Label
-        changeSlddInitValueByTableButton  matlab.ui.control.Button
-        changeSlddTableByInitValueButton  matlab.ui.control.Button
-        changeArchSlddButton          matlab.ui.control.Button
+        AreaDropDownLabel             matlab.ui.control.Label
+        CreateMatlabSlddPanel         matlab.ui.container.Panel
+        createSlddButton              matlab.ui.control.Button
+        createSlddDesignDataButton    matlab.ui.control.Button
+        CheckTab                      matlab.ui.container.Tab
+        delUselessLineButton          matlab.ui.control.Button
+        IntegrationTab                matlab.ui.container.Tab
+        ThernalIntegrationPanel       matlab.ui.container.Panel
+        VER_NAMEEditField             matlab.ui.control.EditField
+        VER_NAMEEditFieldLabel        matlab.ui.control.Label
+        DCM_NAMEEditField             matlab.ui.control.EditField
+        DCM_NAMEEditFieldLabel        matlab.ui.control.Label
+        SOFT_VERSIONEditField         matlab.ui.control.EditField
+        SOFT_VERSIONEditFieldLabel    matlab.ui.control.Label
+        INTERFACE_VERISONEditField    matlab.ui.control.EditField
+        INTERFACE_VERISONEditFieldLabel  matlab.ui.control.Label
+        STAGEEditField                matlab.ui.control.EditField
+        STAGEEditFieldLabel           matlab.ui.control.Label
+        ArxmlToModelButton            matlab.ui.control.Button
+        createIntegrationButton       matlab.ui.control.Button
+        createCodePkgButton           matlab.ui.control.Button
+        SingleModelProcessPanel       matlab.ui.container.Panel
         RefConfigEditField            matlab.ui.control.EditField
         RefConfigEditFieldLabel       matlab.ui.control.Label
         changeCfgRefButton            matlab.ui.control.Button
@@ -158,26 +192,11 @@ classdef smart_thermal < matlab.apps.AppBase
         ControlChooseButtonGroup      matlab.ui.container.ButtonGroup
         VCUButton                     matlab.ui.control.RadioButton
         PCMUButton                    matlab.ui.control.RadioButton
-        findSlddLoadButton            matlab.ui.control.Button
         SubModDropDown                matlab.ui.control.DropDown
         SubModDropDownLabel           matlab.ui.control.Label
-        createIntegrationButton       matlab.ui.control.Button
-        VER_NAMEEditField             matlab.ui.control.EditField
-        VER_NAMEEditFieldLabel        matlab.ui.control.Label
-        createCodePkgButton           matlab.ui.control.Button
-        DCM_NAMEEditField             matlab.ui.control.EditField
-        DCM_NAMEEditFieldLabel        matlab.ui.control.Label
-        SOFT_VERSIONEditField         matlab.ui.control.EditField
-        SOFT_VERSIONEditFieldLabel    matlab.ui.control.Label
-        INTERFACE_VERISONEditField    matlab.ui.control.EditField
-        INTERFACE_VERISONEditFieldLabel  matlab.ui.control.Label
-        STAGEEditField                matlab.ui.control.EditField
-        STAGEEditFieldLabel           matlab.ui.control.Label
-        ConfigTab                     matlab.ui.container.Tab
-        DcmFilePath                   matlab.ui.control.EditField
-        DefaultDcmButton              matlab.ui.control.Button
         ContextMenu                   matlab.ui.container.ContextMenu
-        DelMenu                       matlab.ui.container.Menu
+        DelSelectMenu                 matlab.ui.container.Menu
+        DelAllMenu                    matlab.ui.container.Menu
     end
 
     % Callbacks that handle component events
@@ -294,6 +313,7 @@ classdef smart_thermal < matlab.apps.AppBase
 
         % Button down function: IntegrationTab
         function IntegrationTabButtonDown(app, event)
+            app.LogTextArea.Value = '';
             existing_config = load('config.mat');
             soft_version_previous = existing_config.soft_version;
             % 期望提取SOFT_VERSION的前三位再和当前日期重新组成一个SOFT_VERSION
@@ -313,6 +333,22 @@ classdef smart_thermal < matlab.apps.AppBase
             VER_NAME = ['VcThermal_' STAGE '_' INTERFACE_VERISON '_' SOFT_VERSION];
             app.VER_NAMEEditField.Value = VER_NAME;
 
+            logStr = sprintf('备注：\n');
+            logStr = [logStr sprintf('函数功能简述如下，具体使用说明，请打开帮助手册（Help -> Sript Instrcution ，快捷键 Ctrl + h）\n')];
+            logStr = [logStr sprintf('----------------------------------------------------------------------------------------------------------------------------------\n')];
+            logStr = [logStr sprintf('ArxmlToModel: 将arxml 文件转换成autosar 框架模型\n')];
+            logStr = [logStr sprintf('createIntegration：创建集成模型及所有相关配置，具体流程，详见Help -> PCMU Instrcution，快捷键 Ctrl + p\n')];
+            logStr = [logStr sprintf('createCodePkg: 将生成好的代码进行文件提取并打包\n')];
+            logStr = [logStr sprintf('SOFT_VERSION： 正常阶段不变的情况下，这个值不用改，小版本会根据之前的版本号自动递增，其后四位的日期也会被设置成当天日期\n')];
+            logStr = [logStr sprintf('----------------------------------------------------------------------------------------------------------------------------------\n')];
+            logStr = [logStr sprintf('CreateSubModel： 根据SubMod 参数，创建子模型的引用模型，并配置好相关参数\n')];
+            logStr = [logStr sprintf('createCodeSubMod： 将生成好的代码进行文件提取并打包\n')];
+            logStr = [logStr sprintf('changeCfgRef: 改变模型的引用配置，配置值为 RefConfig\n')];
+            logStr = [logStr sprintf('changeCfgAutosar: 将模型配置成Autosar 配置\n')];
+            logStr = [logStr sprintf('changeCfgErt： 将模型配置成ERT配置, 详见Help -> VCU Instrcution，快捷键 Ctrl + u\n')];
+
+            app.LogTextArea.Value = logStr;
+
         end
 
         % Value changed function: SubModDropDown
@@ -327,12 +363,12 @@ classdef smart_thermal < matlab.apps.AppBase
             disp(selectedButton)
         end
 
-        % Button pushed function: findSlddLoadButton
-        function findSlddLoadButtonPushed(app, event)
-            submod = app.SubModDropDown.Value;
-            control_type = app.ControlChooseButtonGroup.SelectedObject;
-            findSlddLoad(submod,'mode',control_type.Text)
-            findSlddLoad('TmSwArch','mode',control_type.Text)
+        % Button pushed function: findSlddLoadPCMUButton
+        function findSlddLoadPCMUButtonPushed(app, event)
+            submod = app.SlddDropDown.Value;
+            control_type = 'PCMU';
+            findSlddLoad(submod,'mode',control_type)
+            findSlddLoad('TmSwArch','mode',control_type)
         end
 
         % Button pushed function: CreateSubModelButton
@@ -348,7 +384,7 @@ classdef smart_thermal < matlab.apps.AppBase
 
         end
 
-        % Button pushed function: LoadSlddAllButton
+        % Callback function: not associated with a component
         function LoadSlddAllButtonPushed(app, event)
             findSlddLoad('PCMU_SLDD_All.xlsx')
         end
@@ -685,8 +721,18 @@ classdef smart_thermal < matlab.apps.AppBase
 
         % Button pushed function: changeArchSlddButton
         function changeArchSlddButtonPushed(app, event)
+            app.LogTextArea.Value = '';
+            sldd_file = 'PCMU_SLDD_All.xlsx';
             dcm_file = app.DcmFilePath.Value;
-            changeArchSldd(dcm_file, 'PCMU_SLDD_All.xlsx')
+            if ~exist(sldd_file,'file')
+                app.LoadAllSlddButtonPushed(event);
+            else
+                changeArchSldd(dcm_file, sldd_file)
+            end
+
+            % 初始化logstr为空字符串
+            logstr = sprintf('执行成功:\n');
+            app.LogTextArea.Value = logstr;
         end
 
         % Button pushed function: changeCfgAutosarButton
@@ -872,6 +918,8 @@ classdef smart_thermal < matlab.apps.AppBase
 
         % Button pushed function: findSlddButton
         function findSlddButtonPushed(app, event)
+            app.findSlddButton.UserData = '';
+            
             path = app.AreaDropDown.Value;
             if strcmp(path,'gcs')
                 path = gcs;
@@ -880,17 +928,30 @@ classdef smart_thermal < matlab.apps.AppBase
             else
                 disp('wrong path')
             end
-            findSldd(path)
+            [fPCMU, fVCU] = findSldd(path);
+            logstr = sprintf('The exported sldd are as follows:\n');
+            logstr = sprintf('%s the PCMU sldd path is: %s\n', logstr, fPCMU);
+            logstr = sprintf('%s the VCU sldd path is: %s\n', logstr, fVCU);
+            app.LogTextArea.Value = logstr;
+            
+            rstPath.PCMU = fPCMU;
+            rstPath.VCU = fVCU;
+            app.findSlddButton.UserData = rstPath;
         end
 
         % Button down function: HomeTab
         function HomeTabButtonDown(app, event)
-            app.LogTextArea.Value = 'Welcome to use smart thermal app!';
+            logStr = '';
+            logStr = [logStr sprintf('Welcome to use smart thermal app!：\n')];
+            logStr = [logStr sprintf('具体使用说明，请打开帮助手册（Help -> Sript Instrcution ，快捷键 Ctrl + h）\n')];
+            logStr = [logStr sprintf('----------------------------------------------------------------------------------------------------------------------------------\n')];
+
+            app.LogTextArea.Value = logStr;    
         end
 
         % Button pushed function: delUselessLineButton
         function delUselessLineButtonPushed(app, event)
-            delUselessLine(gcs)
+            delUselessLine(bdroot)
         end
 
         % Button pushed function: delUselessPortButton
@@ -930,9 +991,10 @@ classdef smart_thermal < matlab.apps.AppBase
             
         end
 
-        % Menu selected function: DocMenu
-        function DocMenuSelected(app, event)
-            winopen('help.pdf')
+        % Menu selected function: ScriptInstructionMenu
+        function ScriptInstructionMenuSelected(app, event)
+            winopen('Script Instruction.pdf')
+            
         end
 
         % Button pushed function: AddCaseButton
@@ -1237,6 +1299,7 @@ classdef smart_thermal < matlab.apps.AppBase
 
         % Button down function: TestTab
         function TestTabButtonDown(app, event)
+            app.LogTextArea.Value = '';
             if ~exist('harness.mat', 'file')
                 return
             end
@@ -1247,6 +1310,21 @@ classdef smart_thermal < matlab.apps.AppBase
                 list{i} = harnessDataArray(i).modelName;
             end
             app.HarnessParamsListBox.Items = list;
+
+            logStr = '';
+            logStr = [logStr sprintf('备注：\n')];
+            logStr = [logStr sprintf('函数功能简述如下，具体使用说明，请打开帮助手册（Help -> Sript Instrcution ，快捷键 Ctrl + h）\n')];
+            logStr = [logStr sprintf('----------------------------------------------------------------------------------------------------------------------------------\n')];
+            logStr = [logStr sprintf('AddCase: 将TestCase中的内容添加到根目录CaseTree中，作为当前harness的测试大类， 如果需要添加子类，需要先选中大类，再点此按键\n')];
+            logStr = [logStr sprintf('DelCase：将CaseTree中的测试用例删除\n')];
+            logStr = [logStr sprintf('GetPorts: 点击子模型，生成对应的输入输出信号，同时根据CaseTree, 生成测试用例个数，然后就可以对其进行填充\n')];
+            logStr = [logStr sprintf('createHarness： 根据测试用例，生成harness\n')];
+            logStr = [logStr sprintf('Demo: 快速生成demo CaseTree, 需要打开并点击模型：ScriptDemo/createHarness/Demo\n')];
+            logStr = [logStr sprintf('DelParam: 删除Harness Histroy Params 选中的参数\n')];
+            logStr = [logStr sprintf('在表格上单击右键，可以快速删除全部数据或者选中数据\n')];
+
+            app.LogTextArea.Value = logStr;
+
         end
 
         % Clicked callback: HarnessParamsListBox
@@ -1284,13 +1362,13 @@ classdef smart_thermal < matlab.apps.AppBase
             end
         end
 
-        % Button pushed function: DelDataAllButton
+        % Callback function
         function DelDataAllButtonPushed(app, event)
             % 将table 中的数据，全部置为空字符串
             app.CaseTable.Data = cell(size(app.CaseTable.Data));
         end
 
-        % Button pushed function: DelDataSelectButton
+        % Callback function
         function DelDataSelectButtonPushed(app, event)
             % 删除CaseTable中鼠标选中的数据
             if isempty(app.CaseTable.Selected)
@@ -1301,8 +1379,8 @@ classdef smart_thermal < matlab.apps.AppBase
             app.LogTextArea.Value = '已删除选中的数据';
         end
 
-        % Menu selected function: DelMenu
-        function DelMenuSelected(app, event)
+        % Menu selected function: DelSelectMenu
+        function DelSelectMenuSelected(app, event)
             % 删除CaseTable中鼠标选中的数据
             selection = app.CaseTable.Selection;
             
@@ -1326,6 +1404,183 @@ classdef smart_thermal < matlab.apps.AppBase
             app.CaseTable.Data = currentData;
             app.LogTextArea.Value = '已清空选中的数据';
         end
+
+        % Menu selected function: DelAllMenu
+        function DelAllMenuSelected(app, event)
+            % 将table 中的数据，全部置为空字符串
+            app.CaseTable.Data = cell(size(app.CaseTable.Data));
+        end
+
+        % Button down function: CheckTab
+        function CheckTabButtonDown(app, event)
+            logstr =sprintf('一般需要检查点如下：\n');
+
+            % 显示提示信息
+            logstr = sprintf('%s1. 删除无用的连线\n', logstr);
+            logstr = sprintf('%s1. 确保所有的goto, from 都有配对\n', logstr);
+            logstr = sprintf('%s2. 确保一维查表及二维查表，中间是线性插值，两端是截至clip\n', logstr);
+            logstr = sprintf('%s3. 确保除数模块的被除数不为0\n', logstr);
+            logstr = sprintf('%s4. 确保无符号整数的减法不会溢出\n', logstr);
+
+            app.LogTextArea.Value = logstr;
+        end
+
+        % Button pushed function: findSlddLoadVCUButton
+        function findSlddLoadVCUButtonPushed(app, event)
+            submod = app.SlddDropDown.Value;
+            control_type = 'VCU';
+            findSlddLoad(submod,'mode',control_type)
+            findSlddLoad('TmSwArch','mode',control_type)
+        end
+
+        % Button down function: SlddTab
+        function SlddTabButtonDown(app, event)
+            app.LogTextArea.Value = '';
+        end
+
+        % Button pushed function: openSlddButton
+        function openSlddButtonPushed(app, event)
+            slddType = app.SlddTypeButtonGroup.SelectedObject.Text;
+%             slddName = [bdroot '_DD_' slddType '_EXPORT.xlsx'];
+            rstPath = app.findSlddButton.UserData;
+            if isempty(rstPath)
+                return
+            end
+
+            if strcmp(slddType, 'PCMU')
+                slddName = rstPath.PCMU;
+            else
+                slddName = rstPath.VCU;
+            end
+            winopen(slddName)
+        end
+
+        % Button pushed function: changeExportedSlddButton
+        function changeExportedSlddButtonPushed(app, event)
+            slddType = app.SlddTypeButtonGroup.SelectedObject.Text;
+
+            %             slddName = [bdroot '_DD_' slddType '_EXPORT.xlsx'];
+
+            rstPath = app.findSlddButton.UserData;
+            if isempty(rstPath)
+                return
+            end
+            
+            if strcmp(slddType, 'PCMU')
+                slddName = rstPath.PCMU;
+            else
+                slddName = rstPath.VCU;
+            end
+
+            dcm_file = app.DcmFilePath.Value;
+            changeArchSldd(dcm_file, slddName);
+        end
+
+        % Button pushed function: LoadAllSlddButton
+        function LoadAllSlddButtonPushed(app, event)
+            SLDD_NAME = 'PCMU_SLDD_All.xlsx';
+            DCM_NAME = app.DcmFilePath.Value;
+            if ~exist('PCMU_SLDD_All.xlsx','file')
+                app.LogTextArea.Value = sprintf('file of %s not existed. will create first\n',SLDD_NAME);
+
+                proj = currentProject; 
+                rootPath = proj.RootFolder;
+                subPath = fullfile(rootPath,'SubModel');
+                if ~exist(subPath, 'dir')
+                    error('wrong sub model path')
+                end
+                
+                findSlddCombine(subPath, SLDD_NAME);
+            end
+            changeArchSldd(DCM_NAME, SLDD_NAME);
+            findSlddLoad(SLDD_NAME)
+        end
+
+        % Size changed function: SlddTab
+        function SlddTabSizeChanged(app, event)
+            position = app.SlddTab.Position;
+            
+        end
+
+        % Button down function: ModelTab
+        function ModelTabButtonDown(app, event)
+            logStr = '';
+            logStr = [logStr sprintf('备注：\n')];
+            logStr = [logStr sprintf('具体使用说明，请打开帮助手册（Help -> Sript Instrcution ，快捷键 Ctrl + h）\n')];
+            logStr = [logStr sprintf('----------------------------------------------------------------------------------------------------------------------------------\n')];
+
+            app.LogTextArea.Value = logStr;    
+        end
+
+        % Button pushed function: findDCMValuesChangesButton
+        function findDCMValuesChangesButtonPushed(app, event)
+            dcm_file_first = uigetfile('*.dcm', 'Select first DCM File');
+            if isequal(dcm_file_first, 0)
+                % User cancelled the dialog box.
+                return;
+            end
+            dcm_file_second= uigetfile('*.dcm', 'Select second DCM File');
+            if isequal(dcm_file_second, 0)
+                % User cancelled the dialog box.
+                return;
+            end
+
+            changes = findDCMValuesChanges(dcm_file_first, dcm_file_second);
+
+
+            %% 显示比较结果
+            % 参数类型名称映射
+            typeNames = {'常量', '轴定义', '值块', '一维表', '二维表'};
+            logstr = sprintf('    %s    \n和\n    %s    \n的参数差异如下：\n\n', dcm_file_first,dcm_file_second);
+            if isempty(changes)
+                logstr = sprintf('%s未发现参数值的变化。\n', logstr);
+            else
+                logstr = sprintf('%s发现 %d 个参数值有变化:\n', logstr, length(changes));
+                
+                logstr = sprintf('%s--------------------------------------------------------------\n', logstr);
+                logstr = sprintf('%s%-30s %-15s %-30s\n', logstr, '参数名称', '类型', '变化描述');
+                logstr = sprintf('%s--------------------------------------------------------------\n', logstr);
+                
+                for i = 1:length(changes)
+                    change = changes(i);
+                    typeName = typeNames{change.type};
+                    
+                    % 根据参数类型格式化变化描述
+                    switch change.type
+                        case 1 % 常量
+                            if ischar(change.diff)
+                                diffDesc = change.diff;
+                            else
+                                diffDesc = sprintf('%.6g -> %.6g (变化: %.6g)', ...
+                                            change.oldValue, change.newValue, change.diff);
+                            end
+                            
+                        case {2, 3, 4, 5} % 轴定义、值块、一维表或二维表
+                            diffDesc = change.diff;
+                    end
+                    
+                    logstr = sprintf('%s%-30s %-15s %-30s\n', logstr, change.name, typeName, diffDesc);
+                end
+                logstr = sprintf('%s--------------------------------------------------------------\n', logstr);
+
+            end
+            app.LogTextArea.Value = logstr;
+        end
+
+        % Menu selected function: PCMUInstructionMenu
+        function PCMUInstructionMenuSelected(app, event)
+            winopen('PCMU Instruction.pdf')
+        end
+
+        % Menu selected function: VCUInstructionMenu
+        function VCUInstructionMenuSelected(app, event)
+            winopen('HY11 VCU1自研软件集成指南-陈远飞20240130_V3.pdf')
+        end
+
+        % Button down function: TabGroup
+        function TabGroupButtonDown(app, event)
+            
+        end
     end
 
     % Component initialization
@@ -1347,14 +1602,30 @@ classdef smart_thermal < matlab.apps.AppBase
             app.HelpMenu = uimenu(app.UIFigure);
             app.HelpMenu.Text = 'Help';
 
-            % Create DocMenu
-            app.DocMenu = uimenu(app.HelpMenu);
-            app.DocMenu.MenuSelectedFcn = createCallbackFcn(app, @DocMenuSelected, true);
-            app.DocMenu.Text = 'Doc';
+            % Create ScriptInstructionMenu
+            app.ScriptInstructionMenu = uimenu(app.HelpMenu);
+            app.ScriptInstructionMenu.MenuSelectedFcn = createCallbackFcn(app, @ScriptInstructionMenuSelected, true);
+            app.ScriptInstructionMenu.Separator = 'on';
+            app.ScriptInstructionMenu.Accelerator = 'h';
+            app.ScriptInstructionMenu.Text = 'Script Instruction';
+
+            % Create PCMUInstructionMenu
+            app.PCMUInstructionMenu = uimenu(app.HelpMenu);
+            app.PCMUInstructionMenu.MenuSelectedFcn = createCallbackFcn(app, @PCMUInstructionMenuSelected, true);
+            app.PCMUInstructionMenu.Separator = 'on';
+            app.PCMUInstructionMenu.Accelerator = 'p';
+            app.PCMUInstructionMenu.Text = 'PCMU Instruction';
+
+            % Create VCUInstructionMenu
+            app.VCUInstructionMenu = uimenu(app.HelpMenu);
+            app.VCUInstructionMenu.MenuSelectedFcn = createCallbackFcn(app, @VCUInstructionMenuSelected, true);
+            app.VCUInstructionMenu.Accelerator = 'u';
+            app.VCUInstructionMenu.Text = 'VCU Instruction';
 
             % Create AboutMenu
             app.AboutMenu = uimenu(app.HelpMenu);
             app.AboutMenu.MenuSelectedFcn = createCallbackFcn(app, @AboutMenuSelected, true);
+            app.AboutMenu.Separator = 'on';
             app.AboutMenu.Text = 'About';
 
             % Create Toolbar
@@ -1362,10 +1633,13 @@ classdef smart_thermal < matlab.apps.AppBase
 
             % Create OpenTemplate
             app.OpenTemplate = uipushtool(app.Toolbar);
+            app.OpenTemplate.Tag = 'Template';
+            app.OpenTemplate.Tooltip = {'Template File'};
             app.OpenTemplate.ClickedCallback = createCallbackFcn(app, @OpenTemplateClicked, true);
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
+            app.TabGroup.ButtonDownFcn = createCallbackFcn(app, @TabGroupButtonDown, true);
             app.TabGroup.Position = [1 301 1101 398];
 
             % Create HomeTab
@@ -1388,7 +1662,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create VersionTextArea
             app.VersionTextArea = uitextarea(app.ChangeLogPanel);
             app.VersionTextArea.Position = [64 2 1031 183];
-            app.VersionTextArea.Value = {'Version: V0.0.1'; 'Release Date: 20150508'; 'Description:'; '1. add the most used funcions to apps'; ''};
+            app.VersionTextArea.Value = {'Version: V0.0.3'; 'Release Date: 20250514'; 'Description:'; '1. Add the Sldd and Check page'; '2. Add simple Desc. about each Tab'; '3. Add PCUM and VUM integration instruction'; ''; 'Version: V0.0.2'; 'Release Date: 20250512'; 'Description:'; '1. add the test function'; ''; 'Version: V0.0.1'; 'Release Date: 20250508'; 'Description:'; '1. add the most used funcions to apps'; ''};
 
             % Create Image
             app.Image = uiimage(app.HomeTab);
@@ -1398,6 +1672,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create ModelTab
             app.ModelTab = uitab(app.TabGroup);
             app.ModelTab.Title = 'Model';
+            app.ModelTab.ButtonDownFcn = createCallbackFcn(app, @ModelTabButtonDown, true);
 
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.ModelTab);
@@ -1775,34 +2050,6 @@ classdef smart_thermal < matlab.apps.AppBase
             app.creatTmBaseButton.Position = [48 158 100 23];
             app.creatTmBaseButton.Text = 'creatTmBase';
 
-            % Create createSlddTab
-            app.createSlddTab = uitab(app.TabGroup3);
-            app.createSlddTab.Title = 'createSldd';
-
-            % Create createSlddButton
-            app.createSlddButton = uibutton(app.createSlddTab, 'push');
-            app.createSlddButton.ButtonPushedFcn = createCallbackFcn(app, @createSlddButtonPushed, true);
-            app.createSlddButton.Position = [29 303 134 23];
-            app.createSlddButton.Text = 'createSldd';
-
-            % Create SubModDropDown_2Label
-            app.SubModDropDown_2Label = uilabel(app.createSlddTab);
-            app.SubModDropDown_2Label.HorizontalAlignment = 'right';
-            app.SubModDropDown_2Label.Position = [197 304 50 22];
-            app.SubModDropDown_2Label.Text = 'SubMod';
-
-            % Create SlddDropDown
-            app.SlddDropDown = uidropdown(app.createSlddTab);
-            app.SlddDropDown.Items = {'TmRefriModeMgr', 'TmColtModeMgr', 'TmHvchCtrl', 'TmComprCtrl', 'TmRefriVlvCtrl', 'TmSovCtrl', 'TmSigProces', 'TmPumpCtrl', 'TmColtVlvCtrl', 'TmEnergyMgr', 'TmDiag', 'TmAfCtrl', 'bdroot'};
-            app.SlddDropDown.Position = [262 304 147 22];
-            app.SlddDropDown.Value = 'TmRefriModeMgr';
-
-            % Create createSlddDesignDataButton
-            app.createSlddDesignDataButton = uibutton(app.createSlddTab, 'push');
-            app.createSlddDesignDataButton.ButtonPushedFcn = createCallbackFcn(app, @createSlddDesignDataButtonPushed, true);
-            app.createSlddDesignDataButton.Position = [28 266 135 23];
-            app.createSlddDesignDataButton.Text = 'createSlddDesignData';
-
             % Create DeleteTab
             app.DeleteTab = uitab(app.TabGroup2);
             app.DeleteTab.Title = 'Delete';
@@ -1812,53 +2059,46 @@ classdef smart_thermal < matlab.apps.AppBase
             app.GridLayout.ColumnWidth = {'fit', 'fit', '2.25x'};
             app.GridLayout.RowHeight = {'fit', 23, '1.24x', 22, 23, 23, '9.59x'};
 
-            % Create delUselessLineButton
-            app.delUselessLineButton = uibutton(app.GridLayout, 'push');
-            app.delUselessLineButton.ButtonPushedFcn = createCallbackFcn(app, @delUselessLineButtonPushed, true);
-            app.delUselessLineButton.Layout.Row = 1;
-            app.delUselessLineButton.Layout.Column = 1;
-            app.delUselessLineButton.Text = 'delUselessLine';
-
             % Create delUselessPortButton
             app.delUselessPortButton = uibutton(app.GridLayout, 'push');
             app.delUselessPortButton.ButtonPushedFcn = createCallbackFcn(app, @delUselessPortButtonPushed, true);
-            app.delUselessPortButton.Layout.Row = 3;
-            app.delUselessPortButton.Layout.Column = 2;
+            app.delUselessPortButton.Layout.Row = 5;
+            app.delUselessPortButton.Layout.Column = 1;
             app.delUselessPortButton.Text = 'delUselessPort';
 
             % Create delGcsAllButton
             app.delGcsAllButton = uibutton(app.GridLayout, 'push');
             app.delGcsAllButton.ButtonPushedFcn = createCallbackFcn(app, @delGcsAllButtonPushed, true);
-            app.delGcsAllButton.Layout.Row = 2;
+            app.delGcsAllButton.Layout.Row = 1;
             app.delGcsAllButton.Layout.Column = 1;
             app.delGcsAllButton.Text = 'delGcsAll';
 
             % Create UselessInBlockDropDownLabel
             app.UselessInBlockDropDownLabel = uilabel(app.GridLayout);
             app.UselessInBlockDropDownLabel.HorizontalAlignment = 'right';
-            app.UselessInBlockDropDownLabel.Layout.Row = 1;
-            app.UselessInBlockDropDownLabel.Layout.Column = 2;
+            app.UselessInBlockDropDownLabel.Layout.Row = 3;
+            app.UselessInBlockDropDownLabel.Layout.Column = 1;
             app.UselessInBlockDropDownLabel.Text = 'UselessInBlock';
 
             % Create UselessInBlockDropDown
             app.UselessInBlockDropDown = uidropdown(app.GridLayout);
             app.UselessInBlockDropDown.Items = {'Terminator', 'Goto'};
-            app.UselessInBlockDropDown.Layout.Row = 1;
-            app.UselessInBlockDropDown.Layout.Column = 3;
+            app.UselessInBlockDropDown.Layout.Row = 3;
+            app.UselessInBlockDropDown.Layout.Column = 2;
             app.UselessInBlockDropDown.Value = 'Terminator';
 
             % Create UselessOutBlockDropDownLabel
             app.UselessOutBlockDropDownLabel = uilabel(app.GridLayout);
             app.UselessOutBlockDropDownLabel.HorizontalAlignment = 'right';
-            app.UselessOutBlockDropDownLabel.Layout.Row = 2;
-            app.UselessOutBlockDropDownLabel.Layout.Column = 2;
+            app.UselessOutBlockDropDownLabel.Layout.Row = 4;
+            app.UselessOutBlockDropDownLabel.Layout.Column = 1;
             app.UselessOutBlockDropDownLabel.Text = 'UselessOutBlock';
 
             % Create UselessOutBlockDropDown
             app.UselessOutBlockDropDown = uidropdown(app.GridLayout);
             app.UselessOutBlockDropDown.Items = {'Ground', 'From', 'Constant'};
-            app.UselessOutBlockDropDown.Layout.Row = 2;
-            app.UselessOutBlockDropDown.Layout.Column = 3;
+            app.UselessOutBlockDropDown.Layout.Row = 4;
+            app.UselessOutBlockDropDown.Layout.Column = 2;
             app.UselessOutBlockDropDown.Value = 'Ground';
 
             % Create ChangeTab
@@ -1953,18 +2193,6 @@ classdef smart_thermal < matlab.apps.AppBase
             app.FindTab = uitab(app.TabGroup2);
             app.FindTab.Title = 'Find';
 
-            % Create findDCMNamesButton
-            app.findDCMNamesButton = uibutton(app.FindTab, 'push');
-            app.findDCMNamesButton.ButtonPushedFcn = createCallbackFcn(app, @findDCMNamesButtonPushed, true);
-            app.findDCMNamesButton.Position = [37 325 100 23];
-            app.findDCMNamesButton.Text = 'findDCMNames';
-
-            % Create findDCMNamesChangesButton
-            app.findDCMNamesChangesButton = uibutton(app.FindTab, 'push');
-            app.findDCMNamesChangesButton.ButtonPushedFcn = createCallbackFcn(app, @findDCMNamesChangesButtonPushed, true);
-            app.findDCMNamesChangesButton.Position = [35 274 148 23];
-            app.findDCMNamesChangesButton.Text = 'findDCMNamesChanges';
-
             % Create findModPortsButton
             app.findModPortsButton = uibutton(app.FindTab, 'push');
             app.findModPortsButton.ButtonPushedFcn = createCallbackFcn(app, @findModPortsButtonPushed, true);
@@ -1987,10 +2215,6 @@ classdef smart_thermal < matlab.apps.AppBase
             app.TestTab = uitab(app.TabGroup);
             app.TestTab.Title = 'Test';
             app.TestTab.ButtonDownFcn = createCallbackFcn(app, @TestTabButtonDown, true);
-
-            % Create CaseListTree
-            app.CaseListTree = uitree(app.TestTab);
-            app.CaseListTree.Position = [3 182 155 192];
 
             % Create TestCaseTextAreaLabel
             app.TestCaseTextAreaLabel = uilabel(app.TestTab);
@@ -2045,7 +2269,7 @@ classdef smart_thermal < matlab.apps.AppBase
             app.CaseTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
             app.CaseTable.RowName = {};
             app.CaseTable.ColumnEditable = true;
-            app.CaseTable.Position = [157 2 941 227];
+            app.CaseTable.Position = [159 3 941 227];
 
             % Create GetPortsButton
             app.GetPortsButton = uibutton(app.TestTab, 'push');
@@ -2065,126 +2289,256 @@ classdef smart_thermal < matlab.apps.AppBase
             app.DemoButton.Position = [647 260 100 23];
             app.DemoButton.Text = 'Demo';
 
-            % Create HarnessParamsListBox
-            app.HarnessParamsListBox = uilistbox(app.TestTab);
-            app.HarnessParamsListBox.Items = {};
-            app.HarnessParamsListBox.ValueChangedFcn = createCallbackFcn(app, @HarnessParamsListBoxValueChanged, true);
-            app.HarnessParamsListBox.ClickedFcn = createCallbackFcn(app, @HarnessParamsListBoxClicked, true);
-            app.HarnessParamsListBox.Position = [4 3 154 179];
-            app.HarnessParamsListBox.Value = {};
-
             % Create DelParamButton
             app.DelParamButton = uibutton(app.TestTab, 'push');
             app.DelParamButton.ButtonPushedFcn = createCallbackFcn(app, @DelParamButtonPushed, true);
             app.DelParamButton.Position = [779 260 100 23];
             app.DelParamButton.Text = 'DelParam';
 
-            % Create DelDataAllButton
-            app.DelDataAllButton = uibutton(app.TestTab, 'push');
-            app.DelDataAllButton.ButtonPushedFcn = createCallbackFcn(app, @DelDataAllButtonPushed, true);
-            app.DelDataAllButton.Position = [914 261 100 23];
-            app.DelDataAllButton.Text = 'DelDataAll';
+            % Create CaseTreePanel
+            app.CaseTreePanel = uipanel(app.TestTab);
+            app.CaseTreePanel.Title = 'CaseTree';
+            app.CaseTreePanel.Position = [4 179 154 189];
 
-            % Create DelDataSelectButton
-            app.DelDataSelectButton = uibutton(app.TestTab, 'push');
-            app.DelDataSelectButton.ButtonPushedFcn = createCallbackFcn(app, @DelDataSelectButtonPushed, true);
-            app.DelDataSelectButton.Position = [916 297 100 23];
-            app.DelDataSelectButton.Text = 'DelDataSelect';
+            % Create CaseListTree
+            app.CaseListTree = uitree(app.CaseTreePanel);
+            app.CaseListTree.Position = [1 0 152 170];
+
+            % Create HarnessHistoryParamsPanel
+            app.HarnessHistoryParamsPanel = uipanel(app.TestTab);
+            app.HarnessHistoryParamsPanel.Title = 'Harness History Params';
+            app.HarnessHistoryParamsPanel.Position = [4 1 156 179];
+
+            % Create HarnessParamsListBox
+            app.HarnessParamsListBox = uilistbox(app.HarnessHistoryParamsPanel);
+            app.HarnessParamsListBox.Items = {};
+            app.HarnessParamsListBox.ValueChangedFcn = createCallbackFcn(app, @HarnessParamsListBoxValueChanged, true);
+            app.HarnessParamsListBox.ClickedFcn = createCallbackFcn(app, @HarnessParamsListBoxClicked, true);
+            app.HarnessParamsListBox.Position = [1 1 152 158];
+            app.HarnessParamsListBox.Value = {};
+
+            % Create SlddTab
+            app.SlddTab = uitab(app.TabGroup);
+            app.SlddTab.SizeChangedFcn = createCallbackFcn(app, @SlddTabSizeChanged, true);
+            app.SlddTab.Title = 'Sldd';
+            app.SlddTab.ButtonDownFcn = createCallbackFcn(app, @SlddTabButtonDown, true);
+
+            % Create CreateMatlabSlddPanel
+            app.CreateMatlabSlddPanel = uipanel(app.SlddTab);
+            app.CreateMatlabSlddPanel.Title = 'CreateMatlabSldd';
+            app.CreateMatlabSlddPanel.Position = [4 186 266 185];
+
+            % Create createSlddDesignDataButton
+            app.createSlddDesignDataButton = uibutton(app.CreateMatlabSlddPanel, 'push');
+            app.createSlddDesignDataButton.ButtonPushedFcn = createCallbackFcn(app, @createSlddDesignDataButtonPushed, true);
+            app.createSlddDesignDataButton.Position = [6 75 148 23];
+            app.createSlddDesignDataButton.Text = 'createSlddDesignData';
+
+            % Create createSlddButton
+            app.createSlddButton = uibutton(app.CreateMatlabSlddPanel, 'push');
+            app.createSlddButton.ButtonPushedFcn = createCallbackFcn(app, @createSlddButtonPushed, true);
+            app.createSlddButton.Position = [6 116 149 23];
+            app.createSlddButton.Text = 'createSldd';
+
+            % Create CreateExcelSlddPanel
+            app.CreateExcelSlddPanel = uipanel(app.SlddTab);
+            app.CreateExcelSlddPanel.Title = 'CreateExcelSldd';
+            app.CreateExcelSlddPanel.Position = [6 6 264 181];
+
+            % Create AreaDropDownLabel
+            app.AreaDropDownLabel = uilabel(app.CreateExcelSlddPanel);
+            app.AreaDropDownLabel.HorizontalAlignment = 'right';
+            app.AreaDropDownLabel.Position = [14 128 30 22];
+            app.AreaDropDownLabel.Text = 'Area';
+
+            % Create AreaDropDown
+            app.AreaDropDown = uidropdown(app.CreateExcelSlddPanel);
+            app.AreaDropDown.Items = {'bdroot', 'gcs'};
+            app.AreaDropDown.Position = [59 128 147 22];
+            app.AreaDropDown.Value = 'bdroot';
+
+            % Create findParametersButton
+            app.findParametersButton = uibutton(app.CreateExcelSlddPanel, 'push');
+            app.findParametersButton.ButtonPushedFcn = createCallbackFcn(app, @findParametersButtonPushed, true);
+            app.findParametersButton.Position = [19 90 100 23];
+            app.findParametersButton.Text = 'findParameters';
+
+            % Create findSlddButton
+            app.findSlddButton = uibutton(app.CreateExcelSlddPanel, 'push');
+            app.findSlddButton.ButtonPushedFcn = createCallbackFcn(app, @findSlddButtonPushed, true);
+            app.findSlddButton.Position = [19 52 100 23];
+            app.findSlddButton.Text = 'findSldd';
+
+            % Create openSlddButton
+            app.openSlddButton = uibutton(app.CreateExcelSlddPanel, 'push');
+            app.openSlddButton.ButtonPushedFcn = createCallbackFcn(app, @openSlddButtonPushed, true);
+            app.openSlddButton.Position = [143 52 100 23];
+            app.openSlddButton.Text = 'openSldd';
+
+            % Create changeExportedSlddButton
+            app.changeExportedSlddButton = uibutton(app.CreateExcelSlddPanel, 'push');
+            app.changeExportedSlddButton.ButtonPushedFcn = createCallbackFcn(app, @changeExportedSlddButtonPushed, true);
+            app.changeExportedSlddButton.Position = [20 12 165 23];
+            app.changeExportedSlddButton.Text = 'changeExportedSldd';
+
+            % Create LoadSlddPanel
+            app.LoadSlddPanel = uipanel(app.SlddTab);
+            app.LoadSlddPanel.Title = 'LoadSldd';
+            app.LoadSlddPanel.Position = [270 186 260 184];
+
+            % Create findSlddLoadVCUButton
+            app.findSlddLoadVCUButton = uibutton(app.LoadSlddPanel, 'push');
+            app.findSlddLoadVCUButton.ButtonPushedFcn = createCallbackFcn(app, @findSlddLoadVCUButtonPushed, true);
+            app.findSlddLoadVCUButton.Position = [17 118 116 23];
+            app.findSlddLoadVCUButton.Text = 'findSlddLoadVCU';
+
+            % Create findSlddLoadPCMUButton
+            app.findSlddLoadPCMUButton = uibutton(app.LoadSlddPanel, 'push');
+            app.findSlddLoadPCMUButton.ButtonPushedFcn = createCallbackFcn(app, @findSlddLoadPCMUButtonPushed, true);
+            app.findSlddLoadPCMUButton.Position = [16 82 120 23];
+            app.findSlddLoadPCMUButton.Text = 'findSlddLoadPCMU';
+
+            % Create LoadAllSlddButton
+            app.LoadAllSlddButton = uibutton(app.LoadSlddPanel, 'push');
+            app.LoadAllSlddButton.ButtonPushedFcn = createCallbackFcn(app, @LoadAllSlddButtonPushed, true);
+            app.LoadAllSlddButton.Position = [28 42 100 23];
+            app.LoadAllSlddButton.Text = 'LoadAllSldd';
+
+            % Create ChangeSlddPanel
+            app.ChangeSlddPanel = uipanel(app.SlddTab);
+            app.ChangeSlddPanel.Title = 'ChangeSldd';
+            app.ChangeSlddPanel.Position = [271 6 259 179];
+
+            % Create changeSlddTableByInitValueButton
+            app.changeSlddTableByInitValueButton = uibutton(app.ChangeSlddPanel, 'push');
+            app.changeSlddTableByInitValueButton.ButtonPushedFcn = createCallbackFcn(app, @changeSlddTableByInitValueButtonPushed, true);
+            app.changeSlddTableByInitValueButton.Position = [17 124 167 23];
+            app.changeSlddTableByInitValueButton.Text = 'changeSlddTableByInitValue';
+
+            % Create changeSlddInitValueByTableButton
+            app.changeSlddInitValueByTableButton = uibutton(app.ChangeSlddPanel, 'push');
+            app.changeSlddInitValueByTableButton.ButtonPushedFcn = createCallbackFcn(app, @changeSlddInitValueByTableButtonPushed, true);
+            app.changeSlddInitValueByTableButton.Position = [17 92 167 23];
+            app.changeSlddInitValueByTableButton.Text = 'changeSlddInitValueByTable';
+
+            % Create changeArchSlddButton
+            app.changeArchSlddButton = uibutton(app.ChangeSlddPanel, 'push');
+            app.changeArchSlddButton.ButtonPushedFcn = createCallbackFcn(app, @changeArchSlddButtonPushed, true);
+            app.changeArchSlddButton.Position = [17 56 165 22];
+            app.changeArchSlddButton.Text = 'changeArchSldd';
+
+            % Create FindDcmPanel
+            app.FindDcmPanel = uipanel(app.SlddTab);
+            app.FindDcmPanel.Title = 'FindDcm';
+            app.FindDcmPanel.Position = [532 188 231 181];
+
+            % Create findDCMNamesButton
+            app.findDCMNamesButton = uibutton(app.FindDcmPanel, 'push');
+            app.findDCMNamesButton.ButtonPushedFcn = createCallbackFcn(app, @findDCMNamesButtonPushed, true);
+            app.findDCMNamesButton.Position = [18 118 145 23];
+            app.findDCMNamesButton.Text = 'findDCMNames';
+
+            % Create findDCMNamesChangesButton
+            app.findDCMNamesChangesButton = uibutton(app.FindDcmPanel, 'push');
+            app.findDCMNamesChangesButton.ButtonPushedFcn = createCallbackFcn(app, @findDCMNamesChangesButtonPushed, true);
+            app.findDCMNamesChangesButton.Position = [18 80 148 23];
+            app.findDCMNamesChangesButton.Text = 'findDCMNamesChanges';
+
+            % Create findDCMValuesChangesButton
+            app.findDCMValuesChangesButton = uibutton(app.FindDcmPanel, 'push');
+            app.findDCMValuesChangesButton.ButtonPushedFcn = createCallbackFcn(app, @findDCMValuesChangesButtonPushed, true);
+            app.findDCMValuesChangesButton.Position = [19 40 146 23];
+            app.findDCMValuesChangesButton.Text = 'findDCMValuesChanges';
+
+            % Create ConfigPanel
+            app.ConfigPanel = uipanel(app.SlddTab);
+            app.ConfigPanel.Title = 'Config';
+            app.ConfigPanel.Position = [764 187 338 181];
+
+            % Create SubModDropDown_2Label_3
+            app.SubModDropDown_2Label_3 = uilabel(app.ConfigPanel);
+            app.SubModDropDown_2Label_3.HorizontalAlignment = 'right';
+            app.SubModDropDown_2Label_3.Position = [14 121 50 22];
+            app.SubModDropDown_2Label_3.Text = 'SubMod';
+
+            % Create SlddDropDown
+            app.SlddDropDown = uidropdown(app.ConfigPanel);
+            app.SlddDropDown.Items = {'TmRefriModeMgr', 'TmColtModeMgr', 'TmHvchCtrl', 'TmComprCtrl', 'TmRefriVlvCtrl', 'TmSovCtrl', 'TmSigProces', 'TmPumpCtrl', 'TmColtVlvCtrl', 'TmEnergyMgr', 'TmDiag', 'TmAfCtrl', 'bdroot'};
+            app.SlddDropDown.Position = [14 98 147 22];
+            app.SlddDropDown.Value = 'TmRefriModeMgr';
+
+            % Create DefaultDcmButton
+            app.DefaultDcmButton = uibutton(app.ConfigPanel, 'push');
+            app.DefaultDcmButton.ButtonPushedFcn = createCallbackFcn(app, @DefaultDcmButtonPushed, true);
+            app.DefaultDcmButton.Position = [9 9 100 23];
+            app.DefaultDcmButton.Text = 'DefaultDcm';
+
+            % Create DcmFilePath
+            app.DcmFilePath = uieditfield(app.ConfigPanel, 'text');
+            app.DcmFilePath.Placeholder = 'DCM File';
+            app.DcmFilePath.Position = [9 39 323 24];
+
+            % Create SlddTypeButtonGroup
+            app.SlddTypeButtonGroup = uibuttongroup(app.ConfigPanel);
+            app.SlddTypeButtonGroup.Title = 'SlddType';
+            app.SlddTypeButtonGroup.Position = [200 74 123 74];
+
+            % Create PCMUButton_2
+            app.PCMUButton_2 = uiradiobutton(app.SlddTypeButtonGroup);
+            app.PCMUButton_2.Text = 'PCMU';
+            app.PCMUButton_2.Position = [11 28 58 22];
+            app.PCMUButton_2.Value = true;
+
+            % Create VCUButton_2
+            app.VCUButton_2 = uiradiobutton(app.SlddTypeButtonGroup);
+            app.VCUButton_2.Text = 'VCU';
+            app.VCUButton_2.Position = [11 6 65 22];
+
+            % Create NoteTextAreaLabel
+            app.NoteTextAreaLabel = uilabel(app.SlddTab);
+            app.NoteTextAreaLabel.HorizontalAlignment = 'right';
+            app.NoteTextAreaLabel.Position = [533 161 30 22];
+            app.NoteTextAreaLabel.Text = 'Note';
+
+            % Create NoteTextArea
+            app.NoteTextArea = uitextarea(app.SlddTab);
+            app.NoteTextArea.Position = [532 6 566 151];
+            app.NoteTextArea.Value = {'备注：'; '函数功能简述如下，具体使用说明，请打开帮助手册（Help -> Sript Instrcution, 快捷键 Ctrl + h）'; '-------------------------------------------------------------------------------------------------------'; 'createSldd： 创建matlab sldd 并绑定模型(Config->SubMod)'; 'createSlddDesignData: 创建matlab sldd 并绑定模型, 同时将有用的工作空间变量，导入到sldd文件中，这个脚本的前提条件是仿真需要通过'; 'findParameters：可以找出当前界面或者模型的所有标定量，可选参数是bdroot 和 gcs'; 'findSldd:  导出当前模型的所有标定量，信号量到excel 格式的sldd中'; 'openSldd： 打开已经导出的sldd excel 文件，可选参数： Config -> SlddType '; 'changeExportedSldd:  根据最新的DCM文件，对导出 的变量进行赋初值'; 'findSlddLoadVCU： 将excel  变量导入到工作空间中'; 'findSlddLoadPCMU： 将excel  变量导入到工作空间中'; 'LoadAllSldd：  导入所有子模块的变量'; 'changeSlddTableByInitValue： 根据sldd 初值，改变对应的table变量'; 'changeSlddInitValueByTable： 根据sldd table变量，改变对应的初值'; 'changeArchSldd： 根据最新的DCM文件，对汇总后的标定量进行赋初值'; 'findDCMNames： 导出DCM文件中所有的标定量'; 'findDCMNamesChanges： 比较两个不同时期的DCM 标定量变化'; 'findDCMValuesChanges： 比较两个不同时期的DCM 标定值变化'};
+
+            % Create CheckTab
+            app.CheckTab = uitab(app.TabGroup);
+            app.CheckTab.Title = 'Check';
+            app.CheckTab.ButtonDownFcn = createCallbackFcn(app, @CheckTabButtonDown, true);
+
+            % Create delUselessLineButton
+            app.delUselessLineButton = uibutton(app.CheckTab, 'push');
+            app.delUselessLineButton.ButtonPushedFcn = createCallbackFcn(app, @delUselessLineButtonPushed, true);
+            app.delUselessLineButton.Tooltip = {'删除无用连线'};
+            app.delUselessLineButton.Position = [8 342 91 23];
+            app.delUselessLineButton.Text = 'delUselessLine';
 
             % Create IntegrationTab
             app.IntegrationTab = uitab(app.TabGroup);
             app.IntegrationTab.Title = 'Integration';
             app.IntegrationTab.ButtonDownFcn = createCallbackFcn(app, @IntegrationTabButtonDown, true);
 
-            % Create STAGEEditFieldLabel
-            app.STAGEEditFieldLabel = uilabel(app.IntegrationTab);
-            app.STAGEEditFieldLabel.HorizontalAlignment = 'right';
-            app.STAGEEditFieldLabel.Position = [99 335 45 22];
-            app.STAGEEditFieldLabel.Text = 'STAGE';
-
-            % Create STAGEEditField
-            app.STAGEEditField = uieditfield(app.IntegrationTab, 'text');
-            app.STAGEEditField.Position = [159 335 100 22];
-            app.STAGEEditField.Value = '23N7';
-
-            % Create INTERFACE_VERISONEditFieldLabel
-            app.INTERFACE_VERISONEditFieldLabel = uilabel(app.IntegrationTab);
-            app.INTERFACE_VERISONEditFieldLabel.HorizontalAlignment = 'right';
-            app.INTERFACE_VERISONEditFieldLabel.Position = [11 304 133 22];
-            app.INTERFACE_VERISONEditFieldLabel.Text = 'INTERFACE_VERISON';
-
-            % Create INTERFACE_VERISONEditField
-            app.INTERFACE_VERISONEditField = uieditfield(app.IntegrationTab, 'text');
-            app.INTERFACE_VERISONEditField.Position = [159 304 100 22];
-            app.INTERFACE_VERISONEditField.Value = 'V136';
-
-            % Create SOFT_VERSIONEditFieldLabel
-            app.SOFT_VERSIONEditFieldLabel = uilabel(app.IntegrationTab);
-            app.SOFT_VERSIONEditFieldLabel.HorizontalAlignment = 'right';
-            app.SOFT_VERSIONEditFieldLabel.Position = [46 274 98 22];
-            app.SOFT_VERSIONEditFieldLabel.Text = 'SOFT_VERSION';
-
-            % Create SOFT_VERSIONEditField
-            app.SOFT_VERSIONEditField = uieditfield(app.IntegrationTab, 'text');
-            app.SOFT_VERSIONEditField.Position = [159 274 100 22];
-            app.SOFT_VERSIONEditField.Value = '7070416';
-
-            % Create DCM_NAMEEditFieldLabel
-            app.DCM_NAMEEditFieldLabel = uilabel(app.IntegrationTab);
-            app.DCM_NAMEEditFieldLabel.HorizontalAlignment = 'right';
-            app.DCM_NAMEEditFieldLabel.Position = [70 240 74 22];
-            app.DCM_NAMEEditFieldLabel.Text = 'DCM_NAME';
-
-            % Create DCM_NAMEEditField
-            app.DCM_NAMEEditField = uieditfield(app.IntegrationTab, 'text');
-            app.DCM_NAMEEditField.Position = [159 240 257 22];
-            app.DCM_NAMEEditField.Value = 'HY11_PCMU_Tm_OTA3_V6060416_All.DCM';
-
-            % Create createCodePkgButton
-            app.createCodePkgButton = uibutton(app.IntegrationTab, 'push');
-            app.createCodePkgButton.ButtonPushedFcn = createCallbackFcn(app, @createCodePkgButtonPushed, true);
-            app.createCodePkgButton.Position = [21 58 100 23];
-            app.createCodePkgButton.Text = 'createCodePkg';
-
-            % Create VER_NAMEEditFieldLabel
-            app.VER_NAMEEditFieldLabel = uilabel(app.IntegrationTab);
-            app.VER_NAMEEditFieldLabel.HorizontalAlignment = 'right';
-            app.VER_NAMEEditFieldLabel.Position = [73 207 71 22];
-            app.VER_NAMEEditFieldLabel.Text = 'VER_NAME';
-
-            % Create VER_NAMEEditField
-            app.VER_NAMEEditField = uieditfield(app.IntegrationTab, 'text');
-            app.VER_NAMEEditField.Position = [159 207 257 22];
-
-            % Create createIntegrationButton
-            app.createIntegrationButton = uibutton(app.IntegrationTab, 'push');
-            app.createIntegrationButton.ButtonPushedFcn = createCallbackFcn(app, @createIntegrationButtonPushed, true);
-            app.createIntegrationButton.Position = [20 96 105 23];
-            app.createIntegrationButton.Text = 'createIntegration';
-
             % Create SingleModelProcessPanel
             app.SingleModelProcessPanel = uipanel(app.IntegrationTab);
             app.SingleModelProcessPanel.Title = 'SingleModelProcess';
-            app.SingleModelProcessPanel.Position = [537 6 540 367];
+            app.SingleModelProcessPanel.Position = [546 6 540 367];
 
             % Create SubModDropDownLabel
             app.SubModDropDownLabel = uilabel(app.SingleModelProcessPanel);
             app.SubModDropDownLabel.HorizontalAlignment = 'right';
-            app.SubModDropDownLabel.Position = [16 309 50 22];
+            app.SubModDropDownLabel.Position = [24 310 50 22];
             app.SubModDropDownLabel.Text = 'SubMod';
 
             % Create SubModDropDown
             app.SubModDropDown = uidropdown(app.SingleModelProcessPanel);
             app.SubModDropDown.Items = {'TmRefriModeMgr', 'TmColtModeMgr', 'TmHvchCtrl', 'TmComprCtrl', 'TmRefriVlvCtrl', 'TmSovCtrl', 'TmSigProces', 'TmPumpCtrl', 'TmColtVlvCtrl', 'TmEnergyMgr', 'TmDiag', 'TmAfCtrl'};
             app.SubModDropDown.ValueChangedFcn = createCallbackFcn(app, @SubModDropDownValueChanged, true);
-            app.SubModDropDown.Position = [81 309 147 22];
+            app.SubModDropDown.Position = [89 310 147 22];
             app.SubModDropDown.Value = 'TmRefriModeMgr';
-
-            % Create findSlddLoadButton
-            app.findSlddLoadButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.findSlddLoadButton.ButtonPushedFcn = createCallbackFcn(app, @findSlddLoadButtonPushed, true);
-            app.findSlddLoadButton.Position = [26 197 100 23];
-            app.findSlddLoadButton.Text = 'findSlddLoad';
 
             % Create ControlChooseButtonGroup
             app.ControlChooseButtonGroup = uibuttongroup(app.SingleModelProcessPanel);
@@ -2206,31 +2560,31 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create CreateSubModelButton
             app.CreateSubModelButton = uibutton(app.SingleModelProcessPanel, 'push');
             app.CreateSubModelButton.ButtonPushedFcn = createCallbackFcn(app, @CreateSubModelButtonPushed, true);
-            app.CreateSubModelButton.Position = [26 159 105 23];
+            app.CreateSubModelButton.Position = [21 228 120 23];
             app.CreateSubModelButton.Text = 'CreateSubModel';
 
             % Create createCodeSubModButton
             app.createCodeSubModButton = uibutton(app.SingleModelProcessPanel, 'push');
             app.createCodeSubModButton.ButtonPushedFcn = createCallbackFcn(app, @createCodeSubModButtonPushed, true);
-            app.createCodeSubModButton.Position = [26 119 122 23];
+            app.createCodeSubModButton.Position = [21 184 122 23];
             app.createCodeSubModButton.Text = 'createCodeSubMod';
 
             % Create changeCfgAutosarButton
             app.changeCfgAutosarButton = uibutton(app.SingleModelProcessPanel, 'push');
             app.changeCfgAutosarButton.ButtonPushedFcn = createCallbackFcn(app, @changeCfgAutosarButtonPushed, true);
-            app.changeCfgAutosarButton.Position = [171 197 114 23];
+            app.changeCfgAutosarButton.Position = [209 184 114 23];
             app.changeCfgAutosarButton.Text = 'changeCfgAutosar';
 
             % Create changeCfgErtButton
             app.changeCfgErtButton = uibutton(app.SingleModelProcessPanel, 'push');
             app.changeCfgErtButton.ButtonPushedFcn = createCallbackFcn(app, @changeCfgErtButtonPushed, true);
-            app.changeCfgErtButton.Position = [178 158 100 23];
+            app.changeCfgErtButton.Position = [209 137 114 23];
             app.changeCfgErtButton.Text = 'changeCfgErt';
 
             % Create changeCfgRefButton
             app.changeCfgRefButton = uibutton(app.SingleModelProcessPanel, 'push');
             app.changeCfgRefButton.ButtonPushedFcn = createCallbackFcn(app, @changeCfgRefButtonPushed, true);
-            app.changeCfgRefButton.Position = [178 235 100 23];
+            app.changeCfgRefButton.Position = [209 228 114 23];
             app.changeCfgRefButton.Text = 'changeCfgRef';
 
             % Create RefConfigEditFieldLabel
@@ -2244,86 +2598,101 @@ classdef smart_thermal < matlab.apps.AppBase
             app.RefConfigEditField.Position = [91 277 204 22];
             app.RefConfigEditField.Value = 'TmVcThermal_Configuration_sub';
 
-            % Create changeArchSlddButton
-            app.changeArchSlddButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.changeArchSlddButton.ButtonPushedFcn = createCallbackFcn(app, @changeArchSlddButtonPushed, true);
-            app.changeArchSlddButton.Position = [330 232 193 22];
-            app.changeArchSlddButton.Text = 'changeArchSldd';
+            % Create ThernalIntegrationPanel
+            app.ThernalIntegrationPanel = uipanel(app.IntegrationTab);
+            app.ThernalIntegrationPanel.Title = 'Thernal Integration';
+            app.ThernalIntegrationPanel.Position = [10 6 534 366];
 
-            % Create changeSlddTableByInitValueButton
-            app.changeSlddTableByInitValueButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.changeSlddTableByInitValueButton.ButtonPushedFcn = createCallbackFcn(app, @changeSlddTableByInitValueButtonPushed, true);
-            app.changeSlddTableByInitValueButton.Position = [27 74 167 23];
-            app.changeSlddTableByInitValueButton.Text = 'changeSlddTableByInitValue';
+            % Create createCodePkgButton
+            app.createCodePkgButton = uibutton(app.ThernalIntegrationPanel, 'push');
+            app.createCodePkgButton.ButtonPushedFcn = createCallbackFcn(app, @createCodePkgButtonPushed, true);
+            app.createCodePkgButton.Position = [28 50 105 23];
+            app.createCodePkgButton.Text = 'createCodePkg';
 
-            % Create changeSlddInitValueByTableButton
-            app.changeSlddInitValueByTableButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.changeSlddInitValueByTableButton.ButtonPushedFcn = createCallbackFcn(app, @changeSlddInitValueByTableButtonPushed, true);
-            app.changeSlddInitValueByTableButton.Position = [28 32 167 23];
-            app.changeSlddInitValueByTableButton.Text = 'changeSlddInitValueByTable';
-
-            % Create SubModDropDown_2Label_2
-            app.SubModDropDown_2Label_2 = uilabel(app.SingleModelProcessPanel);
-            app.SubModDropDown_2Label_2.HorizontalAlignment = 'right';
-            app.SubModDropDown_2Label_2.Position = [331 178 30 22];
-            app.SubModDropDown_2Label_2.Text = 'Area';
-
-            % Create AreaDropDown
-            app.AreaDropDown = uidropdown(app.SingleModelProcessPanel);
-            app.AreaDropDown.Items = {'bdroot', 'gcs'};
-            app.AreaDropDown.Position = [376 178 147 22];
-            app.AreaDropDown.Value = 'bdroot';
-
-            % Create findParametersButton
-            app.findParametersButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.findParametersButton.ButtonPushedFcn = createCallbackFcn(app, @findParametersButtonPushed, true);
-            app.findParametersButton.Position = [331 124 100 23];
-            app.findParametersButton.Text = 'findParameters';
-
-            % Create findSlddButton
-            app.findSlddButton = uibutton(app.SingleModelProcessPanel, 'push');
-            app.findSlddButton.ButtonPushedFcn = createCallbackFcn(app, @findSlddButtonPushed, true);
-            app.findSlddButton.Position = [24 232 100 23];
-            app.findSlddButton.Text = 'findSldd';
-
-            % Create LoadSlddAllButton
-            app.LoadSlddAllButton = uibutton(app.IntegrationTab, 'push');
-            app.LoadSlddAllButton.ButtonPushedFcn = createCallbackFcn(app, @LoadSlddAllButtonPushed, true);
-            app.LoadSlddAllButton.Position = [20 129 100 23];
-            app.LoadSlddAllButton.Text = 'LoadSlddAll';
+            % Create createIntegrationButton
+            app.createIntegrationButton = uibutton(app.ThernalIntegrationPanel, 'push');
+            app.createIntegrationButton.ButtonPushedFcn = createCallbackFcn(app, @createIntegrationButtonPushed, true);
+            app.createIntegrationButton.Position = [28 92 105 23];
+            app.createIntegrationButton.Text = 'createIntegration';
 
             % Create ArxmlToModelButton
-            app.ArxmlToModelButton = uibutton(app.IntegrationTab, 'push');
+            app.ArxmlToModelButton = uibutton(app.ThernalIntegrationPanel, 'push');
             app.ArxmlToModelButton.ButtonPushedFcn = createCallbackFcn(app, @ArxmlToModelButtonPushed, true);
-            app.ArxmlToModelButton.Position = [19 166 100 23];
+            app.ArxmlToModelButton.Position = [28 133 105 23];
             app.ArxmlToModelButton.Text = 'ArxmlToModel';
 
-            % Create ConfigTab
-            app.ConfigTab = uitab(app.TabGroup);
-            app.ConfigTab.Title = 'Config';
+            % Create STAGEEditFieldLabel
+            app.STAGEEditFieldLabel = uilabel(app.ThernalIntegrationPanel);
+            app.STAGEEditFieldLabel.HorizontalAlignment = 'right';
+            app.STAGEEditFieldLabel.Position = [111 302 45 22];
+            app.STAGEEditFieldLabel.Text = 'STAGE';
 
-            % Create DefaultDcmButton
-            app.DefaultDcmButton = uibutton(app.ConfigTab, 'push');
-            app.DefaultDcmButton.ButtonPushedFcn = createCallbackFcn(app, @DefaultDcmButtonPushed, true);
-            app.DefaultDcmButton.Position = [12 336 100 23];
-            app.DefaultDcmButton.Text = 'DefaultDcm';
+            % Create STAGEEditField
+            app.STAGEEditField = uieditfield(app.ThernalIntegrationPanel, 'text');
+            app.STAGEEditField.Position = [171 302 100 22];
+            app.STAGEEditField.Value = '23N7';
 
-            % Create DcmFilePath
-            app.DcmFilePath = uieditfield(app.ConfigTab, 'text');
-            app.DcmFilePath.Position = [132 334 323 24];
+            % Create INTERFACE_VERISONEditFieldLabel
+            app.INTERFACE_VERISONEditFieldLabel = uilabel(app.ThernalIntegrationPanel);
+            app.INTERFACE_VERISONEditFieldLabel.HorizontalAlignment = 'right';
+            app.INTERFACE_VERISONEditFieldLabel.Position = [23 271 133 22];
+            app.INTERFACE_VERISONEditFieldLabel.Text = 'INTERFACE_VERISON';
+
+            % Create INTERFACE_VERISONEditField
+            app.INTERFACE_VERISONEditField = uieditfield(app.ThernalIntegrationPanel, 'text');
+            app.INTERFACE_VERISONEditField.Position = [171 271 100 22];
+            app.INTERFACE_VERISONEditField.Value = 'V136';
+
+            % Create SOFT_VERSIONEditFieldLabel
+            app.SOFT_VERSIONEditFieldLabel = uilabel(app.ThernalIntegrationPanel);
+            app.SOFT_VERSIONEditFieldLabel.HorizontalAlignment = 'right';
+            app.SOFT_VERSIONEditFieldLabel.Position = [58 241 98 22];
+            app.SOFT_VERSIONEditFieldLabel.Text = 'SOFT_VERSION';
+
+            % Create SOFT_VERSIONEditField
+            app.SOFT_VERSIONEditField = uieditfield(app.ThernalIntegrationPanel, 'text');
+            app.SOFT_VERSIONEditField.Position = [171 241 100 22];
+            app.SOFT_VERSIONEditField.Value = '7070416';
+
+            % Create DCM_NAMEEditFieldLabel
+            app.DCM_NAMEEditFieldLabel = uilabel(app.ThernalIntegrationPanel);
+            app.DCM_NAMEEditFieldLabel.HorizontalAlignment = 'right';
+            app.DCM_NAMEEditFieldLabel.Position = [82 207 74 22];
+            app.DCM_NAMEEditFieldLabel.Text = 'DCM_NAME';
+
+            % Create DCM_NAMEEditField
+            app.DCM_NAMEEditField = uieditfield(app.ThernalIntegrationPanel, 'text');
+            app.DCM_NAMEEditField.Position = [171 207 257 22];
+            app.DCM_NAMEEditField.Value = 'HY11_PCMU_Tm_OTA3_V6060416_All.DCM';
+
+            % Create VER_NAMEEditFieldLabel
+            app.VER_NAMEEditFieldLabel = uilabel(app.ThernalIntegrationPanel);
+            app.VER_NAMEEditFieldLabel.HorizontalAlignment = 'right';
+            app.VER_NAMEEditFieldLabel.Position = [85 174 71 22];
+            app.VER_NAMEEditFieldLabel.Text = 'VER_NAME';
+
+            % Create VER_NAMEEditField
+            app.VER_NAMEEditField = uieditfield(app.ThernalIntegrationPanel, 'text');
+            app.VER_NAMEEditField.Position = [171 174 257 22];
 
             % Create LogTextArea
             app.LogTextArea = uitextarea(app.UIFigure);
             app.LogTextArea.WordWrap = 'off';
             app.LogTextArea.Position = [3 3 1097 299];
+            app.LogTextArea.Value = {'Welcom ! '; 'Welcom ! !'; 'Welcom ! ! !'};
 
             % Create ContextMenu
             app.ContextMenu = uicontextmenu(app.UIFigure);
 
-            % Create DelMenu
-            app.DelMenu = uimenu(app.ContextMenu);
-            app.DelMenu.MenuSelectedFcn = createCallbackFcn(app, @DelMenuSelected, true);
-            app.DelMenu.Text = 'Del';
+            % Create DelSelectMenu
+            app.DelSelectMenu = uimenu(app.ContextMenu);
+            app.DelSelectMenu.MenuSelectedFcn = createCallbackFcn(app, @DelSelectMenuSelected, true);
+            app.DelSelectMenu.Text = 'DelSelect';
+
+            % Create DelAllMenu
+            app.DelAllMenu = uimenu(app.ContextMenu);
+            app.DelAllMenu.MenuSelectedFcn = createCallbackFcn(app, @DelAllMenuSelected, true);
+            app.DelAllMenu.Text = 'DelAll';
             
             % Assign app.ContextMenu
             app.CaseTable.ContextMenu = app.ContextMenu;

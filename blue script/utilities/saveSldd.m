@@ -1,10 +1,10 @@
-function saveSldd(ModelName, DataPCMU, DataVCU, varargin)
+function [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, varargin)
 % 目的: 将端口的Signal信号，保存到excel中
 % 输入：
 %       ModelName: 模型名称
 %       DataPCMU:  PCMU sldd数据
 %       DataVCU: VCU sldd数据
-% 返回： DataPCMU: null
+% 返回： DataPCMU: [fPCMU, fVCU]
 % 范例： saveSldd(DataPCMU, DataVCU)
 % 作者： Blue.ge
 % 日期： 20231010
