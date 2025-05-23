@@ -57,15 +57,18 @@ function [PathAll, ParamAll] = findParameters(path)
         % 查找周期性脉冲标定量
         [PathCnt, ParamCnt] = findParamCnt(path);
         
+        % 查找Bias标定量
+        [PathBias, ParamBias] = findParamBias(path);
+        
         % 合并所有标定量名称
         ParamAll = [ParamConst, ParamCompTo, ...
                    Param1DLoopUp, Param2DLoopUp, ParamFlow, ...
-                   ParamRelay, ParamSatur, ParamDebug, ParamCnt];
+                   ParamRelay, ParamSatur, ParamDebug, ParamCnt, ParamBias];
         ParamAll = unique(ParamAll', 'stable');
         
         % 合并所有路径
         PathAll = [PathConst, PathCompTo, PathLookup1D, PathLookup2D, ...
-                  PathFlow, PathRelay, PathSatur, PathDebug, PathCnt];
+                  PathFlow, PathRelay, PathSatur, PathDebug, PathCnt, PathBias];
         PathAll = PathAll';
         
     catch ME

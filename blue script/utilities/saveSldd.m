@@ -16,7 +16,7 @@ function [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, varargin)
     addParameter(p,'dataType','Signals');  % Signals, Parameters
     addParameter(p,'fileNamePCMU','_DD_PCMU.xlsx');  
     addParameter(p,'fileNameVCU','_DD_VCU.xlsx');  
-    addParameter(p,'override',true);  
+    addParameter(p,'overwrite',true);  
    
     % 输入参数处理   
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
@@ -24,33 +24,26 @@ function [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, varargin)
     dataType = p.Results.dataType;
     fileNamePCMU = p.Results.fileNamePCMU;
     fileNameVCU = p.Results.fileNameVCU;
-    override = p.Results.override;
+    overwrite = p.Results.overwrite;
 
-    %%
-    fullpath =pwd;%mfilename('fullpath');将软件运行目录改为matlab当前工作目录
-    % 模型名_DD_VCU/PCMU
+    %% 处理保存路径
     %处理ModelName
     if contains(ModelName, "/")
         slashes = strfind(ModelName, "/");
         ModelName = extractAfter(ModelName, slashes(end));
     end
 
-%     fPCMU = fullfile(fullpath, [ModelName fileNamePCMU]) ;
-%     fVCU = fullfile(fullpath, [ModelName fileNameVCU]) ;
-    % 如果是override, 则更新路径, 临时
-        if override 
-            fNamePCMU =[ModelName fileNamePCMU];
-            fNameVCU = [ModelName fileNameVCU] ;
-            fPCMU = which(fNamePCMU) ;
-            fVCU = which(fNameVCU) ;
-            if isempty(fPCMU) || isempty(fVCU)
-                fPCMU = fullfile(pwd, [ModelName fileNamePCMU]) ;
-                fVCU = fullfile(pwd, [ModelName fileNameVCU]) ;
-            end
-        else
-            fPCMU = fullfile(pwd, [ModelName '_DD_PCMU_EXPORT.xlsx']) ;
-            fVCU = fullfile(pwd, [ModelName '_DD_VCU_EXPORT.xlsx']) ;
-        end
+    modPath = which(ModelName);
+    modFold = fileparts(modPath);
+    % 如果是overwrite, 则更新路径, 临时
+    if overwrite 
+        fPCMU = fullfile(modFold, [ModelName fileNamePCMU]) ;
+        fVCU = fullfile(modFold, [ModelName fileNameVCU]) ;
+
+    else
+        fPCMU = fullfile(modFold, [ModelName '_DD_PCMU_EXPORT.xlsx']) ;
+        fVCU = fullfile(modFold, [ModelName '_DD_VCU_EXPORT.xlsx']) ;
+    end
 
 
 

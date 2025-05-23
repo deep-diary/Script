@@ -125,6 +125,14 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
                 creatLines([bkIn, bkGoto]);
                 
                 numInputPorts = numInputPorts + 1;
+
+                % 创建from模块
+                fromPos = pos + [-300 - gotoLength/2, 0, -300 + gotoLength/2, 0];
+                bkFrom = add_block('built-in/From', [gcs '/From'], ...
+                                  'MakeNameUnique', 'on', 'Position', fromPos);
+                set_param(bkFrom, 'GotoTag', Name);
+                
+                
             catch ME
                 fprintf('警告: 创建输入端口 %s 失败: %s\n', Name, ME.message);
             end
@@ -158,8 +166,16 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
                 
                 % 连线
                 creatLines([bkFrom, bkOut]);
-                
+                 
                 numOutputPorts = numOutputPorts + 1;
+
+                % 创建goto模块
+                gotoPos = pos + [300 - gotoLength/2, 0, 300 + gotoLength/2, 0];
+                bkGoto = add_block('built-in/Goto', [gcs '/Goto'], ...
+                                  'MakeNameUnique', 'on', 'Position', gotoPos);
+                set_param(bkGoto, 'GotoTag', Name);
+                
+                
             catch ME
                 fprintf('警告: 创建输出端口 %s 失败: %s\n', Name, ME.message);
             end

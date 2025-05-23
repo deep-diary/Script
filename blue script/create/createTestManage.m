@@ -1,10 +1,14 @@
-function createTestManage(modelName, varargin)
+function [testPath,lastestRo,reportPath] = createTestManage(modelName, varargin)
 %CREATETESTMANAGE 为模块创建测试管理器
 %   createTestManage(modelName) 为指定模块创建测试管理器，包括测试文件、
 %   测试套件和测试用例的创建，以及测试运行和报告导出功能。
 %
 %   输入参数:
 %       modelName - 模块名称，例如'TmRefriVlvCtrl'
+%   输出参数：
+%       testPath - 测试文件路径
+%       lastestRo - 最新测试结果
+%       reportPath - 测试报告路径
 %
 %   可选参数:
 %       'run' - 是否运行测试，默认为false
@@ -12,7 +16,7 @@ function createTestManage(modelName, varargin)
 %       'export' - 是否导出测试结果，默认为false
 %
 %   示例:
-%       createTestManage('TmRefriVlvCtrl')
+%       createTestManage('TmComprCtrl')
 %       createTestManage('TmComprCtrl', 'run', true, 'export', true)
 %       createTestManage('TmComprCtrl', 'clear', true)
 %
@@ -45,9 +49,11 @@ function createTestManage(modelName, varargin)
             error('错误的子模块路径: %s', subPath);
         end
         
-        %% 设置测试文件路径
-        fileName = [model, '.mldatx'];
+        %% 设置相关变量
+        fileName = [modelName, '.mldatx'];
         testPath = fullfile(subPath, fileName);
+        lastestRo = '';
+        reportPath = '';
         
         %% 创建或加载测试文件
         try
@@ -57,8 +63,8 @@ function createTestManage(modelName, varargin)
                 sltest.testmanager.close;
                 
                 % 从模型创建测试
-                fprintf('正在从模型 %s 创建测试...\n', model);
-                testFile = sltest.testmanager.createTestsFromModel(testPath, model, 'simulation');
+                fprintf('正在从模型 %s 创建测试...\n', modelName);
+                testFile = sltest.testmanager.createTestsFromModel(testPath, modelName, 'simulation');
             else
                 fprintf('正在加载现有测试文件...\n');
                 sltest.testmanager.load(testPath);
@@ -84,7 +90,7 @@ function createTestManage(modelName, varargin)
         if run
             try
                 fprintf('正在运行测试...\n');
-                ro = sltest.testmanager.run;
+                lastestRo = sltest.testmanager.run;
             catch ME
                 warning(ME.identifier, '运行测试时发生错误: %s', ME.message);
             end
@@ -95,12 +101,23 @@ function createTestManage(modelName, varargin)
             try
                 fprintf('正在导出测试报告...\n');
                 ro = sltest.testmanager.getResultSets;
-                reportName = [model, '.pdf'];
+
+                if isempty(ro)
+                    return
+                else
+                    lastestRo = ro(end);
+                end
+
+                reportName = [modelName, '.pdf'];
                 reportPath = fullfile(subPath, reportName);
+                % 如果存在路径，则先删除
+                if exist(reportPath,'file')
+                    delete(reportPath)
+                end
                 
-                sltest.testmanager.report(ro, reportPath, ...
+                sltest.testmanager.report(lastestRo, reportPath, ...
                     'Author', 'Blue.ge', ...
-                    'Title', model, ...
+                    'Title', modelName, ...
                     'IncludeMLVersion', true, ...
                     'IncludeTestResults', 0, ...
                     'IncludeCoverageResult', true, ...
@@ -139,7 +156,7 @@ function createTestManage(modelName, varargin)
     % if false % 控制开关
     %     tcObj = sltest.testmanager.createTestForComponent(...
     %         'TestFile', testfile, ...
-    %         'Component', [model, '/2F'], ...
+    %         'Component', [modelName, '/2F'], ...
     %         'UseComponentInputs', false, ...
     %         'HarnessOptions', {'Name', 'F2', ...
     %                           'Source', 'Test Sequence', ...

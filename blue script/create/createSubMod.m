@@ -36,8 +36,8 @@ function [modNums] = createSubMod(varargin)
     p = inputParser;            % 函数的输入解析器
     addParameter(p,'template','Template.xlsx');         % 路径下的excel
     addParameter(p,'sheet','ModelName');                % 模板中的sheet名
-    addParameter(p,'FunPrefix','Fun');                  % 功能ID前缀
-    addParameter(p,'ReqPrefix','Req');                  % 需求ID前缀
+    addParameter(p,'FunPrefix','');                  % 功能ID前缀
+    addParameter(p,'ReqPrefix','');                  % 需求ID前缀
     addParameter(p,'rows',1);                           % 需要创建的行数
     addParameter(p,'blockWidth',150);                   % 模块宽度
     addParameter(p,'blockHeight',100);                  % 模块高度
@@ -80,11 +80,15 @@ function [modNums] = createSubMod(varargin)
         xPos = (currentCol - 1) * (blockWidth + hSpacing);
         yPos = (currentRow - 1) * (blockHeight + vSpacing);
         
-        FunctionID = FunctionIDs(i);
-        RequirementID = RequirementIDs(i);
+        FunctionID = FunctionIDs{i};
+        RequirementID = RequirementIDs{i};
         ModelName = ModelNames{i};
         % 获取子模型名称
-        subModName = [FunPrefix, num2str(FunctionID), '_', ReqPrefix, num2str(RequirementID), '_', ModelName];
+        if strcmp(FunctionID, 'None')
+            subModName = [ReqPrefix, RequirementID, '_', ModelName];
+        else
+            subModName = [FunPrefix, FunctionID, '_', ReqPrefix, RequirementID, '_', ModelName];
+        end
         
         % 创建子模型并设置位置
         newBlock = add_block('built-in/SubSystem', [gcs, '/', subModName]);

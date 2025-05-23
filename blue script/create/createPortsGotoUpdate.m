@@ -81,24 +81,25 @@ function [inList, outList] = createPortsGotoUpdate(varargin)
     
     %% 创建端口和Goto/From块
     if ~isempty(inList) || ~isempty(outList)
-        % 计算输出端口位置
+        % 计算端口位置
+        inPortPos = maxInPos(1:2);
         outPortPos = maxOutPos(1:2);
-        if ~isempty(maxOutPos)
-            outPortPos = outPortPos + [0 30];
-        end
         
         % 创建端口和信号
         createPortsGoto(...
             'inList', inList, ...
             'outList', outList, ...
+            'posIn', inPortPos, ...
             'posOut', outPortPos, ...
             'mode', mode);
         
         % 调整模型大小
         changeModSize(gcs, 'wid', wid);
         
-        % 为子模型创建Goto/From连接
-        createModGoto(path, 'mode', 'both');
+        % 为子模型创建Goto/From连接,前提是内部两层以下的子模型，第二层就需要直接创建端口了
+        if(length(split(path,'/'))>2)
+            createModGoto(path, 'mode', 'both');
+        end
     else
         disp('没有找到需要更新的信号。');
     end

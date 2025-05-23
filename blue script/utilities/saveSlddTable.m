@@ -17,7 +17,7 @@ function saveSlddTable(ModelName, DataPCMU,  varargin)
 %     addParameter(p,'tarPath',None);  % 1D, 2D
     addParameter(p,'fileNamePCMU','_DD_PCMU.xlsx');  
     addParameter(p,'fileNameVCU','_DD_VCU.xlsx');  
-    addParameter(p,'override',true);  
+    addParameter(p,'overwrite',true);  
     addParameter(p,'solveTabInputName',false);  
    
     % 输入参数处理   
@@ -26,7 +26,7 @@ function saveSlddTable(ModelName, DataPCMU,  varargin)
     dataType = p.Results.dataType;
     fileNamePCMU = p.Results.fileNamePCMU;
     fileNameVCU = p.Results.fileNameVCU;
-    override = p.Results.override;
+    overwrite = p.Results.overwrite;
     solveTabInputName = p.Results.solveTabInputName;
 
     %% 获取sldd 保存路径
@@ -37,8 +37,8 @@ function saveSlddTable(ModelName, DataPCMU,  varargin)
         ModelName = extractAfter(ModelName, slashes(end));
     end
 
-    % 如果是override, 则更新路径, 临时
-    if override 
+    % 如果是overwrite, 则更新路径, 临时
+    if overwrite 
         fNamePCMU =[ModelName fileNamePCMU];
         fNameVCU = [ModelName fileNameVCU] ;
         fPCMU = which(fNamePCMU) ;

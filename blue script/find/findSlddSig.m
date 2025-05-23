@@ -12,12 +12,12 @@ function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddSig(pathMd,  varargin)
      clc
     % 获取系统坐标
     p = inputParser;            % 函数的输入解析器
-    addParameter(p,'override',false);  
+    addParameter(p,'overwrite',false);  
    
     % 输入参数处理   
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
-    override = p.Results.override;
+    overwrite = p.Results.overwrite;
 
     %% 获取端口sldd signal
     [ModelName,PortsIn,PortsOut] = findModPorts(pathMd);
@@ -36,5 +36,5 @@ function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddSig(pathMd,  varargin)
     %% 合并并保存
     DataPCMU = [DataPCMUPort;DataPCMULoc];
     DataVCU = [DataVCUPort;DataVCULoc];
-    [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, 'dataType','Signals','override',override);
+    [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, 'dataType','Signals','overwrite',overwrite);
 end

@@ -14,12 +14,12 @@ function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddParam(path,  varargin)
      clc
     % 获取系统坐标
     p = inputParser;            % 函数的输入解析器
-    addParameter(p,'override',false);  
+    addParameter(p,'overwrite',false);  
    
     % 输入参数处理   
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
-    override = p.Results.override;
+    overwrite = p.Results.overwrite;
     %% 找到系统标定量
     [PathAll, parameters] = findParameters(path);
 
@@ -27,14 +27,14 @@ function [fPCMU, fVCU, DataPCMU, DataVCU] = findSlddParam(path,  varargin)
     [DataPCMU, DataVCU] = findParameterSlddData(path, parameters);
 
     %% 3. 保存sldd
-    [fPCMU, fVCU] = saveSldd(path, DataPCMU, DataVCU, 'dataType','Parameters','override',override);
+    [fPCMU, fVCU] = saveSldd(path, DataPCMU, DataVCU, 'dataType','Parameters','overwrite',overwrite);
 
      %% 4. 获取look up table 标定量
     [PathLookup1D, PathLookup2D,Param1DLoopUp, Param2DLoopUp] = findParamLookupAll(bdroot);
     %% 5. 保存1维表
     [DataPCMU, DataVCU] = findParameterSlddData(bdroot, Param1DLoopUp);
-    saveSlddTable(path, DataPCMU, 'dataType','1D','override',override)
+    saveSlddTable(path, DataPCMU, 'dataType','1D','overwrite',overwrite)
     %% 6. 保存2维度
     [DataPCMU, DataVCU] = findParameterSlddData(bdroot, Param2DLoopUp);
-    saveSlddTable(path, DataPCMU, 'dataType','2D','override',override)
+    saveSlddTable(path, DataPCMU, 'dataType','2D','overwrite',overwrite)
 end

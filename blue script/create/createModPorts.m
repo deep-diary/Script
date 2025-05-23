@@ -22,7 +22,7 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
     addParameter(p,'suffixStr','');      % 设置变量名和默认参数
     addParameter(p,'findType','base');      % base or interface or None
     addParameter(p,'add','None');      % None, blockType
-    addParameter(p,'enFirstTrig',true);      % 设置变量名和默认参数
+    addParameter(p,'enFirstTrig',false);      % 设置变量名和默认参数
 
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
     mode = p.Results.mode;

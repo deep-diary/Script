@@ -37,6 +37,8 @@ function [inList, outList] = createPortsGotoUpdateLoop(varargin)
         resoveValue = p.Results.resoveValue;
         
         %% 循环处理模型层级
+        inList = [];
+        outList = [];
         modelName = get_param(path, 'Name');
         fprintf('开始处理模型层级:\n');
         
