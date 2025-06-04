@@ -74,19 +74,10 @@ function [inCnt, outCnt, inCntDel, outCntDel] = createPorts(template, portPath, 
         for i = 1:height(inportTabNew)
             data = inportTabNew(i, :);
             posCent = [posIn(1), posIn(2) + inCnt * step, posIn(1), posIn(2) + inCnt * step];
-            inPos = posCent + [-15 -7 15 7];
-            
-            name = data.Name{1};
-            path = [portPath '/' name];
-            
-            try
-                h = add_block('built-in/Inport', path, 'Position', inPos);
-                [dataType, ~, ~, ~, ~] = findNameType(name);
-                set_param(h, 'OutDataTypeStr', dataType);
-                set_param(h, "BackgroundColor", "green");
+            pos = posCent + [-15 -7 15 7];
+            result = createPortsBySheet(gcs, pos, data, 'type', 'Inport');
+            if result
                 inCnt = inCnt + 1;
-            catch ME
-                fprintf('警告: 端口 %s 已存在或创建失败: %s\n', name, ME.message);
             end
         end
         
@@ -95,20 +86,26 @@ function [inCnt, outCnt, inCntDel, outCntDel] = createPorts(template, portPath, 
         for i = 1:height(outportTabNew)
             data = outportTabNew(i, :);
             posCent = [posOut(1), posOut(2) + outCnt * step, posOut(1), posOut(2) + outCnt * step];
-            inPos = posCent + [-15 -7 15 7];
-            
-            name = data.Name{1};
-            path = [portPath '/' name];
-            
-            try
-                h = add_block('built-in/Outport', path, 'Position', inPos);
-                [dataType, ~, ~, ~, ~] = findNameType(name);
-                set_param(h, 'OutDataTypeStr', dataType);
-                set_param(h, "BackgroundColor", "orange");
+            pos = posCent + [-15 -7 15 7];
+            result = createPortsBySheet(gcs, pos, data, 'type', 'Outport');
+            if result
                 outCnt = outCnt + 1;
-            catch ME
-                fprintf('警告: 端口 %s 已存在或创建失败: %s\n', name, ME.message);
             end
+%             name = data.Name{1};
+%             path = [portPath '/' name];
+%             % 获取datatype
+%             dataType = data.DataType{1};
+%             if isempty(dataType)
+%                 [dataType, ~, ~, ~, ~] = findNameType(name);
+%             end
+%             try
+%                 h = add_block('built-in/Outport', path, 'Position', inPos);
+%                 set_param(h, 'OutDataTypeStr', dataType);
+%                 set_param(h, "BackgroundColor", "orange");
+%                 outCnt = outCnt + 1;
+%             catch ME
+%                 fprintf('警告: 端口 %s 已存在或创建失败: %s\n', name, ME.message);
+%             end
         end
         
         %% 删除输入端口

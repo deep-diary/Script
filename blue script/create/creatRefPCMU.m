@@ -28,7 +28,7 @@ function creatRefPCMU(modelName, varargin)
         dcmPath = p.Results.DCM;
         
         %% 加载SLDD文件
-        slddPathArch = 'TmSwArch_DD_PCMU.xlsx';
+%         slddPathArch = 'TmSwArch_DD_PCMU.xlsx';
         
         % 指定模型SLDD路径
         if strcmp(slddPath, 'None')
@@ -43,7 +43,7 @@ function creatRefPCMU(modelName, varargin)
         end
         
         %% 加载SLDD数据
-        findSlddLoad(slddPathArch);
+%         findSlddLoad(slddPathArch);
         findSlddLoad(slddPathMod);
         
         %% 配置采样时间参数

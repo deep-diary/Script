@@ -44,6 +44,7 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
         addParameter(p, 'NAStr', 'NA', @ischar);
         addParameter(p, 'mode', 'keep', @(x) any(strcmp(x, {'pre', 'tail', 'keep'})));
         addParameter(p, 'fromTemplate', false, @islogical);
+        addParameter(p, 'createRelated', false, @islogical);
         addParameter(p, 'template', 'Template', @ischar);
         addParameter(p, 'sheet', 'Signals', @ischar);
         addParameter(p, 'inRecognName', 'Input', @ischar);
@@ -66,6 +67,7 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
         sheet = p.Results.sheet;
         template = p.Results.template;
         fromTemplate = p.Results.fromTemplate;
+        createRelated = p.Results.createRelated;
         
         %% 自动调整端口位置
         if posIn(1) == -500 && posOut(1) == 500
@@ -99,21 +101,17 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
         %% 创建输入端口和Goto模块
         numInputPorts = 0;
         for i = 1:length(inList)
+
+
             try
-                Name = inList{i};
-                if strcmp(Name, NAStr)
-                    continue;
-                end
-                
-                % 创建输入端口
+                data = inportTab(i, :);
+                Name = data.Name{1};
+
+                % 创建Inport模块
                 pos = [posIn(1), posIn(2) + numInputPorts * inputStep, ...
-                       posIn(1) + 30, posIn(2) + 14 + numInputPorts * inputStep];
-                bkIn = add_block('built-in/Inport', [gcs '/' Name], 'Position', pos);
-                
-                % 设置数据类型
-                [dataType, ~, ~, ~, ~] = findNameType(Name);
-                set_param(bkIn, 'OutDataTypeStr', dataType);
-                set_param(bkIn, "BackgroundColor", "green");
+                   posIn(1) + 30, posIn(2) + 14 + numInputPorts * inputStep];
+                bkIn = createPortsBySheet(gcs, pos, data, 'type', 'Inport');
+
                 
                 % 创建Goto模块
                 gotoPos = pos + [300 - gotoLength/2, 0, 300 + gotoLength/2, 0];
@@ -127,10 +125,12 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
                 numInputPorts = numInputPorts + 1;
 
                 % 创建from模块
-                fromPos = pos + [-300 - gotoLength/2, 0, -300 + gotoLength/2, 0];
-                bkFrom = add_block('built-in/From', [gcs '/From'], ...
-                                  'MakeNameUnique', 'on', 'Position', fromPos);
-                set_param(bkFrom, 'GotoTag', Name);
+                if createRelated
+                    fromPos = pos + [-300 - gotoLength/2, 0, -300 + gotoLength/2, 0];
+                    bkFrom = add_block('built-in/From', [gcs '/From'], ...
+                                      'MakeNameUnique', 'on', 'Position', fromPos);
+                    set_param(bkFrom, 'GotoTag', Name);
+                end
                 
                 
             catch ME
@@ -146,17 +146,17 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
                 if strcmp(Name, NAStr)
                     continue;
                 end
-                
-                % 获取输出端口名称和数据类型
-                [dataType, nameOutPort] = findNameMdOut(Name, 'mode', mode);
-                
-                % 创建输出端口
+
+                data = inportTab(i, :);
+
+                % 创建Outport模块
                 pos = [posOut(1), posOut(2) + numOutputPorts * outputStep, ...
                        posOut(1) + 30, posOut(2) + 14 + numOutputPorts * outputStep];
-                bkOut = add_block('built-in/Outport', [gcs '/' nameOutPort], ...
-                                 'MakeNameUnique', 'on', 'Position', pos);
-                set_param(bkOut, 'OutDataTypeStr', dataType);
-                set_param(bkOut, "BackgroundColor", "orange");
+
+                [~, nameOutPort] = findNameMdOut(Name, 'mode', mode);
+                data.Name{1} = nameOutPort;
+                bkOut = createPortsBySheet(gcs, pos, data, 'type', 'Outport');
+                
                 
                 % 创建From模块
                 fromPos = pos + [-300 - gotoLength/2, 0, -300 + gotoLength/2, 0];
@@ -170,10 +170,12 @@ function [numInputPorts, numOutputPorts] = createPortsGoto(varargin)
                 numOutputPorts = numOutputPorts + 1;
 
                 % 创建goto模块
-                gotoPos = pos + [300 - gotoLength/2, 0, 300 + gotoLength/2, 0];
-                bkGoto = add_block('built-in/Goto', [gcs '/Goto'], ...
-                                  'MakeNameUnique', 'on', 'Position', gotoPos);
-                set_param(bkGoto, 'GotoTag', Name);
+                if createRelated
+                    gotoPos = pos + [300 - gotoLength/2, 0, 300 + gotoLength/2, 0];
+                    bkGoto = add_block('built-in/Goto', [gcs '/Goto'], ...
+                                      'MakeNameUnique', 'on', 'Position', gotoPos);
+                    set_param(bkGoto, 'GotoTag', Name);
+                end
                 
                 
             catch ME

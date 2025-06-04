@@ -6,6 +6,7 @@ function uselessFrom = findUselessFrom(varargin)
 % 返回：
 %       uselessFrom: 无用from的路径 
 % 范例：uselessFrom = findUselessFrom(),
+% 范例：uselessFrom = findUselessFrom('path',gcs),
 % 说明：
 % 作者： Blue.ge
 % 日期： 20231031

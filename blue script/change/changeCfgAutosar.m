@@ -34,6 +34,7 @@ function changeCfgAutosar(modelName)
 
     %% 打开模型并初始化AUTOSAR配置
     open_system(modelName);
+%     autosar.api.create(modelName);
     codeGenAutosarCfg;
     autosar.api.create(modelName);
     
