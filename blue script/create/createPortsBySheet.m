@@ -48,14 +48,23 @@ function bk = createPortsBySheet(path, pos, data, varargin)
     bk = '';
     try
         Name = data.Name{1};
-        Details = data.Details{1};
+        Unit = '';
+        Details = '';
+
+        if iscell(data.Details)
+            Details = data.Details{1};
+        end
+        if iscell(data.Unit)
+            Unit = data.Unit{1};
+        end
         Min = data.Min(1);
         Max = data.Max(1);
-        Unit = data.Unit{1};
+
         bkPath = [path '/' Name];
         bkType = ['built-in/' type];
-        DataType = data.DataType{1};
-        if isempty(DataType)
+        if iscell(data.DataType)
+            DataType = data.DataType{1};
+        else
             [DataType, ~, ~, ~, ~] = findNameType(Name);
         end
 

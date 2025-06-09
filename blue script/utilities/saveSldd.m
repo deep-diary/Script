@@ -1,69 +1,83 @@
-function [fPCMU, fVCU] = saveSldd(ModelName, DataPCMU, DataVCU, varargin)
-% 目的: 将端口的Signal信号，保存到excel中
-% 输入：
-%       ModelName: 模型名称
-%       DataPCMU:  PCMU sldd数据
-%       DataVCU: VCU sldd数据
-% 返回： DataPCMU: [fPCMU, fVCU]
-% 范例： saveSldd(DataPCMU, DataVCU)
-% 作者： Blue.ge
-% 日期： 20231010
-%%
-    %% 参数处理
-     clc
-    % 获取系统坐标
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'dataType','Signals');  % Signals, Parameters
-    addParameter(p,'fileNamePCMU','_DD_PCMU.xlsx');  
-    addParameter(p,'fileNameVCU','_DD_VCU.xlsx');  
-    addParameter(p,'overwrite',true);  
-   
-    % 输入参数处理   
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
+function fSldd = saveSldd(ModelName, Data, varargin)
+%SAVESLDD 将信号或参数数据保存到Excel文件中
+%
+%   FSLDD = SAVESLDD(MODELNAME, DATA) 将数据保存到Excel文件中。
+%
+%   FSLDD = SAVESLDD(MODELNAME, DATA, 'project', PROJECT) 指定项目类型，
+%   将数据保存到对应项目的Excel文件中。
+%
+%   输入参数:
+%       MODELNAME - 模型名称 (字符向量或字符串标量)
+%       DATA      - 要保存的数据矩阵
+%       PROJECT   - 项目类型，可选值: 'XCU', 'PCMU', 'VCU', 'CUSTOM'
+%                   (默认值: 'XCU')
+%
+%   可选参数:
+%       'dataType'    - 数据类型，可选值: 'Signals', 'Parameters'
+%                      (默认值: 'Signals')
+%       'overwrite'   - 是否覆盖现有文件，可选值: true, false
+%                      (默认值: true)
+%
+%   输出参数:
+%       FSLDD     - 保存的文件完整路径
+%
+%   示例:
+%       fSldd = saveSldd('ModelName', Data)
+%       fSldd = saveSldd('ModelName', Data, 'project', 'XCU', 'dataType', 'Signals')
+%
+%   作者: Blue.ge
+%   日期: 2023-10-10
 
-    dataType = p.Results.dataType;
-    fileNamePCMU = p.Results.fileNamePCMU;
-    fileNameVCU = p.Results.fileNameVCU;
-    overwrite = p.Results.overwrite;
+% 验证输入参数
+validateattributes(ModelName, {'char', 'string'}, {'scalartext'}, mfilename, 'ModelName');
+validateattributes(Data, {'cell'}, {'2d'}, mfilename, 'Data');
 
-    %% 处理保存路径
-    %处理ModelName
-    if contains(ModelName, "/")
-        slashes = strfind(ModelName, "/");
-        ModelName = extractAfter(ModelName, slashes(end));
-    end
+% 创建输入解析器
+p = inputParser;
+addParameter(p, 'project', 'XCU', @(x) ismember(x, {'XCU', 'PCMU', 'VCU', 'CUSTOM'}));
+addParameter(p, 'dataType', 'Signals', @(x) ismember(x, {'Signals', 'Parameters'}));
+addParameter(p, 'overwrite', true, @islogical);
+parse(p, varargin{:});
 
-    modPath = which(ModelName);
-    modFold = fileparts(modPath);
-    % 如果是overwrite, 则更新路径, 临时
-    if overwrite 
-        fPCMU = fullfile(modFold, [ModelName fileNamePCMU]) ;
-        fVCU = fullfile(modFold, [ModelName fileNameVCU]) ;
+% 获取解析后的参数
+project = p.Results.project;
+dataType = p.Results.dataType;
+overwrite = p.Results.overwrite;
 
-    else
-        fPCMU = fullfile(modFold, [ModelName '_DD_PCMU_EXPORT.xlsx']) ;
-        fVCU = fullfile(modFold, [ModelName '_DD_VCU_EXPORT.xlsx']) ;
-    end
+% 处理模型名称
+if contains(ModelName, "/")
+    slashes = strfind(ModelName, "/");
+    ModelName = extractAfter(ModelName, slashes(end));
+end
 
+% 获取模型路径
+modPath = which(ModelName);
+modFold = fileparts(modPath);
 
+% 构建文件名
+if overwrite
+    fileName = [ModelName '_DD_' project '.xlsx'];
+else
+    fileName = [ModelName '_DD_' project '_EXPORT.xlsx'];
+end
 
-    if ~strcmp(dataType, 'Signals') && ~strcmp(dataType, 'Parameters')
-        error('pls input the right dataType, the chooses are only: Signals, Parameters')
-    end
-    sheet = dataType;
-     if(strlength(sheet)>=31)
-         sheet=sheet(1:30);
-     end
+% 构建完整文件路径
+fSldd = fullfile(modFold, fileName);
 
+% 处理工作表名称
+sheet = dataType;
+if strlength(sheet) >= 31
+    sheet = sheet(1:30);
+end
 
-    %% 合并标题
-    dataTitle={'ModelName', 'PortType','Name','DataType','CustomStorageClass','DefinitionFile','RTE_Interface','Dimensions','Details', 'ValueTable', 'Unit','IniValue','Min','Max','DataTypeSelect','CustomStorageClassSelect','DefinitionFile'};
-    DataPCMUT = [dataTitle; DataPCMU];
-    DataVCUT = [dataTitle; DataVCU];
+% 合并标题
+dataTitle = {'ModelName', 'PortType', 'Name', 'DataType', 'CustomStorageClass', ...
+    'DefinitionFile', 'RTE_Interface', 'Dimensions', 'Details', 'ValueTable', ...
+    'Unit', 'IniValue', 'Min', 'Max', 'DataTypeSelect', ...
+    'CustomStorageClassSelect', 'DefinitionFile'};
+DataWithTitle = [dataTitle; Data];
 
-    %%
-%     xlswrite(fPCMU,DataPCMUT,sheet,xlRange);
-%     xlswrite(fVCU,DataVCUT,sheet,xlRange);
-    writecell(DataPCMUT,fPCMU,'Sheet',sheet ,'WriteMode','overwritesheet');
-    writecell(DataVCUT,fVCU,'Sheet',sheet,'WriteMode','overwritesheet');
+% 保存数据到Excel
+writecell(DataWithTitle, fSldd, 'Sheet', sheet, 'WriteMode', 'overwritesheet');
+
 end

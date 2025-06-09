@@ -19,6 +19,8 @@ function changeLinesPortAttr(path, varargin)
     addParameter(p, 'testValue', false, @islogical);
     addParameter(p, 'Name', '');
     addParameter(p, 'FindAll', false, @islogical);
+    addParameter(p, 'enableIn', false, @islogical);
+    addParameter(p, 'enableOut', false, @islogical);
     parse(p, varargin{:});
 
     resoveValue = p.Results.resoveValue;
@@ -26,40 +28,45 @@ function changeLinesPortAttr(path, varargin)
     testValue = p.Results.testValue;
     Name = p.Results.Name;
     FindAll = p.Results.FindAll;
+    enableIn = p.Results.enableIn;
+    enableOut = p.Results.enableOut;
 
     %% 找到输入输出线的句柄
     [lineIn, lineOut] = findLinesPorts(path,'FindAll',FindAll);
 
     %% Deal with inport
-    for i = 1:length(lineIn)
-        h_line = lineIn(i);
-        Name = get(get(h_line).SrcBlockHandle).Name;
-        if resoveValue || logValue || testValue
-            set(h_line, 'Name', Name);
-        else
-            set(h_line, 'Name', '');
+    if enableIn
+        for i = 1:length(lineIn)
+            h_line = lineIn(i);
+            Name = get(get(h_line).SrcBlockHandle).Name;
+            if resoveValue || logValue || testValue
+                set(h_line, 'Name', Name);
+            else
+                set(h_line, 'Name', '');
+            end
+    
+            set(h_line, 'MustResolveToSignalObject', resoveValue);
+            set(h_line, 'DataLogging', logValue);
+            set(h_line, 'TestPoint', testValue);
         end
-
-        set(h_line, 'MustResolveToSignalObject', resoveValue);
-        set(h_line, 'DataLogging', logValue);
-        set(h_line, 'TestPoint', testValue);
     end
 
     %% Deal with outport
-    for i = 1:length(lineOut)
-        h_line = lineOut(i);
-        Name = get(get(h_line).SrcBlockHandle).Name;
-        if resoveValue || logValue || testValue
-            set(h_line, 'Name', Name);
-        else
-            set(h_line, 'Name', '');
+    if enableOut
+        for i = 1:length(lineOut)
+            h_line = lineOut(i);
+            Name = get(get(h_line).DstBlockHandle).Name;
+            if resoveValue || logValue || testValue
+                set(h_line, 'Name', Name);
+            else
+                set(h_line, 'Name', '');
+            end
+    
+            set(h_line, 'MustResolveToSignalObject', resoveValue);
+            set(h_line, 'DataLogging', logValue);
+            set(h_line, 'TestPoint', testValue);
         end
-
-        set(h_line, 'MustResolveToSignalObject', resoveValue);
-        set(h_line, 'DataLogging', logValue);
-        set(h_line, 'TestPoint', testValue);
     end
-
 end
 
 

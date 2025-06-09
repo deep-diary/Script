@@ -25,7 +25,7 @@ function [sigCnts, paramCnts] = findSlddLoad(path, varargin)
     try
         %% 输入参数处理
         p = inputParser;
-        addParameter(p, 'mode', 'PCMU', @(x) any(validatestring(x, {'PCMU', 'VCU'})));
+        addParameter(p, 'mode', 'XCU', @(x) any(validatestring(x, {'PCMU', 'VCU', 'XCU'})));
         addParameter(p, 'exclude', {}, @(x) iscell(x) || ischar(x));
         parse(p, varargin{:});
         
@@ -60,6 +60,9 @@ function [sigCnts, paramCnts] = findSlddLoad(path, varargin)
         elseif contains(path, 'VCU')
             fprintf('检测到VCU格式的SLDD文件\n');
             mode = 'VCU';
+        elseif contains(path, 'XCU')
+            fprintf('检测到XCU格式的SLDD文件\n');
+            mode = 'XCU';
         else
             error('文件名必须包含PCMU或VCU标识');
         end
@@ -72,6 +75,9 @@ function [sigCnts, paramCnts] = findSlddLoad(path, varargin)
             case 'VCU'
                 sigCnts = findSlddLoadSigVCU(path, 'exclude', exclude);
                 paramCnts = findSlddLoadParamVCU(path, 'exclude', exclude);
+            case 'XCU'
+                sigCnts = findSlddLoadSigXCU(path, 'exclude', exclude);
+                paramCnts = findSlddLoadParamXCU(path, 'exclude', exclude);
             otherwise
                 error('模式参数必须是PCMU或VCU');
         end

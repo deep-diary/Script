@@ -1,0 +1,6 @@
+---
+description: 
+globs: *.m
+alwaysApply: false
+---
+当我让你优化脚本的时候，请使用matlab 官方函数格式，优化下此脚本

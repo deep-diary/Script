@@ -19,7 +19,7 @@ function createCodeSubMod(mdName, varargin)
     try
         %% 输入参数处理
         p = inputParser;
-        addParameter(p, 'type', 'VCU', @(x) any(validatestring(x, {'VCU', 'PCMU'})));
+        addParameter(p, 'type', 'VCU', @(x) any(validatestring(x, {'VCU', 'PCMU','XCU'})));
         parse(p, varargin{:});
         
         ctrlType = p.Results.type;
@@ -27,8 +27,10 @@ function createCodeSubMod(mdName, varargin)
         %% 1. 创建目标文件夹
         proj = currentProject;
         rootPath = proj.RootFolder;
-        mdFold = findModPrefix(mdName);
-        folderName = fullfile(rootPath, 'SubModel', mdFold, ['Code_' ctrlType]);
+        mdPath = which(mdName)
+        [fold,name,ext] = fileparts(mdPath);
+        
+        folderName = fullfile(fold, ['Code_' ctrlType]);
         
         % 如果文件夹存在则删除重建
         if exist(folderName, 'dir')

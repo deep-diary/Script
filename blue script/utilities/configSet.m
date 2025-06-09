@@ -45,5 +45,5 @@ function configSet(key, value, varargin)
         data.(key) = value;
     end
 
-    save(fileName, '-struct', 'data');
+    save(which(fileName), '-struct', 'data');
 end 

@@ -32,7 +32,12 @@ function portsChanged = changeModPortType(path)
 
     %% 初始化
     portsChanged = {};
-    [ModelName, PortsIn, PortsOut] = findModPorts(path);
+    if strcmp(path, bdroot)
+        PortsIn = find_system(path, 'BlockType', 'Inport');
+        PortsOut = find_system(path, 'BlockType', 'Outport');
+    else
+        [~, PortsIn, PortsOut] = findModPorts(path);
+    end
 
     %% 处理输入端口
     for i = 1:length(PortsIn)

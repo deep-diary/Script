@@ -1,202 +1,211 @@
-function saveSlddTable(ModelName, DataPCMU,  varargin)
-% 目的: 保存二维表到excel 中
-% 输入：
-%       ModelName: 模型名称
-%       stData:  表格数据
-%       DataVCU: VCU sldd数据
-% 返回： DataPCMU: null
-% 范例： saveSlddTable(ModelName, DataPCMU, 'dataType','1D')
-% 作者： Blue.ge
-% 日期： 20231010
-%%
-    %% 参数处理
-     clc
-    % 获取系统坐标
-    p = inputParser;            % 函数的输入解析器
-    addParameter(p,'dataType','1D');  % 1D, 2D
-%     addParameter(p,'tarPath',None);  % 1D, 2D
-    addParameter(p,'fileNamePCMU','_DD_PCMU.xlsx');  
-    addParameter(p,'fileNameVCU','_DD_VCU.xlsx');  
-    addParameter(p,'overwrite',true);  
-    addParameter(p,'solveTabInputName',false);  
-   
-    % 输入参数处理   
-    parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
+function saveSlddTable(ModelName, Data, varargin)
+%SAVESLDDTABLE 将SLDD数据保存为Excel表格
+%
+%   SAVESLDDTABLE(MODELNAME, DATA) 将SLDD数据保存为Excel表格。
+%
+%   SAVESLDDTABLE(MODELNAME, DATA, 'project', PROJECT) 指定项目类型，
+%   将数据保存到对应项目的Excel文件中。
+%
+%   输入参数:
+%       MODELNAME   - 模型名称 (字符向量或字符串标量)
+%       DATA        - SLDD数据 (表格)
+%
+%   可选参数:
+%       'project'   - 项目类型，可选值: 'XCU', 'PCMU', 'VCU', 'CUSTOM'
+%                    (默认值: 'PCMU')
+%       'dataType'  - 数据类型，可选值: '1D', '2D'
+%                    (默认值: '1D')
+%       'overwrite' - 是否覆盖现有文件，可选值: true, false
+%                    (默认值: true)
+%       'solveTabInputName' - 是否解析表格输入名称，可选值: true, false
+%                           (默认值: false)
+%
+%   示例:
+%       saveSlddTable('MyModel', Data, 'project', 'XCU')
+%       saveSlddTable('MyModel', Data, 'dataType', '2D', 'overwrite', false)
+%
+%   作者: Blue.ge
+%   日期: 2023-10-26
+%   版本: 1.2
 
-    dataType = p.Results.dataType;
-    fileNamePCMU = p.Results.fileNamePCMU;
-    fileNameVCU = p.Results.fileNameVCU;
-    overwrite = p.Results.overwrite;
-    solveTabInputName = p.Results.solveTabInputName;
+% 验证输入参数
+validateattributes(ModelName, {'char', 'string'}, {'scalartext'}, mfilename, 'ModelName');
+% validateattributes(Data, {'table'}, {}, mfilename, 'Data');
 
-    %% 获取sldd 保存路径
-    % 模型名_DD_VCU/PCMU
-    %处理ModelName
-    if contains(ModelName, "/")
-        slashes = strfind(ModelName, "/");
-        ModelName = extractAfter(ModelName, slashes(end));
-    end
+% 创建输入解析器
+p = inputParser;
+addParameter(p, 'project', 'PCMU', ...
+    @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+addParameter(p, 'dataType', '1D', ...
+    @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+addParameter(p, 'overwrite', true, @islogical);
+addParameter(p, 'solveTabInputName', false, @islogical);
+parse(p, varargin{:});
 
-    % 如果是overwrite, 则更新路径, 临时
-    if overwrite 
-        fNamePCMU =[ModelName fileNamePCMU];
-        fNameVCU = [ModelName fileNameVCU] ;
-        fPCMU = which(fNamePCMU) ;
-        fVCU = which(fNameVCU) ;
-        if isempty(fPCMU) || isempty(fVCU)
-            fPCMU = fullfile(pwd, [ModelName fileNamePCMU]) ;
-            fVCU = fullfile(pwd, [ModelName fileNameVCU]) ;
-        end
-    else
-        fPCMU = fullfile(pwd, [ModelName '_DD_PCMU_EXPORT.xlsx']) ;
-        fVCU = fullfile(pwd, [ModelName '_DD_VCU_EXPORT.xlsx']) ;
-    end
+% 获取解析后的参数
+project = p.Results.project;
+dataType = p.Results.dataType;
+overwrite = p.Results.overwrite;
+solveTabInputName = p.Results.solveTabInputName;
 
-    sheet = dataType;
-     if(strlength(sheet)>=31)
-         sheet=sheet(1:30);
-     end
+% 验证项目类型
+validProjects = {'XCU', 'PCMU', 'VCU', 'CUSTOM'};
+if ~ismember(project, validProjects)
+    error('saveSlddTable:InvalidProject', ...
+        '项目类型必须是以下之一: %s', strjoin(validProjects, ', '));
+end
 
-    %%
+% 验证数据类型
+validTypes = {'1D', '2D'};
+if ~ismember(dataType, validTypes)
+    error('saveSlddTable:InvalidDataType', ...
+        '数据类型必须是以下之一: %s', strjoin(validTypes, ', '));
+end
+
+% 处理模型名称
+if contains(ModelName, "/")
+    slashes = strfind(ModelName, "/");
+    ModelName = extractAfter(ModelName, slashes(end));
+end
+
+% 构建文件路径
+modFold = pwd;
+if overwrite
+    fSldd = fullfile(modFold, [ModelName '_DD_' project '.xlsx']);
+else
+    fSldd = fullfile(modFold, [ModelName '_DD_' project '_EXPORT.xlsx']);
+end
+
+% 处理工作表名称
+sheet = dataType;
+if strlength(sheet) >= 31
+    sheet = sheet(1:30);
+end
+
+try
+    % 根据数据类型处理数据
     if strcmp(dataType, '1D')
-        %% 保存1维表
-        
-%         rows1D = startsWith(DataPCMU.Name,'tTm');
-%         DataPCMU = DataPCMU(rows1D,:);
-        rows = size(DataPCMU,1);
-        stData = cell(rows/2*3,10);
-        for i=1:2:rows
-%             disp(i)
-            idy = 4*(i-1)/2+1;
-%             idy = idy+1; % 让第一行为空
-            data = DataPCMU(i,:);
-            X = DataPCMU(i+1,:);
-            
-            name = data{3};
-            nameX = X{3};
-            value = data{12};
-            valueX = X{12};
-
-            if ischar(value)
-                value = str2num(value);
-            end
-            if ischar(valueX)
-                valueX = str2num(valueX);
-            end
-            widX = length(valueX);
-
-            % 找到输入名字
-            if solveTabInputName
-                try
-                    variables = Simulink.findVars(bdroot, ...
-                        'SourceType','base workspace', ...
-                        'SearchMethod','cached', ...
-                        'Name',name...
-                        ); %% 'SourceType','base workspace',     
-                catch
-                    variables = Simulink.findVars(bdroot, ...
-                        'SourceType','base workspace', ...
-                        'Name',name...
-                        ); %% 'SourceType','base workspace',     'SearchMethod','cached', ...
-                end
-                path = variables(1).Users{1};  % 对应模块路径
-                [X,Y] = findTableInputType(path);
-            end
-
-
-            % 第一行
-            stData{idy,1} = data{9};  % description
-            stData{idy,2} = widX;  % 宽度
-
-            if solveTabInputName
-                stData{idy+1,1} = X.name;
-            else
-                stData{idy+1,1} = nameX;
-            end
-            stData(idy+1,2:widX+1) = num2cell(valueX);
-
-            % 第一行
-            stData{idy+2,1} = name;
-            stData(idy+2,2:widX+1) = num2cell(value);
-            
-            
-        end
-    elseif strcmp(dataType, '2D')
-        %% 保存2维表
-%         rows2D = startsWith(DataPCMU.Name,'mTm');
-%         DataPCMU = DataPCMU(rows2D,:);
-        rows = size(DataPCMU,1);
-        idy = 1; % 从第二行开始
-        stData = {};
-        for i=1:3:rows
-            disp(i)
-            data = DataPCMU(i,:);
-            X = DataPCMU(i+1,:);
-            Y = DataPCMU(i+2,:);
-            name = data{3};
-            nameX = X{3};
-            nameY = Y{3};
-            value = data{12};
-            valueX = X{12};
-            valueY = Y{12}; 
-            if ischar(value)
-                value = str2num(value);
-            end
-            if ischar(valueX)
-                valueX = str2num(valueX);
-            end
-            if ischar(valueY)
-                valueY = str2num(valueY);
-            end
-            widX = length(valueX);
-            widY = length(valueY);
-
-            % 找到输入名字
-            if solveTabInputName
-                try
-                    variables = Simulink.findVars(bdroot, ...
-                        'SourceType','base workspace', ...
-                        'SearchMethod','cached', ...
-                        'Name',name...
-                        ); %% 'SourceType','base workspace',     
-                catch
-                    variables = Simulink.findVars(bdroot, ...
-                        'SourceType','base workspace', ...
-                        'Name',name...
-                        ); %% 'SourceType','base workspace',     'SearchMethod','cached', ...
-                end
-                path = variables(1).Users{1};  % 对应模块路径
-                [X,Y] = findTableInputType(path);
-            end
-            % 第一行
-            stData{idy,1} = data{9};  % description
-            if solveTabInputName
-                stData{idy+1,1} = X.name;
-            else
-                stData{idy+1,1} = nameX;
-            end
-            stData{idy,3} = widX;  % 宽度
-            % 第二行
-            if solveTabInputName
-                stData{idy+1,1} = Y.name;
-            else
-                stData{idy+1,1} = nameY;
-            end
-            stData{idy+1,2} = name;
-            stData(idy+1,3:3+widX-1) = num2cell(valueX);
-            % 第三行
-            stData{idy+2,1} = widY;
-            % Y轴区域
-            stData(idy+2:idy+2+widY-1,2) = num2cell(valueY);
-            % 数据区
-            stData(idy+2:idy+2+widY-1,3:3+widX-1) = num2cell(value);
-        
-            idy = idy + widY + 3;
-        end
-    else
-        error('pls input the right dataType, the chooses are only: 1D, 2D')
+        stData = process1DData(Data, solveTabInputName);
+    else % '2D'
+        stData = process2DData(Data, solveTabInputName);
     end
-    writecell(stData,fPCMU,'Sheet',sheet ,'WriteMode','overwritesheet');
-    writecell(stData,fVCU,'Sheet',sheet,'WriteMode','overwritesheet');
+    
+    % 保存数据到Excel
+    writecell(stData, fSldd, 'Sheet', sheet, 'WriteMode', 'overwritesheet');
+    
+catch ME
+    error('saveSlddTable:Error', '保存SLDD数据时发生错误: %s', ME.message);
+end
 
+end
+
+function stData = process1DData(Data, solveTabInputName)
+% 处理1D数据
+rows = size(Data, 1);
+stData = cell(rows/2*3, 10);
+
+for i = 1:2:rows
+    idy = 4*(i-1)/2+1;
+    data = Data(i,:);
+    X = Data(i+1,:);
+    
+    name = data{3};
+    nameX = X{3};
+    value = data{12};
+    valueX = X{12};
+    
+    % 转换数值
+    if ischar(value)
+        value = str2num(value);
+    end
+    if ischar(valueX)
+        valueX = str2num(valueX);
+    end
+    widX = length(valueX);
+    
+    % 处理表格输入名称
+    if solveTabInputName
+        try
+            variables = Simulink.findVars(bdroot, ...
+                'SourceType', 'base workspace', ...
+                'SearchMethod', 'cached', ...
+                'Name', name);
+            path = variables(1).Users{1};
+            [X,~] = findTableInputType(path);
+            nameX = X.name;
+        catch
+            % 如果查找失败，保持原始名称
+        end
+    end
+    
+    % 填充数据
+    stData{idy,1} = data{9};  % description
+    stData{idy,2} = widX;     % 宽度
+    stData{idy+1,1} = nameX;
+    stData(idy+1,2:widX+1) = num2cell(valueX);
+    stData{idy+2,1} = name;
+    stData(idy+2,2:widX+1) = num2cell(value);
+end
+end
+
+function stData = process2DData(Data, solveTabInputName)
+% 处理2D数据
+rows = size(Data, 1);
+idy = 1;
+stData = {};
+
+for i = 1:3:rows
+    data = Data(i,:);
+    X = Data(i+1,:);
+    Y = Data(i+2,:);
+    
+    name = data{3};
+    nameX = X{3};
+    nameY = Y{3};
+    value = data{12};
+    valueX = X{12};
+    valueY = Y{12};
+    
+    % 转换数值
+    if ischar(value)
+        value = str2num(value);
+    end
+    if ischar(valueX)
+        valueX = str2num(valueX);
+    end
+    if ischar(valueY)
+        valueY = str2num(valueY);
+    end
+    widX = length(valueX);
+    widY = length(valueY);
+    
+    % 处理表格输入名称
+    if solveTabInputName
+        try
+            variables = Simulink.findVars(bdroot, ...
+                'SourceType', 'base workspace', ...
+                'SearchMethod', 'cached', ...
+                'Name', name);
+            path = variables(1).Users{1};
+            [X,Y] = findTableInputType(path);
+            nameX = X.name;
+            nameY = Y.name;
+        catch
+            % 如果查找失败，保持原始名称
+        end
+    end
+    
+    % 填充数据
+    stData{idy,1} = data{9};  % description
+    stData{idy+1,1} = nameX;
+    stData{idy,3} = widX;     % 宽度
+    stData{idy+1,1} = nameY;
+    stData{idy+1,2} = name;
+    stData(idy+1,3:3+widX-1) = num2cell(valueX);
+    stData{idy+2,1} = widY;
+    stData(idy+2:idy+2+widY-1,2) = num2cell(valueY);
+    stData(idy+2:idy+2+widY-1,3:3+widX-1) = num2cell(value);
+    
+    idy = idy + widY + 3;
+end
 end

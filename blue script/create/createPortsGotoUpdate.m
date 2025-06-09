@@ -37,11 +37,23 @@ function [inList, outList] = createPortsGotoUpdate(varargin)
 
     %% 输入参数处理
     p = inputParser;
+    addParameter(p, 'resoveValue', false, @islogical);
+    addParameter(p, 'logValue', false, @islogical);
+    addParameter(p, 'testValue', false, @islogical);
+    addParameter(p, 'enableIn', false, @islogical);
+    addParameter(p, 'enableOut', false, @islogical);
+
     addParameter(p, 'path', gcs, @ischar);
     addParameter(p, 'wid', 400, @(x)validateattributes(x,{'numeric'},{'positive','scalar'}));
     addParameter(p, 'mode', 'keep', @(x)ismember(x,{'pre','tail','keep'}));
 
     parse(p, varargin{:}); 
+    
+    resoveValue = p.Results.resoveValue;
+    logValue = p.Results.logValue;
+    testValue = p.Results.testValue;
+    enableIn = p.Results.enableIn;
+    enableOut = p.Results.enableOut;
 
     path = p.Results.path;
     wid = p.Results.wid;
@@ -55,6 +67,9 @@ function [inList, outList] = createPortsGotoUpdate(varargin)
 
     %% 找到输入输出端口的位置
     [maxInPos, maxOutPos] = findPortPos('path', path);
+
+    maxInPos = maxInPos + [0 30 0 30];
+    maxOutPos = maxOutPos + [0 30 0 30];
     
     %% 根据无效的From收集需要创建的输入信号
     inList = {};
@@ -103,5 +118,14 @@ function [inList, outList] = createPortsGotoUpdate(varargin)
     else
         disp('没有找到需要更新的信号。');
     end
+
+    % 是否对输入输出信号进行解析
+    changeLinesPortAttr(path, ...
+            "resoveValue",resoveValue, ...
+            "logValue",logValue, ...
+            "testValue",testValue, ...
+            "enableIn",enableIn, ...
+            "enableOut",enableOut ...
+            )
 end
 

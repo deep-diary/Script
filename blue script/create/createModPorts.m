@@ -54,14 +54,15 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
     %% 获取子模块的外部输入端口和输出端口
     inports = get_param(modelHandle, 'InputPorts');
     outports = get_param(modelHandle, 'OutputPorts');
-    
-    inNums=size(inports, 1);  %  取得第一维度
-    outNums=size(outports, 1);  %  取得第一维度
+   
 
     PortConnectivity = get_param(modelHandle, 'PortConnectivity');
     parent = get_param(modelHandle, 'Parent');
 
     [name,PortsIn,PortsOut] = findModPorts(path);
+
+    inNums=length(PortsIn);       %  取得输入端口个数
+    outNums=length(PortsOut);     %  取得输出端口个数
 
 
 %%

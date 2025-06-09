@@ -58,6 +58,8 @@ function [createdInput, createdOutput] = createModGoto(path, varargin)
     outports = get_param(modelHandle, 'OutputPorts');
     PortConnectivity = get_param(modelHandle, 'PortConnectivity');
     parent = get_param(modelHandle, 'Parent');
+    PortHandles = get_param(modelHandle, 'PortHandles');
+    Outport = PortHandles.Outport;
 
     [name,PortsIn,PortsOut] = findModPorts(path,'skipTrig',false);
 
@@ -122,19 +124,13 @@ function [createdInput, createdOutput] = createModGoto(path, varargin)
     
     %% 输出处理逻辑
     createdOutput={};
-    i = length(PortsIn);
     if isEnableOut
         sprintf('-----------------start to creat the output From Blocks of the model');
         % 创建输出端口并连接
-        sz = size(PortsOut);
-        for j = 1:sz(1)
-            % 如果有遇到trigger 或enable ，则输入端口数量+1
-            if any(strcmp(PortConnectivity(i+j).Type, {'trigger','enable'}))
-                i = i+1;
-            end
+        for j = 1:length(Outport)
 
             % 判断这个端口是否有连接相关的模块，如果有，则跳过此循环
-            if PortConnectivity(i+j).DstBlock ~=-1
+            if get(Outport(j)).Line ~=-1
                 continue
             end
 
