@@ -171,7 +171,7 @@ function [createdInput, createdOutput] = createModGoto(path, varargin)
         sprintf('-----------------end creating the output From Blocks of the model');
     end
 
-%     changeModSize(path,'wid',400)
+    changeModSize(path,'wid',400)
 end
 
   

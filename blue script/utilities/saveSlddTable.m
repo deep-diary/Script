@@ -69,12 +69,14 @@ if contains(ModelName, "/")
 end
 
 % 构建文件路径
-modFold = pwd;
+[modFold,name,ext] = fileparts(which(ModelName));
 if overwrite
-    fSldd = fullfile(modFold, [ModelName '_DD_' project '.xlsx']);
+    filename = [ModelName '_DD_' project '.xlsx'];
 else
-    fSldd = fullfile(modFold, [ModelName '_DD_' project '_EXPORT.xlsx']);
+    filename = [ModelName '_DD_' project '_EXPORT.xlsx'];
+    
 end
+fSldd = fullfile(modFold, filename);
 
 % 处理工作表名称
 sheet = dataType;
