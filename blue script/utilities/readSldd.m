@@ -4,7 +4,7 @@ function dataTable = readSldd(path, varargin)
 % 输入：
 %       path: sldd path
 % 返回： loadedCnt: 成功导入的数据条数
-% 范例： readSldd('TmComprCtrl_DD_PCMU.xlsx')
+% 范例： dataTable = readSldd('TmSovCtrl_DD_XCU.xlsx')
 % 作者： Blue.ge
 % 日期： 20240201
 %% 

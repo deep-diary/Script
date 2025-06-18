@@ -80,6 +80,8 @@ end
 
 %% 保存数据
 filename = p.Results.filename;
+% 将文件名保存为路径
+filename = which(filename);
 
 try
     % 检查文件是否存在

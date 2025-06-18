@@ -28,7 +28,7 @@ function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo
 %   示例:
 %      [inPortNames, outPortNames, params] = createSubmodInfo()
 %      [inPortNames, outPortNames, params] = createSubmodInfo('DCMfileName','HY11_PCMU_Tm_OTA3_V6050327_All.DCM')
-%      [inPortNames, outPortNames, params] = createSubmodInfo('fontSize', 14)
+%      [inPortNames, outPortNames, params] = createSubmodInfo('SearchDepth', 'all')
 %      [~, ~, params] = createSubmodInfo('path', 'myModel/subsystem1', 'includeCnt', true)
 %
 %   注意事项:
@@ -58,11 +58,14 @@ function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo
     addParameter(p, 'createNote', true, @islogical); % 是否创建注释模块
     addParameter(p, 'annotationName', 'SubmodInfo', @ischar); % 注释模块名称
     addParameter(p, 'userData', 'modInfo', @(x)true); % 用户数据，默认为'modInfo'
-    addParameter(p, 'DCMfileName', 'HY11_PCMU_Tm_OTA3_V6050327_All.DCM', @ischar); % DCM文件名
+    addParameter(p, 'DCMfileName', 'HY11_PCMU_Tm_OTA3_V6070519_All.DCM', @ischar); % DCM文件名
+    addParameter(p, 'ExcelfileName', 'TmSovCtrl_DD_XCU.xlsx', @ischar); % excel sldd文件名
+    addParameter(p, 'SearchDepth', 1, @(x)isnumeric(x) || (ischar(x) && strcmp(x, 'all')));
     
     parse(p, varargin{:});
     
     path = p.Results.path;
+    searchDepth = p.Results.SearchDepth;
     position = p.Results.position;
     fontSize = p.Results.fontSize;
     fgColor = p.Results.fgColor;
@@ -72,6 +75,7 @@ function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo
     annotationName = p.Results.annotationName;
     userData = p.Results.userData;
     DCMfileName = p.Results.DCMfileName;
+    ExcelfileName = p.Results.ExcelfileName;
 
     %% 获取子模型信息
     try
@@ -86,7 +90,7 @@ function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo
         portsOutNames = portsOut;
         
         % 查找模型中的标定量
-        calibParams = findCalibParams(path);
+        calibParams = findCalibParams(path,'SearchDepth', searchDepth);
         
         % 如果需要创建注释模块
         if createNote
@@ -94,7 +98,7 @@ function [portsInNames, portsOutNames, calibParams, infoText] = createSubmodInfo
             removeExistingAnnotation(path, annotationName, userData);
             
             % 生成信息文本
-            infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName);
+            infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName,ExcelfileName);
             
             % 创建或更新注释模块
             createAnnotationBlock(path, infoText, position, fontSize, fgColor, bgColor, annotationName, userData);
@@ -128,7 +132,7 @@ function removeExistingAnnotation(path, annotationName, userData)
     end
 end
 
-function infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName)
+function infoText = generateInfoText(modelName, portsInNames, portsOutNames, calibParams, includeCnt,DCMfileName,ExcelfileName)
     % 生成信息文本
     infoText = ['<模型信息: ' modelName '>' newline newline];
     
@@ -159,31 +163,61 @@ function infoText = generateInfoText(modelName, portsInNames, portsOutNames, cal
     else
         infoText = [infoText '无输出端口' newline];
     end
+
+    param_idx = contains(calibParams,{'cTm','tTm','mTm'});
+    params = calibParams(param_idx);
+    sigs = calibParams(~param_idx);
     
     % 添加标定量信息
     infoText = [infoText newline '【标定量】' newline];
-    if ~isempty(calibParams)
-        for i = 1:length(calibParams)
-            ParamName = calibParams{i};
+    paramsArr = findDCMParam(DCMfileName);
+    %                     {1} - 常量 (FESTWERT)
+    %                     {2} - 轴定义 (STUETZSTELLENVERTEILUNG)
+    %                     {3} - 值块 (FESTWERTEBLOCK)
+    paramsArr = paramsArr([1 3]);
+    datatable = readSldd(ExcelfileName,'sheet','Parameters');
 
-            if strcmp(ParamName(1), 'c')
-                % 从DCM文件中找到Param对应的值
-                ParamValue = findDCMValueByName(DCMfileName,ParamName);
-                if includeCnt
-                    infoText = [infoText num2str(i) '. ' ParamName '=' num2str(ParamValue) newline];
-                else
-                    infoText = [infoText ParamName '=' num2str(ParamValue) newline];
-                end
-            else
-                if includeCnt
-                    infoText = [infoText num2str(i) '. ' ParamName  newline];
-                else
-                    infoText = [infoText ParamName  newline];
-                end
+    if ~isempty(params)
+        for i = 1:length(params)
+            ParamName = params{i};
+
+            % 从DCM文件中找到Param对应的值
+%             ParamValue = findDCMValueByName(DCMfileName,ParamName);
+%             if isempty(ParamValue)
+%                 % 从本地excel 中查找
+%                 ParamValue = findSlddExcelValueByName(ExcelfileName,ParamName);
+%             end
+
+            % 使用cache, 增加查询速度
+            ParamValue = findDCMValueByNameCache(paramsArr,ParamName);
+            if isempty(ParamValue)
+                % 从本地excel 中查找
+                ParamValue = findSlddExcelValueByNameCache(datatable,ParamName);
             end
+
+            if includeCnt
+                infoText = [infoText num2str(i) '. ' ParamName '=' num2str(ParamValue) newline];
+            else
+                infoText = [infoText ParamName '=' num2str(ParamValue) newline];
+            end            
         end
     else
         infoText = [infoText '无标定量' newline];
+    end
+
+    % 添加观测量信息
+    infoText = [infoText newline '【观测量】' newline];
+    if ~isempty(sigs)
+        for i = 1:length(sigs)
+            sig = sigs{i};
+            if includeCnt
+                infoText = [infoText num2str(i) '. ' sig  newline];
+            else
+                infoText = [infoText sig  newline];
+            end           
+        end
+    else
+        infoText = [infoText '无观测量' newline];
     end
     
     % 添加创建时间
