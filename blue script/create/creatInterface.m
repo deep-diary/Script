@@ -3,7 +3,7 @@ function numCreated = creatInterface(varargin)
 %   numCreated = creatInterface() 为输入输出接口创建调试模块，支持多种模式。
 %
 %   可选参数:
-%       'excelFileName' - Excel模板文件名，默认为'Template.xlsx'
+%       'template' - Excel模板文件名，默认为'Template.xlsx'
 %       'sheetName' - 工作表名称，默认为'IF_InportsCommon'
 %       'mode' - 模式选择，可选'inport'或'outport'，默认为'inport'
 %       'sigUse' - 信号使用方式，可选'in'或'out'，默认为'in'
@@ -34,7 +34,7 @@ function numCreated = creatInterface(varargin)
         p = inputParser;
         
         % 添加参数及其验证
-        addParameter(p, 'excelFileName', 'Template.xlsx', @ischar);
+        addParameter(p, 'template', 'Template.xlsx', @ischar);
         addParameter(p, 'sheetName', 'IF_InportsCommon', @ischar);
         addParameter(p, 'mode', 'inport', @(x) any(strcmp(x, {'inport', 'outport'})));
         addParameter(p, 'sigUse', 'in', @(x) any(strcmp(x, {'in', 'out'})));
@@ -45,7 +45,7 @@ function numCreated = creatInterface(varargin)
         parse(p, varargin{:});
         
         % 获取参数值
-        excelFileName = p.Results.excelFileName;
+        template = p.Results.template;
         sheetName = p.Results.sheetName;
         mode = p.Results.mode;
         sigUse = p.Results.sigUse;
@@ -54,13 +54,13 @@ function numCreated = creatInterface(varargin)
         gndBlock = p.Results.gndBlock;
         
         %% 验证Excel文件
-        if ~exist(excelFileName, 'file')
-            error('Excel模板文件不存在: %s', excelFileName);
+        if ~exist(template, 'file')
+            error('Excel模板文件不存在: %s', template);
         end
         
         %% 读取Excel数据
         NAStr = 'NA';
-        [dataTable, sigin, sigout] = readExcelInterface(excelFileName, sheetName);
+        [dataTable, sigin, sigout] = readExcelInterface(template, sheetName);
         if isempty(sigin) || isempty(sigout)
             error('Excel文件中没有找到有效的信号数据');
         end

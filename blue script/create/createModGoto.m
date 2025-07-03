@@ -140,6 +140,12 @@ function [createdInput, createdOutput] = createModGoto(path, varargin)
                 break
             end
             outportName = get_param(PortsOut{j}, 'Name');
+            % 如果有后缀，去掉后缀
+            if endsWith(outportName,suffixStr)
+                outportName=extractBefore(outportName,length(outportName)-length(suffixStr)+1);
+            end
+
+
             % 如果inList不为空，则判断端口是否在其中
             if ~isempty(outList) && ~ismember(outportName, outList)
                 fprintf('%s不在输入端口列表中\n', outportName);

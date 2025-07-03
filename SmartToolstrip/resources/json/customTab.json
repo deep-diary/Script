@@ -1,0 +1,139 @@
+{
+  "version": "1.0",
+  "entries": [
+    {
+      "type": "Tab",
+      "id": "Smart Tab",
+      "title": "SMART TAB",
+      "children": [
+            {
+                "type": "Section",
+                "title": "Aline Ports",
+                "children": [
+                    {
+                        "type": "Column",
+                        "children": [
+                            {
+                                "type": "SplitButton",
+                                "action": "Align_Lines",
+                                "popupName": "AlignLinesPopUpList"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "Section",
+                "title": "Change Block Style",
+                "children": [
+                    {
+                        "type": "Column",
+                        "children": [
+                            {                                 
+                                "type": "PushButton",
+                                "action": "ChangeBlockStyleAction"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Column",
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "type": "Section",
+                "title": "Modeling Standard",
+                "children": [
+                    {
+                        "type": "Column",
+                        "children": [
+                            {
+                                "type": "SplitButton",
+                                "action": "CheckModelingStandardAction",
+                                "popupName": "CheckModelingStandardPopUpList"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Column",
+                        "children": []
+                    }
+                ]
+            },
+          {
+              "type": "Section",
+              "title": "Signal Resolve",
+              "children": [
+                  {
+                      "type":"Column",
+                      "children":
+                      [
+                          {
+                              "type": "SplitButton",
+                              "action": "AddSignalNameAndResolve",
+                              "popupName": "SignalResolvePopUpList"
+                          }
+                      ]
+                  }
+              ]
+          },
+
+          {
+              "type": "Section",
+              "title": "create Ports",
+              "children": [
+                  {
+                      "type":"Column",
+                      "children":
+                      [
+                          {
+                              "type": "SplitButton",
+                              "action": "addPorts",
+                              "popupName": "createModPortsPopUpList"
+                          }
+                      ]
+                  }
+              ]
+          },
+
+          {
+              "type": "Section",
+              "title": "Dictionary",
+              "children": [
+                  {
+                      "type":"Column",
+                      "children":
+                      [
+                          {
+                              "type": "SplitButton",
+                              "action": "LoadDD",
+                              "popupName": "LoadDDPopUpList"
+                          }
+                      ]
+                  }
+              ]
+          },
+          
+          {
+              "type": "Section",
+              "title": "Arch Model Design",
+              "children": [
+                  {
+                      "type":"Column",
+                      "children":
+                      [
+                          {
+                              "type": "SplitButton",
+                              "action": "createBusSig",
+                              "popupName": "ArchModelDesignPopUpList"
+                          }
+                      ]
+                  }
+              ]
+          }
+
+        ]
+    }
+  ]
+}

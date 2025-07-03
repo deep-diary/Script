@@ -1,6 +1,6 @@
-function [resolved, logged, tested, norm] = findLines(pathMd, varargin)
+function [resolved, logged, tested, norm, selected] = findLines(pathMd, varargin)
 % findLines 分类Simulink模型中的信号线
-%   [resolved, logged, tested, norm] = findLines(pathMd)
+%   [resolved, logged, tested, norm, selected] = findLines(pathMd)
 %   输入:
 %       pathMd - 模型路径（字符串）
 %   输出:
@@ -10,6 +10,7 @@ function [resolved, logged, tested, norm] = findLines(pathMd, varargin)
 %       norm     - 正常的信号线句柄
 %
 %   例子:
+%       [resolved, logged, tested, norm, selected] = findLines(gcs)
 %       [resolved, logged, tested, norm] = findLines(gcs)
 %
 %   作者: Blue.ge
@@ -34,6 +35,7 @@ function [resolved, logged, tested, norm] = findLines(pathMd, varargin)
     logged = [];
     tested = [];
     norm = [];
+    selected = [];
 
     % 遍历所有找到的线条
     for i = 1:length(lines)
@@ -43,6 +45,7 @@ function [resolved, logged, tested, norm] = findLines(pathMd, varargin)
         isResolved = isfield(h_attr, 'MustResolveToSignalObject') && h_attr.MustResolveToSignalObject;
         isLogged   = isfield(h_attr, 'DataLogging') && h_attr.DataLogging;
         isTested   = isfield(h_attr, 'TestPoint') && h_attr.TestPoint;
+        isselected   = isfield(h_attr, 'Selected') && strcmp(h_attr.Selected, 'on');
 
         if isResolved
             resolved(end+1) = h;
@@ -53,8 +56,13 @@ function [resolved, logged, tested, norm] = findLines(pathMd, varargin)
         if isTested
             tested(end+1) = h;
         end
-        if ~isResolved && ~isLogged && ~isTested
+        if isselected
+            selected(end+1) = h
+        end
+        if ~isResolved && ~isLogged && ~isTested && ~isselected
             norm(end+1) = h;
         end
+
+        name = findLineName(h)
     end
 end

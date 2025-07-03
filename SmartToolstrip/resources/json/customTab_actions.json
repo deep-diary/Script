@@ -1,0 +1,385 @@
+{
+    "version": "1.0",
+    "entries": [
+        {
+            "type": "Action",
+            "id": "Align_Lines",
+            "text": "对齐连线",
+            "description": "对齐端口与子系统连线",
+            "icon": "AlignLinesIcon",
+            "command": "Align_Lines",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id": "AlignLinesIcon",
+            "icon24": "Aline.png"
+        },
+
+        {
+            "type": "Action",
+            "id": "AlignLinesInport",
+            "text": "对齐输入信号连线",
+            "description": "对齐输入端口与子系统连线",
+            "icon": "AlignLinesInportIcon",
+            "command": "Align_Lines_Inport",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "AlignLinesOutport",
+            "text": "对齐输出信号连线",
+            "description": "对齐输出端口与子系统连线",
+            "icon": "AlignLinesOutportIcon",
+            "command": "Align_Lines_Outport",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "ChangeBlockStyleAction",
+            "text": "统一风格",
+            "description": "改变模块风格",
+            "icon": "ChangeBlockStyleIcon",
+            "command": "ChangeBlockStyle",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id": "ChangeBlockStyleIcon",
+            "icon24": "Color_Pallet.png"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckModelingStandardAction",
+            "text": "检测建模规范",
+            "description": "检测模型是否符合建模规范",
+            "icon": "CheckModelingStandardIcon",
+            "command": "CheckModelingStandard",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id": "CheckModelingStandardIcon",
+            "icon24": "CheckList.png"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckDivideZeroAction",
+            "text": "检查防除0",
+            "description": "检查除法是否有防除0处理",
+            "icon": "CheckDivideZeroIcon",
+            "command": "CheckDivideZero",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckForbiddenBlockAction",
+            "text": "检查禁用模块",
+            "description": "检查模型中是否有禁用模块",
+            "icon": "CheckForbiddenBlockIcon",
+            "command": "CheckForbiddenBlock",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckLookupTableAxleSignalAction",
+            "text": "检查表轴命名",
+            "description": "检查查表模块轴和输出是否有观测信号",
+            "icon": "CheckLookupTableAxleSignalIcon",
+            "command": "CheckLookupTableAxleSignal",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckModelInfoAction",
+            "text": "检查变更记录",
+            "description": "检查模型是否添加Model Info模块",
+            "icon": "CheckModelInfoIcon",
+            "command": "CheckModelInfo",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckStateFlowNumAction",
+            "text": "检查状态机数量",
+            "description": "检查StateFlow数量",
+            "icon": "CheckStateFlowNumIcon",
+            "command": "CheckStateFlowNum",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckSwitchAddDivideDataTypeSetAction",
+            "text": "检查模块隐蔽设置",
+            "description": "检查模块隐蔽设置",
+            "icon": "CheckSwitchAddDivideDataTypeSetIcon",
+            "command": "CheckSwitchAddDivideDataTypeSet",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckUintSubstraOverflowAction",
+            "text": "检查防溢出",
+            "description": "检查无符号整型减法是否做仿溢出处理",
+            "icon": "CheckUintSubstraOverflowIcon",
+            "command": "CheckUintSubstraOverflow",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "CheckUnitsInSimulinkUnitDatabaseAction",
+            "text": "检查单位",
+            "description": "检查数据字典中单位是否可以被simulink识别",
+            "icon": "CheckUnitsInSimulinkUnitDatabaseIcon",
+            "command": "CheckUnitsInSimulinkUnitDatabase",
+            "commandType": "Script"
+        },
+        
+        {
+            "type": "Action",
+            "id": "AddSignalNameAndResolve",
+            "text": "添加端口信号和解析",
+            "description": "根据端口名添加Inport,Outport信号线名并解析为Signal对象",
+            "icon": "addSignalNameAndResolveIcon",
+            "command": "AddSignalNameAndResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Icon",
+            "id":  "addSignalNameAndResolveIcon",
+            "icon24": "SignalResolve.png"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteSignalResolveAndName",
+            "text": "删除端口信号和解析",
+            "description": "删除所选子系统Inport,Outport信号线名和Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "DeleteSignalResolveAndName",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "addSeletSignalResolve",
+            "text": "添加所选信号解析",
+            "description": "为选中信号添加解析Signal类型",
+            "icon": "AlignPortIcon",
+            "command": "addSeletSignalResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteSeletSignalResolve",
+            "text": "删除所选信号解析",
+            "description": "为选中信号删除解析Signal类型",
+            "icon": "AlignPortIcon",
+            "command": "DeleteSeletSignalResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "AddInportSignalName",
+            "text": "添加Inport信号线Name",
+            "description": "根据输入端口名添加信号线名",
+            "icon": "AlignPortIcon",
+            "command": "AddInportSignalName",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "AddInportSignalNameAndResolve",
+            "text": "添加Inport信号线Name并解析为Signal对象",
+            "description": "根据输入端口名添加信号线名并解析为Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "AddInportSignalNameAndResolve",
+            "commandType": "Script"
+        },
+        
+        {
+            "type": "Action",
+            "id": "AddOutportSignalName",
+            "text": "添加Outport信号线Name",
+            "description": "根据输出端口名添加信号线名",
+            "icon": "AlignPortIcon",
+            "command": "AddOutportSignalName",
+            "commandType": "Script"
+        },
+        
+        {
+            "type": "Action",
+            "id": "AddOutportSignalNameAndResolve",
+            "text": "添加Outport信号线Name并解析为Signal对象",
+            "description": "根据输出端口名添加信号线名并解析为Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "AddOutportSignalNameAndResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteInportSignalNameAndResolve",
+            "text": "删除Inport信号线Name和Signal对象",
+            "description": "删除所选子系统输入信号线名和Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "DeleteInportSignalNameAndResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteInportSignalResolveOnly",
+            "text": "删除Inport信号线Signal对象",
+            "description": "删除所选子系统输入信号Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "DeleteInportSignalResolveOnly",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteOutportSignalNameAndResolve",
+            "text": "删除Outport信号线Name和Signal对象",
+            "description": "删除所选子系统输出信号名和Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "DeleteOutportSignalNameAndResolve",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "DeleteOutportSignalResolveOnly",
+            "text": "删除Outport信号线Signal对象",
+            "description": "删除所选子系统输出信号Signal对象",
+            "icon": "AlignPortIcon",
+            "command": "DeleteOutportSignalResolveOnly",
+            "commandType": "Script"
+        },
+        {
+            "type": "Action",
+            "id": "addPorts",
+            "text": "为子系统添加端口",
+            "description": "根据子系统内端口添加inport和outport",
+            "icon": "addPortsIcon",
+            "command": "addPorts",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id":  "addPortsIcon",
+            "icon24": "Inport.png"
+        },
+        {
+            "type": "Action",
+            "id": "addGotos",
+            "text": "为子系统添加goto",
+            "description": "根据子系统内部端口添加同名Goto和from",
+            "icon": "AlignPortIcon",
+            "command": "addGotos",
+            "commandType": "Script"
+        },
+        {
+            "type": "Action",
+            "id": "createPortsBaseOnGotos",
+            "text": "根据goto添加端口",
+            "description": "为无配对的from添加goto和inport,为无配对的goto添加from和outport",
+            "icon": "AlignPortIcon",
+            "command": "createPortsGotoUpdate",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "addGotoBaseOnPorts",
+            "text": "根据端口添加goto",
+            "description": "为未连接的inport创建goto,为未连接的outport创建from",
+            "icon": "AlignPortIcon",
+            "command": "addGotoBaseOnPorts",
+            "commandType": "Script"
+        },
+                
+        {
+            "type": "Action",
+            "id": "createGotoUseless",
+            "text": "接地未配对的goto",
+            "description": "接地未配对的goto,悬空未配对的from",
+            "icon": "AlignPortIcon",
+            "command": "createGotoUseless",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "LoadDD",
+            "text": "加载数据字典",
+            "description": "将Excel数据字典导入Base Workspace",
+            "icon": "LoadDDIcon",
+            "command": "LoadDD",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id":  "LoadDDIcon",
+            "icon24": "Dictionary3.png"
+        },
+
+
+        {
+            "type": "Action",
+            "id": "exportDD_VCU",
+            "text": "导出VCU数据字典",
+            "description": "导出模型未定义的观测量和标定量为VCU格式Excel数据字典",
+            "command": "exportDD_VCU",
+            "commandType": "Script"
+        },
+
+        {
+            "type": "Action",
+            "id": "exportDD_XCU",
+            "text": "导出XCU数据字典",
+            "description": "导出模型未定义的观测量和标定量为XCU格式Excel数据字典",
+            "command": "exportDD_XCU",
+            "commandType": "Script"
+        },
+                
+
+        {
+            "type": "Action",
+            "id": "exportDD_PCMU",
+            "text": "导出PCMU数据字典",
+            "description": "导出模型未定义的观测量和标定量为PCMU格式Excel数据字典",
+            "command": "exportDD_PCMU",
+            "commandType": "Script"
+        },
+        {
+            "type": "Action",
+            "id": "createBusSig",
+            "text": "添加BusSelector信号",
+            "description": "为引用模型添加对应BusSelector信号名，BusSelector需与引用模型同名",
+            "icon": "createBusSigIcon",
+            "command": "createBusSig",
+            "commandType": "Script"
+        },
+        {
+            "type": "Icon",
+            "id":  "createBusSigIcon",
+            "icon24": "BusSelector.png"
+        }
+    ]
+}

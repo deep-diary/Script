@@ -158,6 +158,12 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
             end
     
             outportName=get_param(PortsOut{j}, 'Name');
+            % 如果有后缀，去掉后缀
+            if isDelSuffix && endsWith(outportName,suffix)
+                outportName=extractBefore(outportName,length(outportName)-length(suffix)+1);
+            end
+
+
 %             % 根据信号名，获取数据类型dataType
 %             [dataType, ~, ~, ~, ~] = findNameType(outportName);
             if ~strcmp(add, 'None')

@@ -9,6 +9,7 @@ function createdBuses = createBusFromExcel(varargin)
 %
 %   范例: 
 %       createdBuses = createBusFromExcel()
+%       createdBuses = createBusFromExcel('template', 'TemplateCDD.xlsx')
 %   Excel模板需包含列：BusName, ElementName, DataType, Dimensions, Unit, Description, Min, Max
 
     %% 输入参数解析
@@ -20,7 +21,7 @@ function createdBuses = createBusFromExcel(varargin)
     sheet = p.Results.sheet;
 
     %% 读取Excel数据
-    data = readtable(template, 'Sheet', sheet);
+    data = readtable(template, 'Sheet', sheet, 'TextType', 'string');
 
     %% 获取所有唯一Bus名称
     busNames = unique(data.BusName);
@@ -36,17 +37,23 @@ function createdBuses = createBusFromExcel(varargin)
 
         for j = 1:height(elements)
             busElement = Simulink.BusElement;
-            busElement.Name        = elements.ElementName{j};
+            busElement.Name        = elements.ElementName(j);
             busElement.Complexity  = 'real';
             busElement.Dimensions  = elements.Dimensions(j);
-            busElement.DataType    = elements.DataType{j};
-            busElement.Min         = elements.Min(j);
-            busElement.Max         = elements.Max(j);
+            busElement.DataType    = elements.DataType(j);
+            if isfinite(elements.Min(j))
+                busElement.Min = elements.Min(j);
+            end
+            if isfinite(elements.Max(j))
+                busElement.Max = elements.Max(j);
+            end
             busElement.DimensionsMode = 'Fixed';
             busElement.SamplingMode   = 'Sample based';
             busElement.SampleTime     = -1;
-            busElement.DocUnits       = elements.Unit{j};
-            busElement.Description    = elements.Description{j};
+            if ~isnan(elements.Unit(j))
+                busElement.DocUnits = elements.Unit(j);
+            end
+            busElement.Description    = elements.Description(j);
             ele(j) = busElement;
         end
 

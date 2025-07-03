@@ -24,7 +24,7 @@ function delLinesAttr(path, varargin)
     Name = p.Results.Name;
     FindAll = p.Results.FindAll;
 
-    [resolved, logged, tested, norm] = findLines(path, 'FindAll',FindAll);
+    [resolved, logged, tested, norm, selected] = findLines(path, 'FindAll',FindAll);
 
     lines = [resolved logged tested norm];
 

@@ -4,7 +4,7 @@ function numCreated = creatIFIn(varargin)
 %
 %   可选参数:
 %       'pos' - 模型位置，默认为[0,0]
-%       'excelFileName' - Excel模板文件名，默认为'Template.xlsx'
+%       'template' - Excel模板文件名，默认为'Template.xlsx'
 %       'sheetNames' - 工作表名称列表，默认为{'Inports Common','Inports Diag','Inports 2F'}
 %
 %   输出参数:
@@ -12,7 +12,7 @@ function numCreated = creatIFIn(varargin)
 %
 %   示例:
 %       numCreated = creatIFIn()
-%       numCreated = creatIFIn('pos', [1000,0], 'excelFileName', 'MyTemplate.xlsx')
+%       numCreated = creatIFIn('pos', [1000,0], 'template', 'MyTemplate.xlsx')
 %       numCreated = creatIFIn('sheetNames', {'IF_InportsCommon','IF_InportsDiag'})
 %
 %   作者: 葛维冬 (Blue Ge)
@@ -25,19 +25,19 @@ function numCreated = creatIFIn(varargin)
         
         % 添加参数及其验证
         addParameter(p, 'pos', [0,0], @(x) isnumeric(x) && numel(x) == 2);
-        addParameter(p, 'excelFileName', 'Template.xlsx', @ischar);
+        addParameter(p, 'template', 'Template.xlsx', @ischar);
         addParameter(p, 'sheetNames', {'IF_InportsCommon','IF_InportsDiag','IF_Inports2F'}, @iscell);
         
         parse(p, varargin{:});
         
         % 获取参数值
         pos = p.Results.pos;
-        excelFileName = p.Results.excelFileName;
+        template = p.Results.template;
         sheetNames = p.Results.sheetNames;
         
         %% 验证Excel文件
-        if ~exist(excelFileName, 'file')
-            error('Excel模板文件不存在: %s', excelFileName);
+        if ~exist(template, 'file')
+            error('Excel模板文件不存在: %s', template);
         end
         
         %% 创建模块
@@ -60,7 +60,7 @@ function numCreated = creatIFIn(varargin)
             try
                 posX = 1500 * (i-1);
                 numCreated = creatInterface( ...
-                    'excelFileName', excelFileName, ...
+                    'template', template, ...
                     'sheetName', sheetNames{i}, ...
                     'posX', posX, ...
                     'mode', 'inport', ...

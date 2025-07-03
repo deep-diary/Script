@@ -1,0 +1,126 @@
+% create type
+% In: port, ground, from, const, none
+% Out: port, term, goto, disp, none
+classdef CreateMod < handle
+    properties
+        path
+        inType = 'port'
+        outType = 'port'
+        wid = 500
+        mode = 'both'
+        isDelSuffix = false
+        suffixStr = '_in'
+        findType = 'base'
+        add = 'None'
+        enFirstTrig = false
+        isEnableIn = true
+        isEnableOut = true
+        resolveValue = true
+        logValue = false
+        testValue = false
+        dispName = true
+        inList = {}
+        outList = {}
+        bkHalfLength = 25
+        inPort = {}
+        outPort = {}
+        createdIn = {}
+        createdOut = {}
+
+    end
+    
+    methods(Static)
+        createModBus(mdPath,  varargin);
+        createModBusAll(rootPath);
+        createModConstDisp(path, varargin);
+        createModCopy(srcModel, destPath);
+        createModGoto(path, varargin);
+        createModGotoAll(varargin);
+        createModGroundTerm(path, varargin);
+        createModPorts(path, varargin);
+        createModSig(pathMd, varargin)
+    end
+   methods
+       function obj = CreateMod(path)
+            obj.path = path;
+       end
+
+       function sig(obj)
+            obj.createModSig( ...
+                obj.path, ...
+                'mode',obj.mode, ...
+                'resolveValue',obj.resolveValue,...
+                'logValue',obj.logValue,...
+                'testValue',obj.testValue, ...
+                'dispName', obj.dispName)
+       end
+
+       function create(obj, inType, outType)
+        %% deal with in
+            disp([' %% the input type is ', inType])
+            switch inType
+                case 'port'
+                    [obj.createdIn, obj.createdOut] = obj.createModPorts( ...
+                        obj.path, ...
+                        'mode','inport', ...
+                        'findType',obj.findType,...
+                        'add', obj.add,...
+                        'isDelSuffix',obj.isDelSuffix,...
+                        'suffixStr',obj.suffixStr, ...
+                        'enFirstTrig',obj.enFirstTrig); 
+                case 'from'
+                    [obj.createdIn, obj.createdOut] = createModGoto( ...
+                        obj.path, ...
+                        'mode','inport', ...
+                        'inList', obj.inList, ...
+                        'outList', obj.outList, ...
+                        'bkHalfLength', obj.bkHalfLength);
+                case 'ground'
+                    [obj.createdIn, obj.createdOut] = createModGroundTerm( ...
+                        obj.path, ...
+                        'mode','inport');
+                case 'const'
+                    [obj.createdIn, obj.createdOut] = createModConstDisp( ...
+                        obj.path, ...
+                        'mode','inport');
+                case 'none'
+                otherwise
+                    
+            end
+        
+            %% deal with out
+            switch outType
+                case 'port'
+                    [obj.createdIn, obj.createdOut] = createModPorts( ...
+                        obj.path, ...
+                        'mode','outport', ...
+                        'findType',obj.findType,...
+                        'add', obj.add,...
+                        'isDelSuffix',obj.isDelSuffix,...
+                        'suffixStr',obj.suffixStr, ...
+                        'enFirstTrig',obj.enFirstTrig); 
+                case 'goto'
+                    [obj.createdIn, obj.createdOut] = createModGoto( ...
+                        obj.path, ...
+                        'mode','outport', ...
+                        'inList', obj.inList, ...
+                        'outList', obj.outList,...
+                        'bkHalfLength', obj.bkHalfLength);
+                case 'term'
+                    [obj.createdIn, obj.createdOut] = createModGroundTerm( ...
+                        obj.path, ...
+                        'mode','outport');
+                case 'disp'
+                    [obj.createdIn, obj.createdOut] = createModConstDisp( ...
+                        obj.path, ...
+                        'mode','outport');
+                case 'none'
+                otherwise
+                    
+            end
+       end
+   end
+end
+
+
+

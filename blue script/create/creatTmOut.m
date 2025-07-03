@@ -3,7 +3,7 @@ function nums = creatTmOut(varargin)
 %   nums = creatTmOut() 将内部信号转换为基础模块的输出信号，包括信号名转换和信号隔离。
 %
 %   可选参数:
-%       'excelFileName' - Excel模板文件名，默认为'Template.xlsx'
+%       'template' - Excel模板文件名，默认为'Template.xlsx'
 %       'sheetNames' - 工作表名称列表，默认为{'IF_OutportsCommon','IF_OutportsDiag','IF_Outports2F'}
 %       'posBase' - 基础位置坐标，默认为[0,0]
 %       'posMod' - 模块位置坐标，默认为[10500,0,11000,5000]
@@ -28,7 +28,7 @@ function nums = creatTmOut(varargin)
         p = inputParser;
         
         % 添加参数及其验证
-        addParameter(p, 'excelFileName', 'Template.xlsx', @ischar);
+        addParameter(p, 'template', 'Template.xlsx', @ischar);
         addParameter(p, 'sheetNames', {'IF_OutportsCommon','IF_OutportsDiag','IF_Outports2F'}, @iscell);
         addParameter(p, 'posBase', [0,0], @(x) isnumeric(x) && numel(x) == 2);
         addParameter(p, 'posMod', [10500,0,11000,5000], @(x) isnumeric(x) && numel(x) == 4);
@@ -39,7 +39,7 @@ function nums = creatTmOut(varargin)
         parse(p, varargin{:});
         
         % 获取参数值
-        excelFileName = p.Results.excelFileName;
+        template = p.Results.template;
         sheetNames = p.Results.sheetNames;
         posBase = p.Results.posBase;
         posMod = p.Results.posMod;
@@ -48,8 +48,8 @@ function nums = creatTmOut(varargin)
         gndBlock = p.Results.gndBlock;
         
         %% 验证Excel文件
-        if ~exist(excelFileName, 'file')
-            error('Excel模板文件不存在: %s', excelFileName);
+        if ~exist(template, 'file')
+            error('Excel模板文件不存在: %s', template);
         end
         
         %% 创建子模型框架
@@ -68,7 +68,7 @@ function nums = creatTmOut(varargin)
         for i = 1:length(sheetNames)
             try
                 % 读取Excel数据
-                [data, ~, ~] = readExcelInterface(excelFileName, sheetNames{i});
+                [data, ~, ~] = readExcelInterface(template, sheetNames{i});
                 if isempty(data)
                     warning('工作表 %s 中没有找到数据', sheetNames{i});
                     continue;
