@@ -4,7 +4,7 @@ function outPath = findSlddCombine(subPath, fileName)
     % 输入：
     %       subPath 子模型路径
     % 返回： outPath： 合并后的excel路径
-    % 范例： outPath = findSlddCombine('D:\Thermal\03_对外工作\02_PCMU热管理软件集成\Thermal_PCMU_23N5\SubModel')
+    % 范例： outPath = findSlddCombine('SubModel', 'PCMU_SLDD_All.xlsx')
     % 作者： Blue.ge
     % 日期： 20231031
 %%
@@ -20,7 +20,7 @@ function outPath = findSlddCombine(subPath, fileName)
 
     %% 删除原来的sldd
 %     fileName = 'PCMU_SLDD_All.xlsx';
-    path = fullfile(subPath, fileName);
+    path = fullfile(pwd, subPath, fileName);
     % 检查文件是否已成功删除
     if exist(path, 'file') == 0
         disp('文件不存在。');

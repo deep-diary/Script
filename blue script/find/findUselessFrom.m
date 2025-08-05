@@ -29,6 +29,7 @@ function uselessFrom = findUselessFrom(varargin)
     
     % 遍历 From 模块，检查是否存在对应的 Goto 模块
     uselessFrom={};
+    uselessFromTag={};
     j=1;
     for i = 1:length(fromBlocks)
         fromBlock = fromBlocks{i};
@@ -40,9 +41,13 @@ function uselessFrom = findUselessFrom(varargin)
         if ~isempty(find_system(path, 'SearchDepth',1,'GotoTag', gotoTag, 'BlockType', 'Goto'))
             continue
         end
-        uselessFrom{j} = fromBlock;
-        j=j+1;
-    end  
-    uselessFrom = unique(uselessFrom);
+        % 如果gotoTag 不在uselessGotoTag中，则添加
+        if ~any(strcmp(uselessFromTag, gotoTag))
+            uselessFromTag{end+1} = gotoTag;
+            uselessFrom{end+1} = fromBlock;
+            j=j+1;
+        end
+      
+    end
 
 end

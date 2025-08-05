@@ -19,6 +19,7 @@ function  nums = creatGotoBasedOnUselessFrom(varargin)
     addParameter(p,'posBase',[13500,0]);      % 设置变量名和默认参数 [9000 0]
     addParameter(p,'step',30);      % 设置变量名和默认参数
     addParameter(p,'path',gcs);      % 设置变量名和默认参数
+    addParameter(p,'type','ground');      % 设置变量名和默认参数 constant, ground
     parse(p,varargin{:});       % 对输入变量进行解析，如果检测到前面的变量被赋值，则更新变量取值
 
     stp = p.Results.step;
@@ -40,23 +41,30 @@ function  nums = creatGotoBasedOnUselessFrom(varargin)
         posGoto=[posX-150, posY-10, posX+150, posY+10]; % Goto 位置
 
         % 2. 创建模块
-        bkConst = add_block('built-in/Constant', [path '/Constant'],...
-            'MakeNameUnique','on', ...
-            'Position', posGnd, ...
-            'Value','0');
-        if ~strcmp(dataType, 'Inherit: auto')
-            set_param(bkConst,'OutDataTypeStr',dataType)
+        if strcmp(p.Results.type, 'constant')
+            block = add_block('built-in/Constant', [path '/Constant'],...
+                'MakeNameUnique','on', ...
+                'Position', posGnd, ...
+                'Value','0');
+            if ~strcmp(dataType, 'Inherit: auto')
+                set_param(block,'OutDataTypeStr',dataType)
+            end
+        else
+            block = add_block('built-in/Ground', [path '/Ground'],...
+                'MakeNameUnique','on', ...
+                'Position', posGnd);
         end
+        
         bkGoto = add_block('built-in/Goto', [path '/Goto'],'MakeNameUnique','on', ...
                               'Position',posGoto,'GotoTag',tag);
 
         
         % 3. add line
-%         PortHdFrom = get_param(bkConst, 'PortHandles');
+%         PortHdFrom = get_param(block, 'PortHandles');
 %         portHdTerm = get_param(bkGoto, 'PortHandles');
 %         add_line(path, PortHdFrom.Outport, portHdTerm.Inport, 'autorouting', 'on');
         
-        hArray = [bkConst, bkGoto];
+        hArray = [block, bkGoto];
         createLines(path,hArray)
 
         nums=nums+1;

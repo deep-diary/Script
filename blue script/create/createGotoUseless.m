@@ -44,6 +44,11 @@ function [numGoto, numFrom] = createGotoUseless(varargin)
         createGoto = p.Results.createGoto;
         createFrom = p.Results.createFrom;
         path = p.Results.path;
+
+        %% 确认goto from 位置
+        pos = findGcsPos();
+        posGotoBase = [pos(3) + 200,pos(2)];          
+        posFromBase = [pos(3) + 1000, pos(2)];     
         
         %% 创建Goto模块
         numGoto = 0;

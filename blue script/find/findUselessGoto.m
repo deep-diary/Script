@@ -31,6 +31,7 @@ function uselessGoto = findUselessGoto(varargin)
     
     % 遍历 From 模块，检查是否存在对应的 Goto 模块
     uselessGoto={};
+    uselessGotoTag={};
     j=1;
     for i = 1:length(gotoBlocks)
         gotoBlock = gotoBlocks{i};
@@ -42,8 +43,13 @@ function uselessGoto = findUselessGoto(varargin)
         if ~isempty(find_system(path, 'SearchDepth',1,'GotoTag', gotoTag, 'BlockType', 'From'))
             continue
         end
-        uselessGoto{j} = gotoBlock;
-        j=j+1;
+        % 如果gotoTag 不在uselessGotoTag中，则添加
+        if ~any(strcmp(uselessGotoTag, gotoTag))
+            uselessGotoTag{end+1} = gotoTag;
+            uselessGoto{end+1} = gotoBlock;
+            j=j+1;
+        end
+      
     end
 
 end

@@ -36,6 +36,7 @@ function saveSlddTableByInitValue(path, DataPCMU,  varargin)
      end
 
     %%
+    stData = {};
     if strcmp(dataType, '1D')
         %% 保存1维表
         

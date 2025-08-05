@@ -68,13 +68,17 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
 %%
     createdInport={};
     if isEnableIn
+        Inport = get_param(modelHandle, 'PortHandles').Inport;
+        InLine = get_param(modelHandle, 'LineHandles').Inport;
         % 创建输入端口并连接
         for i = 1:inNums
-            inportPosition = inports(i,:);
+            inportHandle = Inport(i);
+            lineHandle = InLine(i);
+            pos = get_param(inportHandle,'Position');
             % 判断这个端口是否有连接相关的模块，如果有，则返回
             % 这里需要添加代码
             % 判断这个端口是否有连接相关的模块，如果有，则跳过此循环
-            if PortConnectivity(i).SrcBlock ~=-1
+            if lineHandle ~= -1
                 continue
             end
     
@@ -88,9 +92,9 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
             end
     
             if ~strcmp(add, 'None')
-                posBase = [inportPosition(1)-400, inportPosition(2), inportPosition(1)-400, inportPosition(2)];
+                posBase = [pos(1)-400, pos(2), pos(1)-400, pos(2)];
             else
-                posBase = [inportPosition(1)-200, inportPosition(2), inportPosition(1)-200, inportPosition(2)];
+                posBase = [pos(1)-200, pos(2), pos(1)-200, pos(2)];
             end
             posIn =  posBase + [-15 -7 15 7];
             posAdd = posBase + [100 0 100 0]  + [-15 -7 15 7];
@@ -150,10 +154,15 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
     i=inNums;  %  取得第一维度
 
     if isEnableOut
+
+        Outport = get_param(modelHandle, 'PortHandles').Outport;
+        OutLine = get_param(modelHandle, 'LineHandles').Outport;
         for j = 1:outNums
-            outportPosition = outports(j,:);
+            portHandle = Outport(j);
+            lineHandle = OutLine(j);
+            pos = get_param(portHandle,'Position');
             % 判断这个端口是否有连接相关的模块，如果有，则跳过此循环
-            if PortConnectivity(i+j).DstBlock ~=-1
+            if lineHandle ~= -1
                 continue
             end
     
@@ -167,9 +176,9 @@ function [createdInport, createdOutport] = createModPorts(path, varargin)
 %             % 根据信号名，获取数据类型dataType
 %             [dataType, ~, ~, ~, ~] = findNameType(outportName);
             if ~strcmp(add, 'None')
-                posBase = [outportPosition(1)+400, outportPosition(2), outportPosition(1)+400, outportPosition(2)];
+                posBase = [pos(1)+400, pos(2), pos(1)+400, pos(2)];
             else
-                posBase = [outportPosition(1)+200, outportPosition(2), outportPosition(1)+200, outportPosition(2)];
+                posBase = [pos(1)+200, pos(2), pos(1)+200, pos(2)];
             end
             
             posOut =  posBase + [-15 -7 15 7];
