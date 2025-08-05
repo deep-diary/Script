@@ -9,7 +9,7 @@ function createdBuses = createBusFromExcel(varargin)
 %
 %   范例: 
 %       createdBuses = createBusFromExcel()
-%       createdBuses = createBusFromExcel('template', 'TemplateCDD.xlsx')
+%       createdBuses = createBusFromExcel('template', 'TemplateCCMSensor.xlsx')
 %   Excel模板需包含列：BusName, ElementName, DataType, Dimensions, Unit, Description, Min, Max
 
     %% 输入参数解析
