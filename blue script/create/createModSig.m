@@ -1,61 +1,79 @@
 function createModSig(pathMd, varargin)
 %%
-% Ä¿µÄ: ¶ÔÄ£ĞÍÊäÈëÊä³ö¶Ë¿ÚµÄĞÅºÅÏß½øĞĞ½âÎö
-% ÊäÈë£º
-%       pathMd Ä£ĞÍÂ·¾¶£»
-%       mode  ÊäÈëÊä³öÀàĞÍ£¬¿ÉÑ¡¡¾inport  outport  both¡¿
-% ·µ»Ø£ºNull
-% ·¶Àı£º 
+% åŠŸèƒ½: å¯¹æ¨¡å‹è¾“å…¥è¾“å‡ºç«¯å£çš„ä¿¡å·çº¿è¿›è¡Œå‘½åå’Œé…ç½®
+% è¾“å…¥:
+%       pathMd - æ¨¡å‹è·¯å¾„
+%       varargin - å¯é€‰å‚æ•°å¯¹
+%           'skipTrig' - æ˜¯å¦è·³è¿‡è§¦å‘å™¨ç«¯å£ï¼Œé»˜è®¤true
+%           'isEnableIn' - æ˜¯å¦å¯ç”¨è¾“å…¥ç«¯å£å¤„ç†ï¼Œé»˜è®¤true
+%           'isEnableOut' - æ˜¯å¦å¯ç”¨è¾“å‡ºç«¯å£å¤„ç†ï¼Œé»˜è®¤true
+%           'resoveValue' - æ˜¯å¦è§£æä¸ºä¿¡å·å¯¹è±¡ï¼Œé»˜è®¤false
+%           'logValue' - æ˜¯å¦å¯ç”¨æ•°æ®è®°å½•ï¼Œé»˜è®¤false
+%           'testValue' - æ˜¯å¦å¯ç”¨æµ‹è¯•ç‚¹ï¼Œé»˜è®¤false
+%           'dispName' - æ˜¯å¦æ˜¾ç¤ºä¿¡å·åç§°ï¼Œé»˜è®¤true
+%           'truncateSignal' - æ˜¯å¦æˆªæ–­AUTOSARä¿¡å·åï¼Œé»˜è®¤false
+% è¿”å›: æ— 
+% ç¤ºä¾‹: 
 % createModSig(gcs,'skipTrig',true,'isEnableIn',true,'isEnableOut',true,...
-% 'resoveValue',false,'logValue',false,'testValue',false)
-% ×÷Õß£º Blue.ge
-% ÈÕÆÚ£º 2023-9-5
+% 'resoveValue',false,'logValue',false,'testValue',false,'truncateSignal',true)
+% ä½œè€…: Blue.ge
+% æ—¥æœŸ: 2023-9-5
 %%
     clc
-    %% ÊäÈë²ÎÊı´¦Àí
-    p = inputParser;            % º¯ÊıµÄÊäÈë½âÎöÆ÷
-    addParameter(p,'skipTrig',true);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı
-    addParameter(p,'isEnableIn',true);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡ true, false
-    addParameter(p,'isEnableOut',true);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡  true, false
-    addParameter(p,'resoveValue',false);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡  true, false
-    addParameter(p,'logValue',false);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡  true, false
-    addParameter(p,'testValue',false);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡  true, false
-    addParameter(p,'dispName',true);      % ÉèÖÃ±äÁ¿ÃûºÍÄ¬ÈÏ²ÎÊı ¿ÉÑ¡  true, false
-    parse(p,varargin{:});       % ¶ÔÊäÈë±äÁ¿½øĞĞ½âÎö£¬Èç¹û¼ì²âµ½Ç°ÃæµÄ±äÁ¿±»¸³Öµ£¬Ôò¸üĞÂ±äÁ¿È¡Öµ
+    
+    %% è§£æè¾“å…¥å‚æ•°
+    p = inputParser;            % åˆ›å»ºè¾“å…¥å‚æ•°è§£æå™¨
+    addParameter(p,'skipTrig',true);      % è®¾ç½®è§¦å‘å™¨ç«¯å£å‚æ•°ï¼Œé»˜è®¤è·³è¿‡
+    addParameter(p,'isEnableIn',true);      % è®¾ç½®è¾“å…¥ç«¯å£å‚æ•°ï¼Œé»˜è®¤å¯ç”¨ï¼Œå¯é€‰ true, false
+    addParameter(p,'isEnableOut',true);      % è®¾ç½®è¾“å‡ºç«¯å£å‚æ•°ï¼Œé»˜è®¤å¯ç”¨ï¼Œå¯é€‰ true, false
+    addParameter(p,'resoveValue',false);      % è®¾ç½®ä¿¡å·å¯¹è±¡å‚æ•°ï¼Œé»˜è®¤ä¸è§£æï¼Œå¯é€‰ true, false
+    addParameter(p,'logValue',false);      % è®¾ç½®æ•°æ®è®°å½•å‚æ•°ï¼Œé»˜è®¤ä¸è®°å½•ï¼Œå¯é€‰ true, false
+    addParameter(p,'testValue',false);      % è®¾ç½®æµ‹è¯•ç‚¹å‚æ•°ï¼Œé»˜è®¤ä¸å¯ç”¨ï¼Œå¯é€‰ true, false
+    addParameter(p,'dispName',true);      % è®¾ç½®æ˜¾ç¤ºåç§°å‚æ•°ï¼Œé»˜è®¤æ˜¾ç¤ºï¼Œå¯é€‰ true, false
+    addParameter(p,'truncateSignal',false);      % è®¾ç½®æˆªæ–­ä¿¡å·åå‚æ•°ï¼Œé»˜è®¤ä¸æˆªæ–­ï¼Œå¯é€‰ true, false
+    parse(p,varargin{:});       % è§£æè¾“å…¥å‚æ•°å¹¶å°†è§£æç»“æœå­˜å‚¨åˆ°å½“å‰å·¥ä½œåŒºçš„å˜é‡ä¸­ï¼Œç„¶åä»å˜é‡ä¸­å–å€¼
 
-
-    skipTrig = p.Results.skipTrig;
+    % skipTrig = p.Results.skipTrig;  % å½“å‰æœªä½¿ç”¨ï¼Œä¿ç•™ä»¥å¤‡å°†æ¥æ‰©å±•
     isEnableIn = p.Results.isEnableIn;
     isEnableOut = p.Results.isEnableOut;
     resoveValue = p.Results.resoveValue;
     logValue = p.Results.logValue;
     testValue = p.Results.testValue;
     dispName = p.Results.dispName;
+    truncateSignal = p.Results.truncateSignal;
 
-    % ĞÅºÅ½âÎö£¬²âÊÔµÈ£¬¶¼ĞèÒªÏÔÊ¾½âÎöĞÅºÅÃû
+    % ä¿¡å·è§£æç­‰å±æ€§éœ€è¦æ˜¾ç¤ºä¿¡å·åç§°
     if logValue || testValue || resoveValue
         dispName = true;
     end
 
-    %% ÕÒµ½Ä£ĞÍ¶Ë¿Ú
+    %% æ‰¾åˆ°æ¨¡å‹ç«¯å£
     PortHandles = get_param(pathMd, 'PortHandles');
     inports = PortHandles.Inport;
     outports = PortHandles.Outport;
-    %% ÕÒµ½ÓĞĞ§Â·¾¶
-    [ModelName, validPath] = findValidPath(pathMd);
-    InportCell = find_system(validPath,'SearchDepth',1,'BlockType','Inport');  %»ñÈ¡¶¥²ãInportÄ£¿éÂ·¾¶
-    OutportCell = find_system(validPath,'SearchDepth',1,'BlockType','Outport');  %»ñÈ¡¶¥²ãOutportÄ£¿éÂ·¾¶
-    %% ½âÎöĞÅºÅ
+    
+    %% æ‰¾åˆ°æœ‰æ•ˆè·¯å¾„
+    [~, validPath] = findValidPath(pathMd);
+    InportCell = find_system(validPath,'SearchDepth',1,'BlockType','Inport');  % è·å–æ‰€æœ‰Inportæ¨¡å—è·¯å¾„
+    OutportCell = find_system(validPath,'SearchDepth',1,'BlockType','Outport');  % è·å–æ‰€æœ‰Outportæ¨¡å—è·¯å¾„
+    
+    %% å¤„ç†ä¿¡å·
     if isEnableIn
-        for i = 1:length(inports)  % Ìø¹ıtrig ¶Ë¿Ú
-            InportName = get_param(InportCell{i},'Name');  %ÊäÈëÄ£¿éÃû³Æ;  %ÊäÈëÄ£¿éÃû³Æ
+        for i = 1:length(inports)  % éå†è¾“å…¥ç«¯å£
+            InportName = get_param(InportCell{i},'Name');  % è·å–æ¨¡å—åç§°
+            
+            % æ ¹æ®truncateSignalå‚æ•°å†³å®šæ˜¯å¦æˆªæ–­ä¿¡å·å
+            if truncateSignal
+                InportName = truncateSignalName(InportName);
+            end
+            
             hLine = get_param(inports(i), 'Line');
             if dispName
-                set(hLine,'Name',InportName)  %ÉèÖÃĞÅºÅÏßÃû³ÆÎªÊäÈëÄ£¿éÃû³Æ
+                set(hLine,'Name',InportName)  % è®¾ç½®ä¿¡å·çº¿åç§°ä¸ºæ¨¡å—åç§°
             else
-                set(hLine,'Name','')  %ÉèÖÃĞÅºÅÏßÃû³ÆÎªÊäÈëÄ£¿éÃû³Æ
+                set(hLine,'Name','')  % æ¸…ç©ºä¿¡å·çº¿åç§°
             end
-            set(hLine,'MustResolveToSignalObject',resoveValue)   %ÉèÖÃĞÅºÅÏß¹ØÁªSimulink Signal Object
+            set(hLine,'MustResolveToSignalObject',resoveValue)   % è®¾ç½®ä¿¡å·çº¿å…³è”Simulink Signal Object
             set(hLine,'DataLogging',logValue) 
             set(hLine,'TestPoint',testValue)
         end
@@ -63,17 +81,47 @@ function createModSig(pathMd, varargin)
         
     if isEnableOut
         for i = 1:length(outports)  
-            OutportName = get_param(OutportCell{i},'Name');  %ÊäÈëÄ£¿éÃû³Æ
+            OutportName = get_param(OutportCell{i},'Name');  % è·å–æ¨¡å—åç§°
+            
+            % æ ¹æ®truncateSignalå‚æ•°å†³å®šæ˜¯å¦æˆªæ–­ä¿¡å·å
+            if truncateSignal
+                OutportName = truncateSignalName(OutportName);
+            end
+            
             hLine = get_param(outports(i), 'Line');
             if dispName
-                set(hLine,'Name',OutportName)  %ÉèÖÃĞÅºÅÏßÃû³ÆÎªÊäÈëÄ£¿éÃû³Æ
+                set(hLine,'Name',OutportName)  % è®¾ç½®ä¿¡å·çº¿åç§°ä¸ºæ¨¡å—åç§°
             else
-                set(hLine,'Name','')  %ÉèÖÃĞÅºÅÏßÃû³ÆÎªÊäÈëÄ£¿éÃû³Æ
+                set(hLine,'Name','')  % æ¸…ç©ºä¿¡å·çº¿åç§°
             end
-            set(hLine,'MustResolveToSignalObject',resoveValue)   %ÉèÖÃĞÅºÅÏß¹ØÁªSimulink Signal Object
+            set(hLine,'MustResolveToSignalObject',resoveValue)   % è®¾ç½®ä¿¡å·çº¿å…³è”Simulink Signal Object
             set(hLine,'DataLogging',logValue) 
             set(hLine,'TestPoint',testValue)
         end
     end
 end
 
+%% è¾…åŠ©å‡½æ•°ï¼šæˆªæ–­ä¿¡å·å
+function truncatedName = truncateSignalName(originalName)
+    % æˆªæ–­AUTOSARä¿¡å·åï¼Œæå–ç¬¬ä¸€ä¸ªä¸‹åˆ’çº¿åé¢çš„éƒ¨åˆ†
+    % ä¾‹å¦‚: 'NetReqFromPrkgClimaEveMgr_NetReqFromPrkgClimaEveMgr' -> 'NetReqFromPrkgClimaEveMgr'
+    % å¦‚æœç»“æœä»¥_readæˆ–_writeç»“å°¾ï¼Œåˆ™å»æ‰è¯¥åç¼€
+
+    % æŸ¥æ‰¾ç¬¬ä¸€ä¸ªä¸‹åˆ’çº¿çš„ä½ç½®
+    underscorePos = strfind(originalName, '_');
+    
+    if ~isempty(underscorePos) && underscorePos(1) > 1
+        % æå–ç¬¬ä¸€ä¸ªä¸‹åˆ’çº¿åé¢çš„éƒ¨åˆ†
+        truncatedName = originalName(underscorePos(1)+1:end);
+    else
+        % å¦‚æœæ²¡æœ‰æ‰¾åˆ°ä¸‹åˆ’çº¿æˆ–ä¸‹åˆ’çº¿åœ¨å¼€å¤´ï¼Œè¿”å›åŸå
+        truncatedName = originalName;
+    end
+
+    % æ£€æŸ¥å¹¶å»é™¤_readæˆ–_writeåç¼€
+    if endsWith(truncatedName, '_read')
+        truncatedName = truncatedName(1:end-5);
+    elseif endsWith(truncatedName, '_write')
+        truncatedName = truncatedName(1:end-6);
+    end
+end
