@@ -64,7 +64,7 @@ function createModSig(pathMd, varargin)
             
             % 根据truncateSignal参数决定是否截断信号名
             if truncateSignal
-                InportName = truncateSignalName(InportName);
+                InportName = truncateSignalName(InportName,'Input');
             end
             
             hLine = get_param(inports(i), 'Line');
@@ -85,7 +85,7 @@ function createModSig(pathMd, varargin)
             
             % 根据truncateSignal参数决定是否截断信号名
             if truncateSignal
-                OutportName = truncateSignalName(OutportName);
+                OutportName = truncateSignalName(OutportName,'Output');
             end
             
             hLine = get_param(outports(i), 'Line');
@@ -102,7 +102,7 @@ function createModSig(pathMd, varargin)
 end
 
 %% 辅助函数：截断信号名
-function truncatedName = truncateSignalName(originalName)
+function truncatedName = truncateSignalName(originalName,portType)
     % 截断AUTOSAR信号名，提取第一个下划线后面的部分
     % 例如: 'NetReqFromPrkgClimaEveMgr_NetReqFromPrkgClimaEveMgr' -> 'NetReqFromPrkgClimaEveMgr'
     % 如果结果以_read或_write结尾，则去掉该后缀
@@ -118,10 +118,18 @@ function truncatedName = truncateSignalName(originalName)
         truncatedName = originalName;
     end
 
-    % 检查并去除_read或_write后缀
-    if endsWith(truncatedName, '_read')
-        truncatedName = truncatedName(1:end-5);
-    elseif endsWith(truncatedName, '_write')
-        truncatedName = truncatedName(1:end-6);
+    % % 检查并去除_read或_write后缀
+    % if endsWith(truncatedName, '_read')
+    %     truncatedName = truncatedName(1:end-5);
+    % elseif endsWith(truncatedName, '_write')
+    %     truncatedName = truncatedName(1:end-6);
+    % end
+
+    % 检查并添加_read或_write后缀
+    if ~endsWith(truncatedName, '_read') && strcmp(portType, 'Input')
+        truncatedName = [truncatedName '_read'];
+    elseif ~endsWith(truncatedName, '_write') && strcmp(portType, 'Output')
+        truncatedName = [truncatedName '_write'];
     end
+
 end

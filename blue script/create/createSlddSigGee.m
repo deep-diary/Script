@@ -1,7 +1,7 @@
-function [sigTable, outputFile] = createSlddSigGee(ModelName, varargin)
+function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %createSlddSigGee 获取模型根目录下输入输出端口，按模板格式，保存到Excel表格
 %
-%   [SIGTABLE, OUTPUTFILE] = createSlddSigGee(MODELNAME) 获取模型根目录下输入输出端口，
+%   [outputFile, sigTable] = createSlddSigGee(MODELNAME) 获取模型根目录下输入输出端口，
 %   按模板格式，保存到Excel表格。
 %
 %   将数据保存到对应项目的Excel文件中。
@@ -22,10 +22,10 @@ function [sigTable, outputFile] = createSlddSigGee(ModelName, varargin)
 %       OUTPUTFILE  - 输出文件路径
 %
 %   示例:
-%       [sigTable, outputFile] = createSlddSigGee('PrkgClimaEgyMgr');
-%       [sigTable, outputFile] = createSlddSigGee('PrkgClimaEgyMgr', 'verbose', false);
-%       [sigTable, outputFile] = createSlddSigGee('PrkgClimaEgyMgr', 'ignoreInput', true);
-%       [sigTable, outputFile] = createSlddSigGee('PrkgClimaEgyMgr', 'truncateSignal', true);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr');
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'verbose', false);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'ignoreInput', true);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'truncateSignal', true);
 %
 %   作者: Blue.ge
 %   日期: 2025-09-08
@@ -157,7 +157,7 @@ function [sigTable, outputFile] = createSlddSigGee(ModelName, varargin)
             
             % 信号名截断处理
             if truncateSignal
-                portName = truncateSignalName(portName);
+                portName = truncateSignalName(portName, portType);
             end
             
             % 按照["SWC", "ElementType", "Name", "Min", "Max", "DataType", "Units", "Values", "Description"]顺序赋值
@@ -295,7 +295,7 @@ function clearOldData(filePath, sheetName)
 end
 
 %% 辅助函数：截断信号名
-function truncatedName = truncateSignalName(originalName)
+function truncatedName = truncateSignalName(originalName,portType)
     % 截断AUTOSAR信号名，提取第一个下划线后面的部分
     % 例如: 'NetReqFromPrkgClimaEveMgr_NetReqFromPrkgClimaEveMgr' -> 'NetReqFromPrkgClimaEveMgr'
     % 如果结果以_read或_write结尾，则去掉该后缀
@@ -311,10 +311,18 @@ function truncatedName = truncateSignalName(originalName)
         truncatedName = originalName;
     end
 
-    % 检查并去除_read或_write后缀
-    if endsWith(truncatedName, '_read')
-        truncatedName = truncatedName(1:end-5);
-    elseif endsWith(truncatedName, '_write')
-        truncatedName = truncatedName(1:end-6);
+    % % 检查并去除_read或_write后缀
+    % if endsWith(truncatedName, '_read')
+    %     truncatedName = truncatedName(1:end-5);
+    % elseif endsWith(truncatedName, '_write')
+    %     truncatedName = truncatedName(1:end-6);
+    % end
+
+    % 检查并添加_read或_write后缀
+    if ~endsWith(truncatedName, '_read') && strcmp(portType, 'Input')
+        truncatedName = [truncatedName '_read'];
+    elseif ~endsWith(truncatedName, '_write') && strcmp(portType, 'Output')
+        truncatedName = [truncatedName '_write'];
     end
+
 end
