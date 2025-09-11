@@ -43,7 +43,7 @@ function changeCfgRefAll()
     %% 处理每个子模型
     for i = 1:length(subMods)
         fprintf('正在处理模型: %s\n', subMods{i});
-        changeCfgRef(subMods{i}, cfg);
+        changeCfgRef(subMods{i}, 'ConfigFile', cfg, 'CloseModel', true);
     end
     
     disp('所有模型配置完成');

@@ -49,7 +49,7 @@ function [sigCnts, paramCnts] = findSlddLoad(path, varargin)
         end
         
         % 检查文件是否存在
-        if isempty(which(path))
+        if isempty(path) || ~(isfile(which(path)) || isfile(path))
             error('文件未包含在项目中，请先将SLDD路径添加到项目中');
         end
         

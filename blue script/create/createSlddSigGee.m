@@ -39,7 +39,7 @@ function [sigTable, outputFile] = createSlddSigGee(ModelName, varargin)
     addParameter(p, 'outputDir', '', @(x) ischar(x) || isstring(x));
     addParameter(p, 'ignoreInput', true, @islogical);
     addParameter(p, 'ignoreOutput', false, @islogical);
-    addParameter(p, 'truncateSignal', true, @islogical);
+    addParameter(p, 'truncateSignal', false, @islogical);
 
     parse(p, ModelName, varargin{:});
 

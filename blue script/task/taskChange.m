@@ -50,7 +50,7 @@ changeRefModStat()
 %% 改变模型配置
 changeCfgAutosar('TmSovCtrl')
 changeCfgErt('TmSovCtrl')
-changeCfgRef('TmRefriVlvCtrl', 'TmVcThermal_Configuration_sub') % 改变单个模型配置， 需要提前加载好相关配置文件
+changeCfgRef('TmRefriVlvCtrl', 'ConfigFile', 'TmVcThermal_Configuration_sub') % 改变单个模型配置， 需要提前加载好相关配置文件
 changeCfgRefAll() % changeModSize 改变所有模型配置
 
 
