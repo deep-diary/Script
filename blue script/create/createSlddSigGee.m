@@ -1,10 +1,13 @@
 function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
-%createSlddSigGee 获取模型根目录下输入输出端口，按模板格式，保存到Excel表格
-%
-%   [outputFile, sigTable] = createSlddSigGee(MODELNAME) 获取模型根目录下输入输出端口，
+%CREATESLDDSIGGEE 获取模型根目录下输入输出端口，按模板格式，保存到Excel表格
+%   [OUTPUTFILE, SIGTABLE] = CREATESLDDSIGGEE(MODELNAME) 获取模型根目录下输入输出端口，
 %   按模板格式，保存到Excel表格。
+%   [OUTPUTFILE, SIGTABLE] = CREATESLDDSIGGEE(MODELNAME, 'Parameter', Value, ...) 使用指定参数处理端口
 %
-%   将数据保存到对应项目的Excel文件中。
+%   功能描述:
+%      获取指定模型的输入输出端口信息，按照预定义模板格式生成信号数据表格，
+%      并保存到Excel文件中。支持AUTOSAR信号名解析，可以处理重复命名的信号。
+%      将数据保存到对应项目的Excel文件中。
 %
 %   输入参数:
 %       MODELNAME   - 模型名称 (字符向量或字符串标量)
@@ -13,9 +16,14 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %       'overwrite' - 是否覆盖现有文件，可选值: true, false (默认值: true)
 %       'verbose'   - 是否显示详细信息，可选值: true, false (默认值: true)
 %       'outputDir' - 输出目录路径 (默认值: 模型所在目录)
-%       'ignoreInput' - 是否忽略输入端口，可选值: true, false (默认值: false)
+%       'ignoreInput' - 是否忽略输入端口，可选值: true, false (默认值: true)
 %       'ignoreOutput' - 是否忽略输出端口，可选值: true, false (默认值: false)
-%       'truncateSignal' - 是否截断信号名，可选值: true, false (默认值: false)
+%       'autosarMode' - AUTOSAR信号名解析模式，可选值: 'deleteTail', 'halfTail', 'justHalf', 'modelHalf' (默认值: '')
+%                       当指定此参数时，将自动启用信号名截断功能
+%                       - 'deleteTail': 删除后缀（_read 或 _write）
+%                       - 'halfTail': 保留一半名称并添加相应后缀
+%                       - 'justHalf': 只保留一半名称
+%                       - 'modelHalf': 模型名_一半名称
 %
 %   返回值:
 %       SIGTABLE    - 生成的信号数据表格
@@ -24,8 +32,9 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %   示例:
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'verbose', false);
-%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'ignoreInput', true);
-%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'truncateSignal', true);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'ignoreInput', false);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'halfTail');
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'modelHalf', 'ignoreInput', false);
 %
 %   作者: Blue.ge
 %   日期: 2025-09-08
@@ -39,7 +48,8 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     addParameter(p, 'outputDir', '', @(x) ischar(x) || isstring(x));
     addParameter(p, 'ignoreInput', true, @islogical);
     addParameter(p, 'ignoreOutput', false, @islogical);
-    addParameter(p, 'truncateSignal', false, @islogical);
+    % addParameter(p, 'truncateSignal', false, @islogical);
+    addParameter(p,'autosarMode','', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
 
     parse(p, ModelName, varargin{:});
 
@@ -50,7 +60,17 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     outputDir = char(p.Results.outputDir);
     ignoreInput = p.Results.ignoreInput;
     ignoreOutput = p.Results.ignoreOutput;
-    truncateSignal = p.Results.truncateSignal;
+    % truncateSignal = p.Results.truncateSignal;
+    autosarMode = char(p.Results.autosarMode);
+
+    % 确定是否截断信号名
+    if ~isempty(autosarMode)
+        truncateSignal = true;
+        fprintf('AUTOSAR模式: %s (将截断信号名)\n', autosarMode);
+    else
+        truncateSignal = false;
+        fprintf('AUTOSAR模式: 关闭 (不截断信号名)\n');
+    end
 
 
     %% 验证模型是否存在
@@ -106,18 +126,18 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 
     %% 根据参数过滤端口
     allPorts = {};
-    portTypes = {}; % 记录端口类型：'Input' 或 'Output'
+    portTypes = {}; % 记录端口类型：'Inport' 或 'Outport'
     
     % 处理输入端口
     if ~ignoreInput && ~isempty(inPorts)
         allPorts = [allPorts, inPorts];
-        portTypes = [portTypes, repmat({'Input'}, 1, length(inPorts))];
+        portTypes = [portTypes, repmat({'Inport'}, 1, length(inPorts))];
     end
     
     % 处理输出端口
     if ~ignoreOutput && ~isempty(outPorts)
         allPorts = [allPorts, outPorts];
-        portTypes = [portTypes, repmat({'Output'}, 1, length(outPorts))];
+        portTypes = [portTypes, repmat({'Outport'}, 1, length(outPorts))];
     end
     
     if isempty(allPorts)
@@ -157,7 +177,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
             
             % 信号名截断处理
             if truncateSignal
-                portName = truncateSignalName(portName, portType);
+                portName = findNameAutosar(portName,bdroot,portType,'mode',autosarMode);
             end
             
             % 按照["SWC", "ElementType", "Name", "Min", "Max", "DataType", "Units", "Values", "Description"]顺序赋值
@@ -292,37 +312,4 @@ function clearOldData(filePath, sheetName)
     catch
         % 静默处理错误，不影响主程序运行
     end
-end
-
-%% 辅助函数：截断信号名
-function truncatedName = truncateSignalName(originalName,portType)
-    % 截断AUTOSAR信号名，提取第一个下划线后面的部分
-    % 例如: 'NetReqFromPrkgClimaEveMgr_NetReqFromPrkgClimaEveMgr' -> 'NetReqFromPrkgClimaEveMgr'
-    % 如果结果以_read或_write结尾，则去掉该后缀
-
-    % 查找第一个下划线的位置
-    underscorePos = strfind(originalName, '_');
-    
-    if ~isempty(underscorePos) && underscorePos(1) > 1
-        % 提取第一个下划线后面的部分
-        truncatedName = originalName(underscorePos(1)+1:end);
-    else
-        % 如果没有找到下划线或下划线在开头，返回原名
-        truncatedName = originalName;
-    end
-
-    % % 检查并去除_read或_write后缀
-    % if endsWith(truncatedName, '_read')
-    %     truncatedName = truncatedName(1:end-5);
-    % elseif endsWith(truncatedName, '_write')
-    %     truncatedName = truncatedName(1:end-6);
-    % end
-
-    % 检查并添加_read或_write后缀
-    if ~endsWith(truncatedName, '_read') && strcmp(portType, 'Input')
-        truncatedName = [truncatedName '_read'];
-    elseif ~endsWith(truncatedName, '_write') && strcmp(portType, 'Output')
-        truncatedName = [truncatedName '_write'];
-    end
-
 end

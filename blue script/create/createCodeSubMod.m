@@ -18,6 +18,9 @@ function createCodeSubMod(mdName, varargin)
 
     try
         %% 输入参数处理
+        % 提醒此脚本已经弃用，后续请用createCodeMod代替
+        warning('此脚本已经弃用，后续请用createCodeMod代替');
+
         p = inputParser;
         addParameter(p, 'type', 'VCU', @(x) any(validatestring(x, {'VCU', 'PCMU','XCU'})));
         parse(p, varargin{:});
@@ -30,7 +33,8 @@ function createCodeSubMod(mdName, varargin)
         mdPath = which(mdName)
         [fold,name,ext] = fileparts(mdPath);
         
-        folderName = fullfile(fold, ['Code_' ctrlType]);
+%         folderName = fullfile(fold, ['Code_' ctrlType]);
+        folderName = fullfile(fold, 'Code');
         
         % 如果文件夹存在则删除重建
         if exist(folderName, 'dir')

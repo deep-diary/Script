@@ -125,7 +125,27 @@
   delGcsAll()
   ```
 
-### 4. AUTOSAR 配置类
+### 4. 目录清理类
+
+#### delGitFolders.m
+
+**功能**: 删除指定目录下所有包含.git 文件夹的目录，优化工程路径加载性能
+
+- **输入参数**:
+  - `rootPath`: 要搜索的根目录路径（字符串，必需）
+  - `varargin`: 可选参数
+    - `'confirm'`: 是否在删除前确认（逻辑值，默认 true）
+    - `'verbose'`: 是否显示详细信息（逻辑值，默认 true）
+    - `'dryrun'`: 是否只显示将要删除的目录而不实际删除（逻辑值，默认 false）
+- **输出参数**: 无
+- **示例**:
+  ```matlab
+  delGitFolders('D:\MyProject')
+  delGitFolders('D:\MyProject', 'confirm', false, 'verbose', true)
+  delGitFolders('D:\MyProject', 'dryrun', true)  % 只显示不删除
+  ```
+
+### 5. AUTOSAR 配置类
 
 #### delAutosar.m
 
