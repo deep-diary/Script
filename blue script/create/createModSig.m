@@ -15,7 +15,8 @@ function createModSig(pathMd, varargin)
 %      'testValue'     - 是否启用测试点 (逻辑值), 默认值: false
 %      'dispName'      - 是否显示信号名称 (逻辑值), 默认值: true
 %      'autosarMode'   - AUTOSAR信号名解析模式 (字符串), 默认值: ''
-%                        可选值: 'deleteTail', 'halfTail', 'justHalf', 'modelHalf'
+%                        可选值: 'deleteTail', 'halfTail', 'justHalf', 'modelHalf', 'prefixHalf'
+%      'prefixName'    - 前缀名称，用于 'prefixHalf' 模式 (字符串), 默认值: 'CcmIF'
 %
 %   功能描述:
 %      对模型的输入输出端口信号线进行命名和配置，支持AUTOSAR信号名解析。
@@ -24,7 +25,8 @@ function createModSig(pathMd, varargin)
 %   示例:
 %      createModSig(gcs)
 %      createModSig(gcs, 'isEnableIn', true, 'isEnableOut', true)
-%      createModSig(gcs, 'autosarMode', 'halfTail', 'dispName', true)
+%      createModSig(gcs, 'autosarMode', 'deleteTail', 'dispName', true)
+%      createModSig(gcs, 'autosarMode', 'prefixHalf', 'prefixName', 'CustomPrefix')
 %
 %   作者: Blue.ge
 %   日期: 2023-9-5
@@ -58,6 +60,7 @@ function createModSig(pathMd, varargin)
     addParameter(p,'testValue',false, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     addParameter(p,'dispName',true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     addParameter(p,'autosarMode','', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p,'prefixName','CcmIF', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     
     parse(p,varargin{:});
 
@@ -70,6 +73,7 @@ function createModSig(pathMd, varargin)
     testValue = p.Results.testValue;
     dispName = p.Results.dispName;
     autosarMode = char(p.Results.autosarMode);
+    prefixName = char(p.Results.prefixName);
 
     % 信号解析等属性需要显示信号名称
     if logValue || testValue || resoveValue
@@ -132,7 +136,7 @@ function createModSig(pathMd, varargin)
             
             % 根据truncateSignal参数决定是否截断信号名
             if truncateSignal
-                InportName = findNameAutosar(InportName,bdroot,BlockType,'mode',autosarMode);
+                InportName = findNameAutosar(InportName,'nameMd',modelName,'type',BlockType,'mode',autosarMode,'prefixName',prefixName);
                 fprintf('  端口 %d: %s -> %s\n', i, originalName, InportName);
             else
                 fprintf('  端口 %d: %s (未截断)\n', i, InportName);
@@ -164,7 +168,7 @@ function createModSig(pathMd, varargin)
             
             % 根据truncateSignal参数决定是否截断信号名
             if truncateSignal
-                OutportName = findNameAutosar(OutportName,bdroot,BlockType,'mode',autosarMode);
+                OutportName = findNameAutosar(OutportName,'nameMd',modelName,'type',BlockType,'mode',autosarMode,'prefixName',prefixName);
                 fprintf('  端口 %d: %s -> %s\n', i, originalName, OutportName);
             else
                 fprintf('  端口 %d: %s (未截断)\n', i, OutportName);

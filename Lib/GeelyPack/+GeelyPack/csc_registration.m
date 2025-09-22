@@ -1,6 +1,6 @@
 function defs = csc_registration(action)
 
-%   Copyright 1994-2024 The MathWorks, Inc.
+%   Copyright 1994-2025 The MathWorks, Inc.
 %   $Revision: $  $Date: $
 
 
@@ -13,8 +13,8 @@ function defs = csc_registration(action)
 % - Hand modification of this file is not recommended as it may prevent the
 %   Simulink custom storage class designer from loading the associated classes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% - Generated on:   31-Jan-2024 15:24:19
-% - MATLAB version: 9.13.0.2193358 (R2022b) Update 5
+% - Generated on:   17-Sep-2025 10:58:52
+% - MATLAB version: 9.13.0.2320565 (R2022b) Update 6
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -219,6 +219,43 @@ switch action
     set(h, 'OwnerPackage', 'GeelyPack');
     set(h, 'CSCType', 'Unstructured');
     set(h, 'MemorySection', 'CAL_32BIT');
+    set(h, 'IsMemorySectionInstanceSpecific', false);
+    set(h, 'IsGrouped', false);
+        set(h.DataUsage, 'IsParameter', true);
+        set(h.DataUsage, 'IsSignal', false);
+    set(h, 'DataScope', 'Exported');
+    set(h, 'IsDataScopeInstanceSpecific', false);
+    set(h, 'IsAutosarPerInstanceMemory', false);
+    set(h, 'IsAutosarPostBuild', false);
+    set(h, 'SupportSILPIL', false);
+    set(h, 'DataInit', 'Static');
+    set(h, 'IsDataInitInstanceSpecific', false);
+    set(h, 'DataAccess', 'Direct');
+    set(h, 'IsDataAccessInstanceSpecific', false);
+    set(h, 'HeaderFile', '');
+    set(h, 'IsHeaderFileInstanceSpecific', true);
+    set(h, 'DefinitionFile', '');
+    set(h, 'IsDefinitionFileInstanceSpecific', true);
+    set(h, 'Owner', '');
+    set(h, 'IsOwnerInstanceSpecific', true);
+    set(h, 'PreserveDimensions', false);
+    set(h, 'PreserveDimensionsInstanceSpecific', false);
+    set(h, 'IsReusable', false);
+    set(h, 'IsReusableInstanceSpecific', false);
+    set(h, 'CommentSource', 'Default');
+    set(h, 'TypeComment', '');
+    set(h, 'DeclareComment', '');
+    set(h, 'DefineComment', '');
+    set(h, 'CSCTypeAttributesClassName', '');
+    set(h, 'CSCTypeAttributes', []);
+    set(h, 'TLCFileName', 'Unstructured.tlc');
+    defs = [defs; h];
+
+    h = Simulink.CSCDefn;
+    set(h, 'Name', 'CAL_TYPES');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'CSCType', 'Unstructured');
+    set(h, 'MemorySection', 'CAL_TYPES');
     set(h, 'IsMemorySectionInstanceSpecific', false);
     set(h, 'IsGrouped', false);
         set(h.DataUsage, 'IsParameter', true);
@@ -807,6 +844,80 @@ switch action
     defs = [defs; h];
 
     h = Simulink.CSCDefn;
+    set(h, 'Name', 'DATA_EXP');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'CSCType', 'Unstructured');
+    set(h, 'MemorySection', 'DATA_TYPES');
+    set(h, 'IsMemorySectionInstanceSpecific', false);
+    set(h, 'IsGrouped', false);
+        set(h.DataUsage, 'IsParameter', false);
+        set(h.DataUsage, 'IsSignal', true);
+    set(h, 'DataScope', 'Exported');
+    set(h, 'IsDataScopeInstanceSpecific', false);
+    set(h, 'IsAutosarPerInstanceMemory', false);
+    set(h, 'IsAutosarPostBuild', false);
+    set(h, 'SupportSILPIL', false);
+    set(h, 'DataInit', 'Static');
+    set(h, 'IsDataInitInstanceSpecific', false);
+    set(h, 'DataAccess', 'Direct');
+    set(h, 'IsDataAccessInstanceSpecific', false);
+    set(h, 'HeaderFile', 'CCM_InterfaceOutput.h');
+    set(h, 'IsHeaderFileInstanceSpecific', false);
+    set(h, 'DefinitionFile', 'CCM_InterfaceOutput.c');
+    set(h, 'IsDefinitionFileInstanceSpecific', false);
+    set(h, 'Owner', '');
+    set(h, 'IsOwnerInstanceSpecific', false);
+    set(h, 'PreserveDimensions', false);
+    set(h, 'PreserveDimensionsInstanceSpecific', false);
+    set(h, 'IsReusable', false);
+    set(h, 'IsReusableInstanceSpecific', false);
+    set(h, 'CommentSource', 'Default');
+    set(h, 'TypeComment', '');
+    set(h, 'DeclareComment', '');
+    set(h, 'DefineComment', '');
+    set(h, 'CSCTypeAttributesClassName', '');
+    set(h, 'CSCTypeAttributes', []);
+    set(h, 'TLCFileName', 'Unstructured.tlc');
+    defs = [defs; h];
+
+    h = Simulink.CSCDefn;
+    set(h, 'Name', 'DATA_IMP');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'CSCType', 'Unstructured');
+    set(h, 'MemorySection', 'DATA_TYPES');
+    set(h, 'IsMemorySectionInstanceSpecific', false);
+    set(h, 'IsGrouped', false);
+        set(h.DataUsage, 'IsParameter', false);
+        set(h.DataUsage, 'IsSignal', true);
+    set(h, 'DataScope', 'Imported');
+    set(h, 'IsDataScopeInstanceSpecific', false);
+    set(h, 'IsAutosarPerInstanceMemory', false);
+    set(h, 'IsAutosarPostBuild', false);
+    set(h, 'SupportSILPIL', false);
+    set(h, 'DataInit', 'None');
+    set(h, 'IsDataInitInstanceSpecific', false);
+    set(h, 'DataAccess', 'Direct');
+    set(h, 'IsDataAccessInstanceSpecific', false);
+    set(h, 'HeaderFile', '');
+    set(h, 'IsHeaderFileInstanceSpecific', true);
+    set(h, 'DefinitionFile', '');
+    set(h, 'IsDefinitionFileInstanceSpecific', false);
+    set(h, 'Owner', '');
+    set(h, 'IsOwnerInstanceSpecific', false);
+    set(h, 'PreserveDimensions', false);
+    set(h, 'PreserveDimensionsInstanceSpecific', false);
+    set(h, 'IsReusable', false);
+    set(h, 'IsReusableInstanceSpecific', false);
+    set(h, 'CommentSource', 'Default');
+    set(h, 'TypeComment', '');
+    set(h, 'DeclareComment', '');
+    set(h, 'DefineComment', '');
+    set(h, 'CSCTypeAttributesClassName', '');
+    set(h, 'CSCTypeAttributes', []);
+    set(h, 'TLCFileName', 'Unstructured.tlc');
+    defs = [defs; h];
+
+    h = Simulink.CSCDefn;
     set(h, 'Name', 'DATA32BIT_EXP');
     set(h, 'OwnerPackage', 'GeelyPack');
     set(h, 'CSCType', 'Unstructured');
@@ -844,6 +955,43 @@ switch action
     defs = [defs; h];
 
     h = Simulink.CSCDefn;
+    set(h, 'Name', 'DATA32BIT_IMP');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'CSCType', 'Unstructured');
+    set(h, 'MemorySection', 'DATA_32BIT');
+    set(h, 'IsMemorySectionInstanceSpecific', false);
+    set(h, 'IsGrouped', false);
+        set(h.DataUsage, 'IsParameter', false);
+        set(h.DataUsage, 'IsSignal', true);
+    set(h, 'DataScope', 'Imported');
+    set(h, 'IsDataScopeInstanceSpecific', false);
+    set(h, 'IsAutosarPerInstanceMemory', false);
+    set(h, 'IsAutosarPostBuild', false);
+    set(h, 'SupportSILPIL', false);
+    set(h, 'DataInit', 'Auto');
+    set(h, 'IsDataInitInstanceSpecific', false);
+    set(h, 'DataAccess', 'Direct');
+    set(h, 'IsDataAccessInstanceSpecific', false);
+    set(h, 'HeaderFile', '');
+    set(h, 'IsHeaderFileInstanceSpecific', true);
+    set(h, 'DefinitionFile', '');
+    set(h, 'IsDefinitionFileInstanceSpecific', false);
+    set(h, 'Owner', '');
+    set(h, 'IsOwnerInstanceSpecific', false);
+    set(h, 'PreserveDimensions', false);
+    set(h, 'PreserveDimensionsInstanceSpecific', false);
+    set(h, 'IsReusable', false);
+    set(h, 'IsReusableInstanceSpecific', false);
+    set(h, 'CommentSource', 'Default');
+    set(h, 'TypeComment', '');
+    set(h, 'DeclareComment', '');
+    set(h, 'DefineComment', '');
+    set(h, 'CSCTypeAttributesClassName', '');
+    set(h, 'CSCTypeAttributes', []);
+    set(h, 'TLCFileName', 'Unstructured.tlc');
+    defs = [defs; h];
+
+    h = Simulink.CSCDefn;
     set(h, 'Name', 'GEELYLOCDATA');
     set(h, 'OwnerPackage', 'GeelyPack');
     set(h, 'CSCType', 'Unstructured');
@@ -863,43 +1011,6 @@ switch action
     set(h, 'IsDataAccessInstanceSpecific', false);
     set(h, 'HeaderFile', '');
     set(h, 'IsHeaderFileInstanceSpecific', false);
-    set(h, 'DefinitionFile', '');
-    set(h, 'IsDefinitionFileInstanceSpecific', false);
-    set(h, 'Owner', '');
-    set(h, 'IsOwnerInstanceSpecific', false);
-    set(h, 'PreserveDimensions', false);
-    set(h, 'PreserveDimensionsInstanceSpecific', false);
-    set(h, 'IsReusable', false);
-    set(h, 'IsReusableInstanceSpecific', false);
-    set(h, 'CommentSource', 'Default');
-    set(h, 'TypeComment', '');
-    set(h, 'DeclareComment', '');
-    set(h, 'DefineComment', '');
-    set(h, 'CSCTypeAttributesClassName', '');
-    set(h, 'CSCTypeAttributes', []);
-    set(h, 'TLCFileName', 'Unstructured.tlc');
-    defs = [defs; h];
-
-    h = Simulink.CSCDefn;
-    set(h, 'Name', 'DATA32BIT_IMP');
-    set(h, 'OwnerPackage', 'GeelyPack');
-    set(h, 'CSCType', 'Unstructured');
-    set(h, 'MemorySection', 'DATA_32BIT');
-    set(h, 'IsMemorySectionInstanceSpecific', false);
-    set(h, 'IsGrouped', false);
-        set(h.DataUsage, 'IsParameter', false);
-        set(h.DataUsage, 'IsSignal', true);
-    set(h, 'DataScope', 'Imported');
-    set(h, 'IsDataScopeInstanceSpecific', false);
-    set(h, 'IsAutosarPerInstanceMemory', false);
-    set(h, 'IsAutosarPostBuild', false);
-    set(h, 'SupportSILPIL', false);
-    set(h, 'DataInit', 'None');
-    set(h, 'IsDataInitInstanceSpecific', false);
-    set(h, 'DataAccess', 'Direct');
-    set(h, 'IsDataAccessInstanceSpecific', false);
-    set(h, 'HeaderFile', '');
-    set(h, 'IsHeaderFileInstanceSpecific', true);
     set(h, 'DefinitionFile', '');
     set(h, 'IsDefinitionFileInstanceSpecific', false);
     set(h, 'Owner', '');
@@ -1551,12 +1662,40 @@ switch action
     defs = [defs; h];
 
     h = Simulink.MemorySectionDefn;
+    set(h, 'Name', 'CAL_TYPES');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'Comment', '');
+    set(h, 'PragmaPerVar', false);
+    set(h, 'PrePragma', '#define START_SECTION_GEELY_CAL_TYPES');
+    set(h, 'PostPragma', '#define STOP_SECTION_GEELY_CAL_TYPES');
+        set(h.DataUsage, 'IsParameter', true);
+        set(h.DataUsage, 'IsSignal', false);
+    set(h, 'IsConst', true);
+    set(h, 'IsVolatile', true);
+    set(h, 'Qualifier', '');
+    defs = [defs; h];
+
+    h = Simulink.MemorySectionDefn;
     set(h, 'Name', 'DATA_BOOL');
     set(h, 'OwnerPackage', 'GeelyPack');
     set(h, 'Comment', '');
     set(h, 'PragmaPerVar', true);
     set(h, 'PrePragma', '#define START_SECTION_GEELY_DATA_BOOLEAN\n#include "geely_memmap.h"');
     set(h, 'PostPragma', '#define STOP_SECTION_GEELY_DATA_BOOLEAN\n#include "geely_memmap.h"');
+        set(h.DataUsage, 'IsParameter', true);
+        set(h.DataUsage, 'IsSignal', true);
+    set(h, 'IsConst', false);
+    set(h, 'IsVolatile', true);
+    set(h, 'Qualifier', '');
+    defs = [defs; h];
+
+    h = Simulink.MemorySectionDefn;
+    set(h, 'Name', 'DATA_TYPES');
+    set(h, 'OwnerPackage', 'GeelyPack');
+    set(h, 'Comment', '');
+    set(h, 'PragmaPerVar', false);
+    set(h, 'PrePragma', '#define START_SECTION_GEELY_DATA_TYPES');
+    set(h, 'PostPragma', '#define STOP_SECTION_GEELY_DATA_TYPES');
         set(h.DataUsage, 'IsParameter', true);
         set(h.DataUsage, 'IsSignal', true);
     set(h, 'IsConst', false);

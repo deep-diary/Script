@@ -18,6 +18,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %       'outputDir' - 输出目录路径 (默认值: 模型所在目录)
 %       'ignoreInput' - 是否忽略输入端口，可选值: true, false (默认值: true)
 %       'ignoreOutput' - 是否忽略输出端口，可选值: true, false (默认值: false)
+%       'sheet'     - Excel工作表名称 (默认值: 'Interface')
 %       'autosarMode' - AUTOSAR信号名解析模式，可选值: 'deleteTail', 'halfTail', 'justHalf', 'modelHalf' (默认值: '')
 %                       当指定此参数时，将自动启用信号名截断功能
 %                       - 'deleteTail': 删除后缀（_read 或 _write）
@@ -33,6 +34,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'verbose', false);
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'ignoreInput', false);
+%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'sheet', 'Signal');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'halfTail');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'modelHalf', 'ignoreInput', false);
 %
@@ -46,8 +48,9 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     addParameter(p, 'overwrite', true, @islogical);
     addParameter(p, 'verbose', true, @islogical);
     addParameter(p, 'outputDir', '', @(x) ischar(x) || isstring(x));
-    addParameter(p, 'ignoreInput', true, @islogical);
+    addParameter(p, 'ignoreInput', false, @islogical);
     addParameter(p, 'ignoreOutput', false, @islogical);
+    addParameter(p, 'sheet', 'Interface', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     % addParameter(p, 'truncateSignal', false, @islogical);
     addParameter(p,'autosarMode','', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
 
@@ -60,6 +63,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     outputDir = char(p.Results.outputDir);
     ignoreInput = p.Results.ignoreInput;
     ignoreOutput = p.Results.ignoreOutput;
+    sheet = char(p.Results.sheet);
     % truncateSignal = p.Results.truncateSignal;
     autosarMode = char(p.Results.autosarMode);
 
@@ -177,12 +181,12 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
             
             % 信号名截断处理
             if truncateSignal
-                portName = findNameAutosar(portName,bdroot,portType,'mode',autosarMode);
+                portName = findNameAutosar(portName,'nameMd',ModelName,'type',portType,'mode',autosarMode);
             end
             
             % 按照["SWC", "ElementType", "Name", "Min", "Max", "DataType", "Units", "Values", "Description"]顺序赋值
             sigTable.SWC(i) = modelName;                    % SWC
-            sigTable.ElementType(i) = 'Signal';             % ElementType, 输入输出都是Signal, excel 自带脚本只识别这个
+            sigTable.ElementType(i) = portType; % 'Signal';             % ElementType, 输入输出都是Signal, excel 自带脚本只识别这个
             sigTable.Name(i) = portName;                    % Name (可能被截断)
             sigTable.Min(i) = get_param(portHandle, 'OutMin');          % Min
             sigTable.Max(i) = get_param(portHandle, 'OutMax');          % Max
@@ -207,10 +211,10 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     %% 保存Excel文件
     try
         % 清除旧数据（保留第一行）
-        clearOldData(outputFile, 'Signal');
+        clearOldData(outputFile, sheet);
         
         % 需要从A2开始写入，因为第一行是log 等相关信息
-        writetable(sigTable, outputFile, 'Sheet', 'Signal', 'Range', 'A2');
+        writetable(sigTable, outputFile, 'Sheet', sheet, 'Range', 'A2');
         
         if verbose
             fprintf('\n');

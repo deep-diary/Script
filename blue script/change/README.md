@@ -477,6 +477,32 @@
   changedPath = changeConstantType(constantPath, "Inherit: Inherit from 'Constant value'", 'single')
   ```
 
+#### changeHeaderFile.m
+
+**功能**: 清空工作空间中所有变量的 HeaderFile 属性
+
+- **输入参数**:
+  - 无必需参数
+- **可选参数**:
+  - `'modelName'`: 指定模型名称（默认使用 bdroot）
+  - `'verbose'`: 是否显示详细信息（默认 true）
+  - `'dryRun'`: 是否只预览不实际修改（默认 false）
+- **输出参数**:
+  - `modifiedCount`: 修改的变量数量（可选）
+  - `errorCount`: 错误数量（可选）
+- **示例**:
+
+  ```matlab
+  % 基本用法
+  changeHeaderFile()
+
+  % 预览模式
+  changeHeaderFile('dryRun', true)
+
+  % 获取修改结果
+  [modifiedCount, errorCount] = changeHeaderFile('verbose', true)
+  ```
+
 ## 使用注意事项
 
 1. **模型状态**: 使用前请确保目标 Simulink 模型已打开
@@ -493,6 +519,7 @@
 
 ## 更新日志
 
+- 2024-12-19: 添加 HeaderFile 属性管理功能
 - 2024-08-02: 更新数据字典相关函数
 - 2024-06-03: 添加信号名称修改功能
 - 2024-01-24: 添加 A2L 文件处理功能
