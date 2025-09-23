@@ -46,7 +46,7 @@ function varargout = changeHeaderFile(varargin)
 %
 %   作者: Blue.ge
 %   版本: 1.7
-%   日期: 2025-09-19
+%   日期: 2024-12-19
 
     %% 参数解析
     p = inputParser;
@@ -78,24 +78,8 @@ function varargout = changeHeaderFile(varargin)
     %% 获取工作空间中的所有变量
     try
         % 获取基础工作空间中的所有变量
+        % 由于主函数已经检查过模型编译状态，这里直接使用基础工作空间变量
         allVarNames = evalin('base', 'who');
-        
-        % 如果模型有数据字典，也获取数据字典中的变量
-        dataDictPath = get_param(modelName, 'DataDictionary');
-        if ~isempty(dataDictPath)
-            try
-                dictObj = Simulink.data.dictionary.open(dataDictPath);
-                dictVarNames = getSectionNames(dictObj, 'Design Data');
-                if ~isempty(dictVarNames)
-                    allVarNames = [allVarNames; dictVarNames];
-                end
-            catch
-                % 如果无法获取数据字典变量，继续使用基础工作空间变量
-            end
-        end
-        
-        % 去重
-        allVarNames = unique(allVarNames);
         
         if verbose
             fprintf('找到 %d 个变量需要检查\n', length(allVarNames));
@@ -120,40 +104,19 @@ function varargout = changeHeaderFile(varargin)
         
         try
             % 获取变量对象
-            % 首先尝试从基础工作空间获取
-            try
+            if ismember(varName, baseVars)
                 varObj = evalin('base', varName);
                 isBaseVar = true;
-            catch
-                % 如果基础工作空间中没有，尝试从数据字典中获取
+            else
+                % 从数据字典中获取
                 dataDictPath = get_param(modelName, 'DataDictionary');
                 if ~isempty(dataDictPath)
-                    try
-                        dictObj = Simulink.data.dictionary.open(dataDictPath);
-                        varObj = getVariable(dictObj, varName);
-                        isBaseVar = false;
-                    catch
-                        % 如果数据字典中也没有，跳过这个变量
-                        if verbose
-                            fprintf('变量 %s 在基础工作空间和数据字典中都未找到，跳过\n', varName);
-                        end
-                        continue;
-                    end
+                    dictObj = Simulink.data.dictionary.open(dataDictPath);
+                    varObj = getVariable(dictObj, varName);
+                    isBaseVar = false;
                 else
-                    % 没有数据字典，跳过这个变量
-                    if verbose
-                        fprintf('变量 %s 在基础工作空间中未找到且无数据字典，跳过\n', varName);
-                    end
                     continue;
                 end
-            end
-            
-            % 检查变量对象是否有效
-            if isempty(varObj)
-                if verbose
-                    fprintf('变量 %s 的对象为空，跳过\n', varName);
-                end
-                continue;
             end
             
             % 检查是否有HeaderFile属性
@@ -314,16 +277,6 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
 %SETHEADERFILEPROPERTY 根据对象类型设置HeaderFile属性
 %   使用MATLAB官方推荐的方法设置不同Simulink对象的HeaderFile属性
 %   返回修改后的对象
-%
-%   输入参数:
-%       varObj    - Simulink对象
-%       varName   - 变量名称
-%       dataScope - DataScope属性值
-%       verbose   - 是否显示详细信息
-%
-%   输出参数:
-%       success        - 是否成功修改
-%       modifiedVarObj - 修改后的对象
 
     success = false;
     modifiedVarObj = varObj; % 默认返回原对象
@@ -332,7 +285,6 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
         % 获取对象类型
         objClass = class(varObj);
         
-        % 根据对象类型使用不同的方法设置属性
         switch objClass
             case {'Simulink.Bus', 'Simulink.AliasType', 'Simulink.NumericType'}
                 % 对于Bus、AliasType、NumericType对象，使用点号语法
@@ -340,7 +292,7 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
                 if isprop(varObj, 'DataScope')
                     varObj.DataScope = dataScope;
                 end
-                modifiedVarObj = varObj;
+                modifiedVarObj = varObj; % 返回修改后的对象
                 success = true;
                 
             case {'Simulink.Parameter', 'Simulink.Signal'}
@@ -349,7 +301,7 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
                 if isprop(varObj, 'DataScope')
                     set(varObj, 'DataScope', dataScope);
                 end
-                modifiedVarObj = varObj;
+                modifiedVarObj = varObj; % 返回修改后的对象
                 success = true;
                 
             case {'Simulink.ValueType'}
@@ -358,7 +310,7 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
                 if isprop(varObj, 'DataScope')
                     varObj.DataScope = dataScope;
                 end
-                modifiedVarObj = varObj;
+                modifiedVarObj = varObj; % 返回修改后的对象
                 success = true;
                 
             otherwise
@@ -368,7 +320,7 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
                     if isprop(varObj, 'DataScope')
                         varObj.DataScope = dataScope;
                     end
-                    modifiedVarObj = varObj;
+                    modifiedVarObj = varObj; % 返回修改后的对象
                     success = true;
                 catch
                     % 如果点号语法失败，尝试set函数
@@ -377,7 +329,7 @@ function [success, modifiedVarObj] = setHeaderFileProperty(varObj, varName, data
                         if isprop(varObj, 'DataScope')
                             set(varObj, 'DataScope', dataScope);
                         end
-                        modifiedVarObj = varObj;
+                        modifiedVarObj = varObj; % 返回修改后的对象
                         success = true;
                     catch
                         if verbose
