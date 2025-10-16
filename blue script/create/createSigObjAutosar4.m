@@ -13,6 +13,12 @@ function sigObj = createSigObjAutosar4(name, varargin)
 %       'sigType'               - 信号类型，指定为字符向量或字符串标量（默认: ''）
 %                                可选值: 'Inport', 'Outport'
 %                                当指定此参数时，将自动设置CustomStorageClass
+%       'StorageClassIn'        - 输入信号存储类，指定为字符向量或字符串标量（默认: 'Auto'）
+%                                可选值: 'Auto', 'ImportedExtern', 'ExportedGlobal', 'Custom'等
+%                                当为'Auto'时，按当前规则自动处理；否则直接使用指定值
+%       'StorageClassOut'       - 输出信号存储类，指定为字符向量或字符串标量（默认: 'Auto'）
+%                                可选值: 'Auto', 'ExportedGlobal', 'Custom'等
+%                                当为'Auto'时，按当前规则自动处理；否则直接使用指定值
 %       'Dimensions'            - 维度，指定为正数标量（默认: 1）
 %       'Description'           - 描述信息，指定为字符向量或字符串标量（默认: ''）
 %       'Unit'                  - 单位，指定为字符向量或字符串标量（默认: ''）
@@ -37,11 +43,17 @@ function sigObj = createSigObjAutosar4(name, varargin)
 %       % 设置数值范围
 %       sigObj = createSigObjAutosar4('TestSignal', 'Min', 0, 'Max', 100, 'Unit', 'V');
 %       
-%       % 创建输入信号
+%       % 创建输入信号（使用Auto模式）
 %       sigObj = createSigObjAutosar4('InputSignal', 'sigType', 'Inport', 'Description', '输入信号');
 %       
-%       % 创建输出信号
+%       % 创建输出信号（使用Auto模式）
 %       sigObj = createSigObjAutosar4('OutputSignal', 'sigType', 'Outport', 'Description', '输出信号');
+%       
+%       % 自定义输入信号存储类
+%       sigObj = createSigObjAutosar4('InputSignal', 'sigType', 'Inport', 'StorageClassIn', 'ExportedGlobal');
+%       
+%       % 自定义输出信号存储类
+%       sigObj = createSigObjAutosar4('OutputSignal', 'sigType', 'Outport', 'StorageClassOut', 'Custom');
 %
 %   NOTES:
 %       - 基于AUTOSAR4.Signal创建信号对象，支持完整的信号属性配置
@@ -67,6 +79,8 @@ function sigObj = createSigObjAutosar4(name, varargin)
     addParameter(p, 'DataType', 'single', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     addParameter(p, 'CustomStorageClass', 'Global', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     addParameter(p, 'sigType', '', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p, 'StorageClassIn', 'ImportedExtern', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p, 'StorageClassOut', 'Global', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     addParameter(p, 'Dimensions', 1, @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive'}));
     addParameter(p, 'Description', '', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     addParameter(p, 'Unit', '', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
@@ -86,6 +100,8 @@ function sigObj = createSigObjAutosar4(name, varargin)
     dataType = char(p.Results.DataType);
     customStorageClass = char(p.Results.CustomStorageClass);
     sigType = char(p.Results.sigType);
+    storageClassIn = char(p.Results.StorageClassIn);
+    storageClassOut = char(p.Results.StorageClassOut);
     dimensions = p.Results.Dimensions;
     description = char(p.Results.Description);
     unit = char(p.Results.Unit);
@@ -121,29 +137,54 @@ function sigObj = createSigObjAutosar4(name, varargin)
         evalin('base', [finalSignalName '.CoderInfo.Alias = '''';']);
         evalin('base', [finalSignalName '.CoderInfo.Alignment = -1;']);
 
-        %% 根据sigType自动设置CustomStorageClass
+        %% 根据sigType和StorageClass参数设置存储类
         if ~isempty(sigType)
             switch lower(sigType)
                 case 'inport'
-                    StorageClass = 'ImportedExtern';
-                    if verbose
-                        fprintf('检测到Inport类型，自动设置StorageClass为: ImportedExtern\n');
+                    % 处理输入信号存储类
+                    if strcmpi(storageClassIn, 'Auto')
+                        % Auto模式：使用默认规则
+                        finalStorageClass = 'Auto';
+                        if verbose
+                            fprintf('检测到Inport类型，Auto模式自动设置StorageClass为: Auto\n');
+                        end
+                    else
+                        % 非Auto模式：直接使用指定值
+                        finalStorageClass = storageClassIn;
+                        if verbose
+                            fprintf('检测到Inport类型，使用指定的StorageClass: %s\n', finalStorageClass);
+                        end
                     end
                     % 更新StorageClass属性
-                    evalin('base', [finalSignalName '.CoderInfo.StorageClass = "' StorageClass '";']);
+                    evalin('base', [finalSignalName '.CoderInfo.StorageClass = "' finalStorageClass '";']);
                     
                 case 'outport'
-                    customStorageClass = 'Global';
-                    if verbose
-                        fprintf('检测到Outport类型，自动设置CustomStorageClass为: Global\n');
+                    % 处理输出信号存储类
+                    if strcmpi(storageClassOut, 'Auto')
+                        % Auto模式：使用默认规则
+                        finalStorageClass = 'Auto';
+                        if verbose
+                            fprintf('检测到Outport类型，Auto模式自动设置StorageClass为: %s, CustomStorageClass为: %s\n', finalStorageClass, finalCustomStorageClass);
+                        end
+                        % 更新StorageClass属性
+                        evalin('base', [finalSignalName '.CoderInfo.StorageClass = "' finalStorageClass '";']);
+                    else
+                        % 非Auto模式：直接使用指定值
+                        finalStorageClass = 'Custom';
+                        finalCustomStorageClass = storageClassOut;
+                        if verbose
+                            fprintf('检测到Outport类型，使用指定的StorageClass: %s\n', finalStorageClass);
+                        end
+
+                        % 更新StorageClass属性
+                        evalin('base', [finalSignalName '.CoderInfo.StorageClass = "' finalStorageClass '";']);
+                        % 更新CustomStorageClass属性
+                        evalin('base', [finalSignalName '.CoderInfo.CustomStorageClass = "' finalCustomStorageClass '";']);
+                        % 设置输出存储类属性
+                        evalin('base', [finalSignalName '.CoderInfo.CustomAttributes.MemorySection = ''VAR'';']);
+                        evalin('base', [finalSignalName '.CoderInfo.CustomAttributes.ConcurrentAccess = false;']);
                     end
-                    % 更新CustomStorageClass属性
-                    evalin('base', [finalSignalName '.CoderInfo.StorageClass = "' storageClass '";']);
-                    % 更新CustomStorageClass属性
-                    evalin('base', [finalSignalName '.CoderInfo.CustomStorageClass = "' customStorageClass '";']);
-                    % 设置输出存储类属性
-                    evalin('base', [finalSignalName '.CoderInfo.CustomAttributes.MemorySection = ''VAR'';']);
-                    evalin('base', [finalSignalName '.CoderInfo.CustomAttributes.ConcurrentAccess = false;']);
+
             end
         end
         

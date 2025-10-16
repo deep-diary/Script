@@ -1,25 +1,48 @@
 function [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee(path, varargin)
-%%
-% 目的: 导入sldd表格中的Signal, Parameter, Interface
-% 输入：
-%       path: sldd文件路径
-%       varargin: 可选参数
-% 返回： 
-%       sigTable: Signal数据表格（内部全局变量）
-%       paraTable: Parameter数据表格  
-%       interfaceTable: Interface数据表格（输入输出端口）
-%       loadedCnt: 成功导入的数据条数
-% 范例： [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee('PrkgClimaEgyMgr_Element_Management_AddPort.xlsm');
-% 作者： Blue.ge
-% 日期： 20250908
-%% 
+%FINDSLDDLOADGEE 导入sldd表格中的Signal, Parameter, Interface
+%   [SIGTABLE, PARATABLE, INTERFACETABLE, LOADEDCNT] = FINDSLDDLOADGEE(PATH) 使用默认参数导入数据
+%   [SIGTABLE, PARATABLE, INTERFACETABLE, LOADEDCNT] = FINDSLDDLOADGEE(PATH, 'Parameter', Value, ...) 使用指定参数导入
+%
+%   输入参数:
+%      path        - sldd文件路径 (字符向量或字符串标量)
+%
+%   可选参数（名值对）:
+%      'ProcessInterface' - 是否处理Interface数据，可选值: true, false (默认值: true)
+%      'ProcessSignal'    - 是否处理Signal数据，可选值: true, false (默认值: false)
+%      'ProcessParameter' - 是否处理Parameter数据，可选值: true, false (默认值: false)
+%      'Verbose'          - 是否显示详细信息，可选值: true, false (默认值: true)
+%      'StorageClassIn'   - 输入信号存储类，可选值: 'Auto', 'ImportedExtern', 'ExportedGlobal', 'Custom'等 (默认值: 'Auto')
+%      'StorageClassOut'  - 输出信号存储类，可选值: 'Auto', 'ExportedGlobal', 'Custom'等 (默认值: 'Auto')
+%
+%   输出参数:
+%      sigTable        - Signal数据表格
+%      paraTable       - Parameter数据表格  
+%      interfaceTable  - Interface数据表格（输入输出端口）
+%      loadedCnt       - 成功导入的数据条数
+%
+%   功能描述:
+%      从Excel文件中导入Signal、Parameter和Interface数据，并创建相应的AUTOSAR对象。
+%      支持自定义输入输出信号的存储类设置。
+%
+%   示例:
+%      [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee('PrkgClimaEgyMgr_Element_Management_AddPort.xlsm');
+%      [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee('file.xlsm', 'ProcessSignal', true);
+%      [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee('file.xlsm', 'StorageClassIn', 'ExportedGlobal');
+%
+%   作者: Blue.ge
+%   日期: 2025-01-27
+%   版本: 2.0 
     %% 输入参数处理
     p = inputParser;
+    p.FunctionName = mfilename;
+    
     addRequired(p, 'path', @(x) ischar(x) || isstring(x));
     addParameter(p, 'ProcessInterface', true, @islogical);
     addParameter(p, 'ProcessSignal', false, @islogical);
     addParameter(p, 'ProcessParameter', false, @islogical);
     addParameter(p, 'Verbose', true, @islogical);
+    addParameter(p, 'StorageClassIn', 'ImportedExtern', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p, 'StorageClassOut', 'Global', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     
     parse(p, path, varargin{:});
     
@@ -28,6 +51,8 @@ function [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee(path
     processInterface = p.Results.ProcessInterface;
     processSignal = p.Results.ProcessSignal;
     processParameter = p.Results.ProcessParameter;
+    storageClassIn = char(p.Results.StorageClassIn);
+    storageClassOut = char(p.Results.StorageClassOut);
 
     %% 验证文件路径
     if isempty(filePath) || ~(isfile(which(filePath)) || isfile(filePath))
@@ -54,7 +79,7 @@ function [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee(path
         end
 
         %% 读取Interface数据
-        [interfaceTable, interfaceLoadedCnt] = readSheetData(filePath, 'Interface', 'Signal', verbose);
+        [interfaceTable, interfaceLoadedCnt] = readSheetData(filePath, 'Interface', 'Signal', verbose, storageClassIn, storageClassOut);
         loadedCnt = loadedCnt + interfaceLoadedCnt;
     end
 
@@ -67,7 +92,7 @@ function [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee(path
         end
 
         %% 读取Signal数据
-        [sigTable, signalLoadedCnt] = readSheetData(filePath, 'Signal', 'Signal', verbose);
+        [sigTable, signalLoadedCnt] = readSheetData(filePath, 'Signal', 'Signal', verbose, storageClassIn, storageClassOut);
         loadedCnt = loadedCnt + signalLoadedCnt;
     else
         sigTable = table();
@@ -103,13 +128,15 @@ function [sigTable, paraTable, interfaceTable, loadedCnt] = findSlddLoadGee(path
 end
 
 %% 辅助函数：通用读取工作表数据
-function [dataTable, loadedCount] = readSheetData(filePath, sheetName, objectType, verbose)
+function [dataTable, loadedCount] = readSheetData(filePath, sheetName, objectType, verbose, storageClassIn, storageClassOut)
     % 通用读取工作表数据的函数
     % 输入参数:
     %   filePath - Excel文件路径
     %   sheetName - 工作表名称
     %   objectType - 对象类型 ('Signal' 或 'Parameter')
     %   verbose - 是否显示详细信息
+    %   storageClassIn - 输入信号存储类
+    %   storageClassOut - 输出信号存储类
     % 输出参数:
     %   dataTable - 读取的数据表格
     %   loadedCount - 成功创建的对象数量
@@ -151,7 +178,7 @@ function [dataTable, loadedCount] = readSheetData(filePath, sheetName, objectTyp
                 % 根据对象类型创建相应的AUTOSAR对象
                 if strcmp(objectType, 'Signal')
                     % 从表格数据中提取信号参数
-                    signalParams = extractSignalParams(itemData);
+                    signalParams = extractSignalParams(itemData, storageClassIn, storageClassOut);
                     % createSigObjGeePack(itemName, signalParams{:});
                     createSigObjAutosar4(itemName, signalParams{:});
                 elseif strcmp(objectType, 'Parameter')
@@ -179,9 +206,11 @@ function [dataTable, loadedCount] = readSheetData(filePath, sheetName, objectTyp
 end
 
 %% 辅助函数：从表格数据中提取信号参数
-function signalParams = extractSignalParams(itemData)
+function signalParams = extractSignalParams(itemData, storageClassIn, storageClassOut)
     % 从表格数据中提取信号对象的参数
     % 输入: itemData - 表格行数据
+    %       storageClassIn - 输入信号存储类
+    %       storageClassOut - 输出信号存储类
     % 输出: signalParams - 参数名称-值对单元数组
     
     signalParams = {};
@@ -234,15 +263,21 @@ function signalParams = extractSignalParams(itemData)
         end
     end
     
-    % 根据ElementType设置信号类型
+    % 根据ElementType设置信号类型和存储类
     if ~ismissing(itemData.ElementType) && itemData.ElementType ~= ""
         elementType = char(itemData.ElementType);
         if contains(lower(elementType), 'inport') || contains(lower(elementType), 'input')
             signalParams{end+1} = 'sigType';
             signalParams{end+1} = 'Inport';
+            % 设置输入信号存储类
+            signalParams{end+1} = 'StorageClassIn';
+            signalParams{end+1} = storageClassIn;
         elseif contains(lower(elementType), 'outport') || contains(lower(elementType), 'output')
             signalParams{end+1} = 'sigType';
             signalParams{end+1} = 'Outport';
+            % 设置输出信号存储类
+            signalParams{end+1} = 'StorageClassOut';
+            signalParams{end+1} = storageClassOut;
         end
     end
     

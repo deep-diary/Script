@@ -82,8 +82,20 @@ function NameSigOut = findNameAutosar(Name, varargin)
             % 查找下划线位置
             underscorePos = strfind(nameWithoutTail, '_');
             if ~isempty(underscorePos)
-                % 取第一个下划线之后的部分作为一半名称
-                nameHalf = nameWithoutTail(underscorePos(1)+1:end);
+                % 特殊处理包含_IsUpdated的信号名
+                if strcmp(mode, 'prefixHalf') && contains(nameWithoutTail, '_IsUpdated_')
+                    % 对于prefixHalf模式，如果包含_IsUpdated_，则取_IsUpdated_之后的部分
+                    isUpdatedPos = strfind(nameWithoutTail, '_IsUpdated_');
+                    if ~isempty(isUpdatedPos)
+                        nameHalf = nameWithoutTail(isUpdatedPos(1) + length('_IsUpdated_'):end);
+                    else
+                        % 如果没有找到_IsUpdated_，使用原来的逻辑
+                        nameHalf = nameWithoutTail(underscorePos(1)+1:end);
+                    end
+                else
+                    % 取第一个下划线之后的部分作为一半名称
+                    nameHalf = nameWithoutTail(underscorePos(1)+1:end);
+                end
             else
                 nameHalf = nameWithoutTail;
             end

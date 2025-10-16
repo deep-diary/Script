@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Auto generated XML Component Description for model PrkgClimaActvMgr
+Model version                : 1.14
+Simulink Coder version       : Simulink Coder 9.8 (R2022b) 13-May-2022
+XML source code generated on : Thu Sep 25 17:01:53 2025
+Model Checksum               : 3254230659 2522516751 714771317 330502008
+-->
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00049.xsd">
+    <AR-PACKAGES>
+        <AR-PACKAGE>
+            <SHORT-NAME>Components</SHORT-NAME>
+            <ELEMENTS>
+                <APPLICATION-SW-COMPONENT-TYPE UUID="26bd4371-9f46-51f2-8199-32c7665ac3a2">
+                    <SHORT-NAME>PrkgClimaActvMgr</SHORT-NAME>
+                    <INTERNAL-BEHAVIORS>
+                        <SWC-INTERNAL-BEHAVIOR UUID="7498f7df-26a5-5303-dad7-6d75a3d15c32">
+                            <SHORT-NAME>PrkgClimaActvMgr_IB</SHORT-NAME>
+                            <EVENTS>
+                                <INIT-EVENT UUID="6ad709cf-5b9b-5038-a090-4e161c7f8976">
+                                    <SHORT-NAME>Event_Init</SHORT-NAME>
+                                    <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Components/PrkgClimaActvMgr/PrkgClimaActvMgr_IB/PrkgClimaActvMgr_Init</START-ON-EVENT-REF>
+                                </INIT-EVENT>
+                                <TIMING-EVENT UUID="2649860b-77e0-5414-6b35-8f13d12f9cb3">
+                                    <SHORT-NAME>Event_Runnable</SHORT-NAME>
+                                    <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/Components/PrkgClimaActvMgr/PrkgClimaActvMgr_IB/PrkgClimaActvMgr_Runnable</START-ON-EVENT-REF>
+                                    <PERIOD>0.2</PERIOD>
+                                </TIMING-EVENT>
+                            </EVENTS>
+                            <HANDLE-TERMINATION-AND-RESTART>NO-SUPPORT</HANDLE-TERMINATION-AND-RESTART>
+                            <RUNNABLES>
+                                <RUNNABLE-ENTITY UUID="590b6769-53b5-5b60-57ce-08b97db5250e">
+                                    <SHORT-NAME>PrkgClimaActvMgr_Init</SHORT-NAME>
+                                    <MINIMUM-START-INTERVAL>0</MINIMUM-START-INTERVAL>
+                                    <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                                    <SYMBOL>PrkgClimaActvMgr_Init</SYMBOL>
+                                </RUNNABLE-ENTITY>
+                                <RUNNABLE-ENTITY UUID="91553cde-749a-5ffe-4acd-2427d9f01fcf">
+                                    <SHORT-NAME>PrkgClimaActvMgr_Runnable</SHORT-NAME>
+                                    <MINIMUM-START-INTERVAL>0</MINIMUM-START-INTERVAL>
+                                    <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                                    <SYMBOL>PrkgClimaActvMgr_Runnable</SYMBOL>
+                                </RUNNABLE-ENTITY>
+                            </RUNNABLES>
+                            <SUPPORTS-MULTIPLE-INSTANTIATION>false</SUPPORTS-MULTIPLE-INSTANTIATION>
+                        </SWC-INTERNAL-BEHAVIOR>
+                    </INTERNAL-BEHAVIORS>
+                </APPLICATION-SW-COMPONENT-TYPE>
+            </ELEMENTS>
+        </AR-PACKAGE>
+    </AR-PACKAGES>
+</AUTOSAR>

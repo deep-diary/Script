@@ -1,5 +1,5 @@
 function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
-%FINDCODEFILES 查找模型中的代码文件并按类型分类
+%FINDCODEFILES 查找模型中的代码文件并按类型分类，并可选择自动复制到目标目录
 %   [CODEFILES, FILETYPEMAPPING] = FINDCODEFILES(SOURCEPATH) 在指定路径中查找所有代码文件
 %   [CODEFILES, FILETYPEMAPPING] = FINDCODEFILES(SOURCEPATH, 'Parameter', Value, ...) 使用指定参数查找代码文件
 %
@@ -10,6 +10,10 @@ function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
 %      'fileType'        - 文件类型 (字符向量或字符向量元胞数组), 默认值: {'c', 'h', 'a2l'}
 %      'showInfo'        - 是否显示代码文件信息 (逻辑值), 默认值: true
 %      'recursive'       - 是否递归搜索子目录 (逻辑值), 默认值: true
+%      'targetPath'      - 目标复制路径 (字符串), 默认值: 'TargetCodeFiles'
+%      'autoCopy'        - 是否自动复制文件到目标目录 (逻辑值), 默认值: false
+%      'combine'         - 复制时是否合并文件到同一目录 (逻辑值), 默认值: true
+%      'overwrite'       - 复制时是否覆盖已存在文件 (逻辑值), 默认值: true
 %
 %   输出参数:
 %      codeFiles         - 按文件类型分类的代码文件列表 (元胞数组)
@@ -23,22 +27,28 @@ function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
 %   功能描述:
 %      查找指定路径中符合条件的代码文件，按文件类型分类返回。
 %      支持递归搜索子目录，可以选择是否显示找到的代码文件的详细信息。
-%      返回的元胞数组便于后续将不同类别的代码拷贝到不同的文件夹中。
+%      可选择自动调用createCopyCodeFiles函数将文件复制到指定目录。
 %
 %   示例:
+%      % 基本用法：只查找文件
 %      [codeFiles, mapping] = findCodeFiles('CodeGen')
-%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'fileType', {'c', 'h'}, 'showInfo', true)
-%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'recursive', false)
 %      
-%      % 使用示例：将C文件拷贝到特定文件夹
-%      if ~isempty(codeFiles{1})  % C文件
-%          copyFilesToFolder(codeFiles{1}, 'C_Files_Folder');
-%      end
+%      % 自动复制到默认目录
+%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'autoCopy', true)
+%      
+%      % 自动复制到指定目录
+%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'autoCopy', true, 'targetPath', 'MyCodeFiles')
+%      
+%      % 使用分类模式复制
+%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'autoCopy', true, 'combine', false)
+%      
+%      % 查找特定文件类型并自动复制
+%      [codeFiles, mapping] = findCodeFiles('CodeGen', 'fileType', {'c', 'h'}, 'autoCopy', true)
 %
-%   参见: DIR, FULLFILE, INPUTPARSER
+%   参见: DIR, FULLFILE, INPUTPARSER, CREATECOPYCODEFILES
 %
 %   作者: Blue.ge
-%   版本: 2.1
+%   版本: 2.2
 %   日期: 20250912
 
     %% 输入参数验证
@@ -58,12 +68,20 @@ function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
     addParameter(p, 'fileType', {'c', 'h', 'a2l'}, @(x) validateFileType(x));
     addParameter(p, 'showInfo', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     addParameter(p, 'recursive', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+    addParameter(p, 'targetPath', 'TargetCodeFiles', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p, 'autoCopy', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+    addParameter(p, 'combine', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+    addParameter(p, 'overwrite', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     
     parse(p, varargin{:});
     
     fileType = p.Results.fileType;
     showInfo = p.Results.showInfo;
     recursive = p.Results.recursive;
+    targetPath = char(p.Results.targetPath);
+    autoCopy = p.Results.autoCopy;
+    combine = p.Results.combine;
+    overwrite = p.Results.overwrite;
     
     % 确保fileType是元胞数组
     if ischar(fileType) || isstring(fileType)
@@ -130,7 +148,7 @@ function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
     end
     fileTypeMapping.types = userFriendlyTypes;
     fileTypeMapping.counts = fileCounts;
-    
+
     %% 显示代码文件信息
     if showInfo
         totalFiles = sum(fileCounts);
@@ -146,6 +164,32 @@ function [codeFiles, fileTypeMapping] = findCodeFiles(sourcePath, varargin)
                     end
                 end
             end
+        end
+    end
+
+    %% 自动复制文件到目标目录
+    if autoCopy && totalFiles > 0
+        try
+            if showInfo
+                fprintf('\n开始自动复制文件到目标目录...\n');
+            end
+            
+            % 调用createCopyCodeFiles函数
+            createCopyCodeFiles(codeFiles, fileTypeMapping, targetPath, ...
+                'combine', combine, ...
+                'showInfo', showInfo, ...
+                'overwrite', overwrite);
+                
+            if showInfo
+                fprintf('文件复制完成！\n');
+            end
+            
+        catch ME
+            warning('findCodeFiles:copyFailed', '自动复制文件失败: %s', ME.message);
+        end
+    elseif autoCopy && totalFiles == 0
+        if showInfo
+            fprintf('未找到文件，跳过复制操作。\n');
         end
     end
 end
