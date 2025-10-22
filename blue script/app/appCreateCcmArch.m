@@ -8,7 +8,7 @@ modelName = 'CcmArch';
 names = {'PrkgClimaActvMgr','PrkgClimaEgyMgr'};
 
 % 读取autosar 任务mapping 表格，获取各个SWC的调度周期
-[init, tasks, tasksAll] = readAutosarTasks('CCMtaskmappingV2.0.xlsx', 'Sheet1');
+[init, tasks, tasksAll] = readAutosarTasks('CCMtaskmappingV2.0.xlsx', 'ErtModel');
 
 % 各周期任务列表
 task1ms = tasks.task1ms;
@@ -113,7 +113,7 @@ compositions = archModel.Compositions;
 totalCompositions = length(compositions);
 
 
-fprintf('\n开始按组合层次处理 %d 个组合，共 %d 个组件...\n', totalCompositions, totalComponents);
+fprintf('\n开始按组合层次处理 %d 个组合，共 %d 个组件...\n', totalCompositions, totalComponentsAll);
 
 % 全局组件计数器
 globalComponentCounter = 0;
@@ -150,7 +150,7 @@ for i = 1:totalCompositions
         globalComponentCounter = globalComponentCounter + 1;
         
         % 显示组件处理进度（组合内进度 + 全局进度）
-        percent = (globalComponentCounter / totalComponents) * 100;
+        percent = (globalComponentCounter / totalComponentsAll) * 100;
         fprintf('\n  --- [%d/%d] 处理组件: %s (全局: %d/%d, %.1f%%) ---\n', ...
             j, totalComponents, componentName, globalComponentCounter, totalComponentsAll, percent);
         
