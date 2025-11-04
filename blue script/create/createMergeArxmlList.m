@@ -1,14 +1,18 @@
-function createMergeArxmlList(arxmlList, outputFile, varargin)
+function createMergeArxmlList(varargin)
 %CREATEMERGEARXMLLIST 将多个ARXML文件合并为一个ARXML文件
-%   CREATEMERGEARXMLLIST(ARXMLLIST, OUTPUTFILE) 将指定的ARXML文件列表合并为一个文件
-%   CREATEMERGEARXMLLIST(ARXMLLIST, OUTPUTFILE, 'OptionName', OptionValue, ...) 使用指定选项合并
+%   CREATEMERGEARXMLLIST(ARXMLLIST) 将指定的ARXML文件列表合并为一个文件
+%   CREATEMERGEARXMLLIST(..., 'OutputFile', OUTPUTFILE, 'FolderPath', PATH, ...) 使用名值对指定参数
+%   CREATEMERGEARXMLLIST('FolderPath', true) 通过UI对话框选择文件夹
 %
-%   输入参数:
-%      arxmlList    - ARXML文件路径列表 (字符向量元胞数组或字符串数组，当FolderPath不为空时被忽略)
-%      outputFile   - 输出文件路径 (字符向量或字符串)
+%   输入参数（均为可选）:
+%      arxmlList    - ARXML文件路径列表 (位置参数，字符向量元胞数组或字符串数组，当FolderPath不为空时被忽略)
 %
 %   可选参数（名值对）:
-%      'FolderPath' - 文件夹路径，自动读取文件夹内所有.arxml文件 (字符向量或字符串，默认: '')
+%      'FolderPath' - 文件夹路径或布尔值 (字符向量、字符串或逻辑值，默认: '')
+%                        - 字符/字符串: 指定文件夹路径
+%                        - true: 通过UI对话框选择文件夹
+%                        - false或空: 不使用文件夹模式
+%      'OutputFile' - 输出文件路径 (字符向量或字符串，默认: 'merged.arxml')
 %      'BaseFile'   - 基础文件路径，其他文件将合并到此文件中 (字符向量或字符串)
 %      'Validate'   - 是否验证合并结果 (逻辑值，默认: true)
 %      'Backup'     - 是否备份现有输出文件 (逻辑值，默认: true)
@@ -23,55 +27,85 @@ function createMergeArxmlList(arxmlList, outputFile, varargin)
 %      5. 支持XML格式验证和错误检查
 %
 %   示例:
-%      % 基本用法
-%      arxmlFiles = {'ActvnCoorrForEcuAndCom.arxml', 'AirDirecCtrlMgr.arxml'};
-%      createMergeArxmlList(arxmlFiles, 'merged.arxml');
+%      % 基本用法（通过UI选择文件夹）
+%      createMergeArxmlList('FolderPath', true);
+% 
+%      % 指定文件
+%      createMergeArxmlList('arxmlList', {'SdbRxSigProc.arxml','PrkgClimaActvMgr.arxml'});
 %
-%      % 从文件夹自动读取所有arxml文件
-%      createMergeArxmlList([], 'merged.arxml', 'FolderPath', 'arxml_folder');
+%      % 指定文件夹路径
+%      createMergeArxmlList('FolderPath', 'arxml_folder');
+%
+%      % 指定输出文件名
+%      createMergeArxmlList('FolderPath', true, 'OutputFile', 'my_merged');
+%
+%      % 使用文件列表
+%      arxmlFiles = {'ActvnCoorrForEcuAndCom.arxml', 'AirDirecCtrlMgr.arxml'};
+%      createMergeArxmlList(arxmlFiles, 'OutputFile', 'merged.arxml');
 %
 %      % 指定基础文件
-%      createMergeArxmlList(arxmlFiles, 'merged.arxml', 'BaseFile', 'base.arxml');
-%
-%      % 从文件夹读取并指定基础文件
-%      createMergeArxmlList([], 'merged.arxml', 'FolderPath', 'arxml_folder', 'BaseFile', 'base.arxml');
-%
-%      % 禁用验证和备份
-%      createMergeArxmlList(arxmlFiles, 'merged.arxml', 'Validate', false, 'Backup', false);
+%      createMergeArxmlList('FolderPath', 'arxml_folder', 'BaseFile', 'base.arxml');
 %
 %   作者: Blue.ge
 %   日期: 20250101
-%   版本: 1.0
+%   版本: 2.0
 
 % 创建输入解析器
 p = inputParser;
 
-% 添加必需参数
-addRequired(p, 'arxmlList', @(x) iscell(x) || isstring(x) || isempty(x));
-addRequired(p, 'outputFile', @(x) validateattributes(x, {'char', 'string'}, {'nonempty'}));
-
-% 添加可选参数
-addParameter(p, 'FolderPath', '', @(x) validateattributes(x, {'char', 'string'}, {}));
-addParameter(p, 'BaseFile', '', @(x) validateattributes(x, {'char', 'string'}, {}));
-addParameter(p, 'Validate', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
-addParameter(p, 'Backup', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
-addParameter(p, 'Verbose', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+% 只使用名值对参数（无位置参数）
+addParameter(p, 'FolderPath', '', @(x) isempty(x) || ischar(x) || isstring(x) || islogical(x));
+addParameter(p, 'OutputFile', 'merged', @(x) isempty(x) || ischar(x) || isstring(x));
+addParameter(p, 'arxmlList', '', @(x) isempty(x) || iscell(x) || ischar(x) || isstring(x));
+addParameter(p, 'BaseFile', '', @(x) isempty(x) || ischar(x) || isstring(x));
+addParameter(p, 'Validate', true, @(x) islogical(x) && isscalar(x));
+addParameter(p, 'Backup', true, @(x) islogical(x) && isscalar(x));
+addParameter(p, 'Verbose', true, @(x) islogical(x) && isscalar(x));
 
 % 解析输入
-parse(p, arxmlList, outputFile, varargin{:});
+parse(p, varargin{:});
 
 % 提取参数
 arxmlList = p.Results.arxmlList;
-outputFile = char(p.Results.outputFile);
-folderPath = char(p.Results.FolderPath);
+folderPathInput = p.Results.FolderPath;
+outputFile = char(p.Results.OutputFile);
 baseFile = char(p.Results.BaseFile);
 validateResult = p.Results.Validate;
 backupFile = p.Results.Backup;
 verbose = p.Results.Verbose;
 
-% 验证arxmlList参数
+%  outputFile 增加当前时间+后缀
+outputFile = [outputFile, '_', datestr(datetime('now'),'yyyymmdd_HHMMSS'), '.arxml'];
+
+% 处理 FolderPath 参数（支持布尔值和路径字符串）
+folderPath = '';
+if islogical(folderPathInput)
+    if folderPathInput
+        % 通过 UI 对话框选择文件夹
+        folderPath = uigetdir(pwd, '请选择包含ARXML文件的文件夹');
+        if isequal(folderPath, 0) || isempty(folderPath) || (ischar(folderPath) && strcmp(folderPath, '0'))
+            error('createMergeArxmlList:FolderSelectionCancelled', '用户取消了文件夹选择');
+        end
+        folderPath = char(folderPath);
+        if verbose
+            fprintf('选择的文件夹: %s\n', folderPath);
+        end
+    end
+    % false 或空值，不设置 folderPath
+elseif ~isempty(folderPathInput)
+    folderPath = char(folderPathInput);
+end
+
+% 转换 arxmlList 数据类型
+if ~isempty(arxmlList) && ~iscell(arxmlList)
+    arxmlList = {char(arxmlList)};
+elseif ~isempty(arxmlList)
+    arxmlList = cellfun(@char, arxmlList, 'UniformOutput', false);
+end
+
+% 验证arxmlList和FolderPath参数（至少要有一个）
 if isempty(arxmlList) && isempty(folderPath)
-    error('createMergeArxmlList:EmptyList', 'ARXML文件列表不能为空（除非指定FolderPath参数）');
+    error('createMergeArxmlList:EmptyList', '必须指定arxmlList或FolderPath参数，两者不能同时为空');
 end
 
 % 验证arxmlList中的文件路径
@@ -123,6 +157,18 @@ else
     end
 end
 
+% 确保输出文件使用绝对路径
+if ~isempty(outputFile)
+    % 检查是否为绝对路径（Windows 或 Unix）
+    isAbsolute = (length(outputFile) >= 2 && outputFile(2) == ':') || ...  % Windows: C:\
+                 (outputFile(1) == filesep);                                 % Unix/Mac: /
+    
+    if ~isAbsolute
+        % 相对路径，转换为绝对路径
+        outputFile = fullfile(pwd, outputFile);
+    end
+end
+
 if verbose
     fprintf('输出文件: %s\n', outputFile);
 end
@@ -142,12 +188,20 @@ else
     end
 end
 
-% 备份现有输出文件
-if backupFile && exist(outputFile, 'file')
-    backupName = [outputFile, '.backup.', datestr(now, 'yyyymmdd_HHMMSS')];
-    copyfile(outputFile, backupName);
-    if verbose
-        fprintf('已备份现有文件到: %s\n', backupName);
+% 备份现有输出文件（仅在文件存在时）
+if backupFile
+    try
+        if exist(outputFile, 'file')
+            backupName = [outputFile, '.backup.', datestr(now, 'yyyymmdd_HHMMSS')];
+            copyfile(outputFile, backupName);
+            if verbose
+                fprintf('已备份现有文件到: %s\n', backupName);
+            end
+        end
+    catch ME
+        if verbose
+            fprintf('警告: 无法备份现有文件: %s\n', ME.message);
+        end
     end
 end
 
@@ -170,21 +224,29 @@ end
 try
     if verbose
         fprintf('\n步骤2: 合并其他文件...\n');
+        fprintf('总文件数: %d\n', length(arxmlList));
+        fprintf('基础文件: %s\n', baseFile);
     end
     
     mergedContent = baseContent;
     mergedCount = 0;
+    skippedCount = 0;
+    failedCount = 0;
     
     for i = 1:length(arxmlList)
         currentFile = arxmlList{i};
         
-        % 跳过基础文件
-        if strcmp(currentFile, baseFile)
-            continue;
+        if verbose
+            fprintf('  处理文件 %d/%d: %s\n', i, length(arxmlList), currentFile);
         end
         
-        if verbose
-            fprintf('  合并文件 %d/%d: %s\n', i, length(arxmlList), currentFile);
+        % 跳过基础文件
+        if strcmp(currentFile, baseFile)
+            if verbose
+                fprintf('    跳过基础文件\n');
+            end
+            skippedCount = skippedCount + 1;
+            continue;
         end
         
         try
@@ -200,6 +262,7 @@ try
             end
             
         catch ME
+            failedCount = failedCount + 1;
             if verbose
                 fprintf('    警告: 文件合并失败 - %s\n', ME.message);
             end
@@ -207,7 +270,12 @@ try
     end
     
     if verbose
-        fprintf('合并完成，成功合并 %d 个文件\n', mergedCount);
+        fprintf('\n合并统计:\n');
+        fprintf('  总文件数: %d\n', length(arxmlList));
+        fprintf('  基础文件: %d (跳过)\n', skippedCount);
+        fprintf('  成功合并: %d\n', mergedCount);
+        fprintf('  合并失败: %d\n', failedCount);
+        fprintf('  实际处理: %d\n', mergedCount + failedCount);
     end
     
 catch ME
@@ -266,6 +334,24 @@ end
 
 if verbose
     fprintf('\n=== 合并完成 ===\n');
+    fprintf('输出文件: %s\n', outputFile);
+    
+    % 显示文件信息
+    if exist(outputFile, 'file')
+        fileInfo = dir(outputFile);
+        fprintf('文件大小: %d 字节 (%.2f MB)\n', fileInfo.bytes, fileInfo.bytes / 1024 / 1024);
+        fprintf('创建时间: %s\n', fileInfo.date);
+    end
+    
+    fprintf('\n最终统计:\n');
+    fprintf('  输入文件总数: %d\n', length(arxmlList));
+    fprintf('  基础文件: 1 (作为合并基础)\n');
+    fprintf('  合并文件数: %d\n', mergedCount);
+    if validateResult
+        fprintf('  验证结果: 通过\n');
+    else
+        fprintf('  验证结果: 跳过\n');
+    end
 end
 
 end % 主函数结束
