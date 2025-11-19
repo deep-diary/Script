@@ -25,8 +25,6 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %                       - 'halfTail': 保留一半名称并添加相应后缀
 %                       - 'justHalf': 只保留一半名称
 %                       - 'modelHalf': 模型名_一半名称
-%       'isUseSubModel' - 是否在第一个子模型中查找端口，可选值: true, false (默认值: false)
-%                        当为true时，会先找到根模型下的第一个子模型，然后在该子模型中查找端口
 %
 %   返回值:
 %       SIGTABLE    - 生成的信号数据表格
@@ -39,7 +37,6 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'sheet', 'Signal');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'halfTail');
 %       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'autosarMode', 'modelHalf', 'ignoreInput', false);
-%       [outputFile, sigTable] = createSlddSigGee('PrkgClimaEgyMgr', 'isUseSubModel', true);
 %
 %   作者: Blue.ge
 %   日期: 2025-09-08
@@ -56,7 +53,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     addParameter(p, 'sheet', 'Interface', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     % addParameter(p, 'truncateSignal', false, @islogical);
     addParameter(p,'autosarMode','', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
-    addParameter(p, 'isUseSubModel', false, @islogical);
+    addParameter(p, 'prefixName', 'CcmIF', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
 
     parse(p, ModelName, varargin{:});
 
@@ -70,7 +67,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
     sheet = char(p.Results.sheet);
     % truncateSignal = p.Results.truncateSignal;
     autosarMode = char(p.Results.autosarMode);
-    isUseSubModel = p.Results.isUseSubModel;
+    prefixName = char(p.Results.prefixName);
 
     % 确定是否截断信号名
     if ~isempty(autosarMode)
@@ -116,39 +113,12 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
         fprintf('========================================\n');
     end
 
-    %% 确定要查找端口的模型路径
-    targetModel = modelName;
-    if isUseSubModel
-        try
-            % 查找第一个子模型
-            subModels = find_system(modelName, 'SearchDepth', 1, 'BlockType', 'SubSystem');
-            if length(subModels) >= 1  
-                targetModel = subModels{1};  % 取第一个子模型
-                if verbose
-                    fprintf('使用子模型: %s\n', targetModel);
-                end
-            else
-                if verbose
-                    warning('createSlddSigGee:NoSubModel', '模型 "%s" 中没有找到子模型，将使用根模型', modelName);
-                end
-            end
-        catch ME
-            if verbose
-                warning('createSlddSigGee:SubModelError', '查找子模型失败: %s，将使用根模型', ME.message);
-            end
-        end
-    end
-
-    %% 获取指定模型下的输入输出端口
+    %% 获取根目录下输入输出端口
     try
-        [~, inPorts, outPorts] = findModPorts(targetModel, 'getType', 'Handle');
+        [~, inPorts, outPorts] = findModPorts(modelName, 'getType', 'Handle');
         
         if verbose
-            if isUseSubModel && ~strcmp(targetModel, modelName)
-                fprintf('在子模型 "%s" 中发现 %d 个输入端口, %d 个输出端口\n', targetModel, length(inPorts), length(outPorts));
-            else
-                fprintf('发现 %d 个输入端口, %d 个输出端口\n', length(inPorts), length(outPorts));
-            end
+            fprintf('发现 %d 个输入端口, %d 个输出端口\n', length(inPorts), length(outPorts));
         end
         
     catch ME
@@ -213,7 +183,7 @@ function [outputFile, sigTable] = createSlddSigGee(ModelName, varargin)
             
             % 信号名截断处理
             if truncateSignal
-                portName = findNameAutosar(portName,'nameMd',ModelName,'type',portType,'mode',autosarMode);
+                portName = findNameAutosar(portName,'nameMd',ModelName,'type',portType,'mode',autosarMode, 'prefixName', prefixName);
             end
             
             % 按照["SWC", "ElementType", "Name", "Min", "Max", "DataType", "Units", "Values", "Description"]顺序赋值

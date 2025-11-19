@@ -20,7 +20,7 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
 %
 %   功能描述:
 %      查找指定模型中的输入输出端口，可以选择返回端口的不同属性。
-%      支持过滤未连接的端口和跳过触发端口。
+%      支持过滤未连接的端口和跳过触发端口。   
 %
 %   示例:
 %      [name, inPorts, outPorts] = findModPorts(gcb, 'getType', 'Path');
@@ -46,6 +46,7 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
     pathMd = p.Results.pathMd;
     getType = p.Results.getType;
     FiltUnconnected = p.Results.FiltUnconnected;
+    skipTrig = p.Results.skipTrig;
     
 
     %% 找到所有端口
@@ -94,10 +95,15 @@ function [ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(pathMd, var
     end
     
     % 忽略function call触发端口
-%     if ~isempty(PortsIn) && (skipTrig || ...
-%        (length(PortsIn) >= 1 && strcmp(get_param(PortsIn{1}, 'OutputFunctionCall'), 'on')))
-%         PortsIn = PortsIn(2:end);
-%     end
+    if skipTrig
+        PortsInTemp = {};
+        for i = 1:length(PortsIn)
+            if strcmp(get_param(PortsIn{i}, 'OutputFunctionCall'), 'off')
+                PortsInTemp{end+1} = PortsIn{i};
+            end
+        end
+        PortsIn = PortsInTemp;
+    end
 
     % 如果不是返回路径，则获取指定的属性
     if ~strcmp(getType, 'Path')

@@ -50,6 +50,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(mdName, vararg
 %       % 基本用法
 %       [success, errorMsg, codePaths, summary] = appAutosar2Ert(bdroot);
 %       [success, errorMsg, codePaths, summary] = appAutosar2Ert('PrkgClimaEgyMgr');
+%       [success, errorMsg, codePaths, summary] = appAutosar2Ert(bdroot,'prefixName','Smart');
 %       
 %       % 使用不同的AUTOSAR模式和合并设置
 %       [success, errorMsg, codePaths, summary] = appAutosar2Ert('PrkgClimaEgyMgr', ...
@@ -110,10 +111,12 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(mdName, vararg
     validModes = {'prefixHalf', 'deleteTail', 'halfTail', 'justHalf', 'modelHalf'};
     addParameter(p, 'AutosarMode', 'prefixHalf', @(x) any(validatestring(x, validModes)));
     addParameter(p, 'Combine', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+    addParameter(p, 'prefixName', 'CcmIF', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     
     parse(p, varargin{:});
     autosarMode = p.Results.AutosarMode;
     combine = p.Results.Combine;
+    prefixName = char(p.Results.prefixName);
     
     fprintf('========================================\n');
     fprintf('    开始AUTOSAR到ERT转换\n');
@@ -219,7 +222,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(mdName, vararg
         
         % 创建模型信号
         % createModSig(subModPath{1},'isEnableIn',true,'resoveValue',true,'autosarMode',autosarMode); % 基于模型信号
-        changeLinesPortAttr(mdName,'resoveValue',true,'autosarMode',autosarMode); % 基于端口信号
+        changeLinesPortAttr(mdName,'resoveValue',true,'autosarMode',autosarMode, 'prefixName', prefixName); % 基于端口信号
         fprintf('  信号解析完成\n');
         
     catch ME
@@ -232,7 +235,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(mdName, vararg
         fprintf('步骤6: 导出信号到Excel模板...\n');
         
         % 导出到excel模板中
-        outputFile = createSlddSigGee(mdName,'autosarMode',autosarMode);
+        outputFile = createSlddSigGee(mdName,'autosarMode',autosarMode, 'prefixName', prefixName);
         
         if isempty(outputFile)
             errorMsg = 'Excel文件导出失败';

@@ -1,4 +1,4 @@
-function creatBusSig(mdPath, varargin)
+TelmDefrostReqdataForStorgfunction creatBusSig(mdPath, varargin)
 %%
 % 目的: 为模型创建对应的输入bus, 
 % 输入：

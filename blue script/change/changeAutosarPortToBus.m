@@ -203,14 +203,18 @@ function result = changeAutosarPortToBus(model, varargin)
                 
                 % 检查是否已存在相同PortName的Bus Element（避免名称冲突）
                 existingBlocks = find_system(model, 'SearchDepth', 1, ...
-                    'BlockType', 'InBusElement', ...
+                    'BlockType', 'Inport', ...
                     'PortName', inport.Port);
                 
                 if ~isempty(existingBlocks)
                     % 如果已存在相同PortName的Bus Element，尝试复用
                     existingBlock = existingBlocks{1};
-                    actualPortName = get_param(existingBlock, 'Name');
-                    busElementPath = existingBlock;  % 保存路径用于Map
+                    busElementPath = add_block(existingBlock, [model '/In Bus Element'],'MakeNameUnique','on');
+                    set_param(busElementPath, ...
+                        'Element', inport.Element, ...
+                        'Position', pos);
+
+                    actualPortName = get_param(busElementPath, 'Name');
                     detail.NewName = actualPortName;
                     detail.Message = sprintf('复用已存在的Bus Element（相同PortName）: %s', actualPortName);
                     
@@ -218,6 +222,7 @@ function result = changeAutosarPortToBus(model, varargin)
                         fprintf('  [复用] 输入端口%d: %s -> %s (%s.%s, 已存在相同PortName)\n', i, ...
                             portName, actualPortName, inport.Port, inport.Element);
                     end
+
                 else
                     % 创建In Bus Element
                     busElementPath = add_block('simulink/Ports & Subsystems/In Bus Element', ...
@@ -365,14 +370,17 @@ function result = changeAutosarPortToBus(model, varargin)
                 
                 % 检查是否已存在相同PortName的Bus Element（避免名称冲突）
                 existingBlocks = find_system(model, 'SearchDepth', 1, ...
-                    'BlockType', 'OutBusElement', ...
+                    'BlockType', 'Outport', ...
                     'PortName', outport.Port);
                 
                 if ~isempty(existingBlocks)
                     % 如果已存在相同PortName的Bus Element，尝试复用
                     existingBlock = existingBlocks{1};
-                    actualPortName = get_param(existingBlock, 'Name');
-                    busElementPath = existingBlock;  % 保存路径用于Map
+                    busElementPath = add_block(existingBlock, [model '/Out Bus Element'],'MakeNameUnique','on');
+                    set_param(busElementPath, ...
+                        'Element', outport.Element, ...
+                        'Position', pos);
+                    actualPortName = get_param(busElementPath, 'Name');
                     detail.NewName = actualPortName;
                     detail.Message = sprintf('复用已存在的Bus Element（相同PortName）: %s', actualPortName);
                     
@@ -380,6 +388,8 @@ function result = changeAutosarPortToBus(model, varargin)
                         fprintf('  [复用] 输出端口%d: %s -> %s (%s.%s, 已存在相同PortName)\n', i, ...
                             portName, actualPortName, outport.Port, outport.Element);
                     end
+
+
                 else
                     % 创建Out Bus Element
                     busElementPath = add_block('simulink/Ports & Subsystems/Out Bus Element', ...
@@ -447,9 +457,9 @@ function result = changeAutosarPortToBus(model, varargin)
     %% 保存结果并显示摘要
     result.InportDetails = inportDetails;
     result.OutportDetails = outportDetails;
-    
+    save_system(model);
     if verbose
-        fprintf('\n转换完成摘要:\n');
+        fprintf('\n%s 转换完成摘要:\n', model);
         fprintf('  输入端口: %d/%d 成功, %d 失败\n', ...
             result.ConvertedInports, result.TotalInports, result.FailedInports);
         fprintf('  输出端口: %d/%d 成功, %d 失败\n', ...
