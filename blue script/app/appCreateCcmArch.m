@@ -37,58 +37,39 @@ for i = 1:length(autosarSwcs)
             '对Autosar的模型%s进行链接到模型失败: %s', autosarSwcs(i).Name, ME.message);
     end
 end
+% unlinkFromModel(component) % backup code
 
 %% 4. 对非Autosar SWC 创建新模型
+% 找到ERT组合，创建新模型
+ertComposition = find(ArchModel,'Composition', 'Name', 'ERT');
+if isempty(ertComposition)
+    error('未找到ERT组合');
+end
+for i = 1:height(Tb_ertSWC)
+    SWCName = Tb_ertSWC(i,:).SWCName{1};
+    Periodic = Tb_ertSWC(i,:).Periodic;
+    component = find(ertComposition,'Component', 'Name', SWCName);
+    fprintf('创建ERT组件模型: %s\n, %d / %d\n', SWCName, i, height(Tb_ertSWC));
+    if isempty(component.ReferenceName)
+        createModel(component);
+        createModExportFun(SWCName, 'Periodic', Periodic)
+        changeAutosarRunnable(SWCName, 'AutoBuild', false)
+    end
+end
 
 %% 5. 创建输入输出端口
-swcRxName = 'SdbRxSigProc';
-swcTxName = 'SdbTxSigProc';
-swcRx = find(ArchModel,'Component', 'Name', swcRxName);
-swcTx = find(ArchModel,'Component', 'Name', swcTxName);
-% 处理swcRx的输入输口
-[ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(swcRx.SimulinkHandle,'skipTrig', true,'getType','Handle');
-if ~isempty(PortsIn)
-    for i = 1:length(PortsIn)
-        portHandle = PortsIn{i};
-        IsBusElementPort = get_param(portHandle, 'IsBusElementPort');
-        if strcmp(IsBusElementPort, 'off') % 不是BusElementPort，则跳过,比如Updated端口
-            continue;
-        end
-        PortName = get_param(portHandle, 'PortName');
-        BlockType = get_param(portHandle, 'BlockType');
-        OutDataTypeStr = get_param(portHandle, 'OutDataTypeStr');
-        Description = get_param(portHandle, 'Description');
-        port = addPort(ArchModel,'Receiver',PortName);
-        set_param(port.SimulinkHandle,'OutDataTypeStr',OutDataTypeStr);
-        set_param(port.SimulinkHandle,'Description',Description);  
-    end
-end
-
-% 处理swcTx的输出输口
-[ModelName, PortsIn, PortsOut, PortsSpecial] = findModPorts(swcTx.SimulinkHandle,'getType','Handle');
-if ~isempty(PortsOut)
-    for i = 1:length(PortsOut)
-        portHandle = PortsOut{i};
-        PortName = get_param(portHandle, 'PortName');
-        BlockType = get_param(portHandle, 'BlockType');
-        OutDataTypeStr = get_param(portHandle, 'OutDataTypeStr');
-        Description = get_param(portHandle, 'Description');
-        port = addPort(ArchModel,'Sender',PortName);
-        set_param(port.SimulinkHandle,'OutDataTypeStr',OutDataTypeStr);
-        set_param(port.SimulinkHandle,'Description',Description);  
-    end
-end
+createArchPort(ArchModel, 'RxComponentName', 'SdbRxSigProc', 'TxComponentName', 'SdbTxSigProc');
 
 %% 6. 自动连线
 createArchLines(ArchModel);
 
 %% 7. 根据模型，创建架构Interface Dictionary，为每个端口，配置Bus 数据类型
 
-interfaceDict = Simulink.interface.dictionary.open('ccmArxml.sldd')
-ifTest = getInterface(interfaceDict, 'IF_ToSWC')
+% interfaceDict = Simulink.interface.dictionary.open('ccmArxml.sldd')
+% ifTest = getInterface(interfaceDict, 'IF_ToSWC')
 
-port = find(ArchModel,'Port','Name','ActvnOfWshrFrntSafe')
-setInterface(port,ifTest)
+% port = find(ArchModel,'Port','Name','ActvnOfWshrFrntSafe')
+% setInterface(port,ifTest)
 
 % 
 % 
