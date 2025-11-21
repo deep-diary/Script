@@ -111,7 +111,7 @@ function changeAutosarRunnable(model, varargin)
     try
         % 打开模型
         if ~bdIsLoaded(model)
-            open_system(model);
+            load_system(model);
             fprintf('已打开模型: %s\n', model);
         else
             fprintf('模型已加载: %s\n', model);
@@ -389,7 +389,7 @@ function changeAutosarRunnable(model, varargin)
         error('MATLAB:changeAutosarRunnable:MappingFailed', ...
               'AUTOSAR Mapping属性设置失败: %s', ME.message);
     end
-
+    
     %% 步骤8: 生成AUTOSAR代码（可选）
     if autoBuild
         try
@@ -405,4 +405,6 @@ function changeAutosarRunnable(model, varargin)
     end
     
     fprintf('AUTOSAR Runnable配置完成: %s\n', model);
+    save_system(model)
+    close_system(model)
 end

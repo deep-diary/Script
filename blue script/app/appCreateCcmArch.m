@@ -15,6 +15,7 @@ templateFile = 'CCMtaskmappingV2.0.xlsx';
 %% 1. 获取SWC清单及周期属性
 [Tb_autosarSWC, Tb_ertSWC, ArchModel] = createArchSWC(templateFile, ArchName);
 autosarSwcs = ArchModel.Components;
+ertComposition = find(ArchModel,'Composition', 'Name', 'ERT');
 
 %% 2. 将Autosar的模型端口，转换成bus
 for i = 1:length(autosarSwcs)
@@ -30,40 +31,64 @@ end
 
 for i = 1:length(autosarSwcs)
     try
+        swcComponent = autosarSwcs(i);
         % Link to Simulink implementation model and inherit its interface
-        linkToModel(autosarSwcs(i),autosarSwcs(i).Name);
+        if isempty(autosarSwcs(i).ReferenceName)
+            linkToModel(swcComponent,swcComponent.Name);
+        else
+            fprintf('Autosar的模型%s有引用模型%s\n', swcComponent.Name, swcComponent.ReferenceName);
+        end
     catch ME
         warning('MATLAB:appCreateCcmArch:LinkToModelFailed', ...
             '对Autosar的模型%s进行链接到模型失败: %s', autosarSwcs(i).Name, ME.message);
     end
 end
+layout(ArchModel)
+save(ArchModel)
 % unlinkFromModel(component) % backup code
 
 %% 4. 对非Autosar SWC 创建新模型
 % 找到ERT组合，创建新模型
-ertComposition = find(ArchModel,'Composition', 'Name', 'ERT');
+
 if isempty(ertComposition)
     error('未找到ERT组合');
 end
 for i = 1:height(Tb_ertSWC)
-    SWCName = Tb_ertSWC(i,:).SWCName{1};
+    SWCName = Tb_ertSWC(i,:).SWCName{1}; 
     Periodic = Tb_ertSWC(i,:).Periodic;
+
+    % 判断是否有对应的component
     component = find(ertComposition,'Component', 'Name', SWCName);
-    fprintf('创建ERT组件模型: %s\n, %d / %d\n', SWCName, i, height(Tb_ertSWC));
+    if isempty(component)
+        error('未找到对应的组件%s', SWCName);
+    end
+    % 及工作空间中是否存在对应的模型
+    if isempty(which(SWCName))
+        fprintf('-------------------创建ERT组件模型: %s\n, %d / %d-------------\n', SWCName, i, height(Tb_ertSWC));
+        createModExportFun(SWCName, 'Periodic', Periodic, 'TargetFolder', 'ModelErt', 'ModelType', 'autosar')
+        changeAutosarRunnable(SWCName, 'AutoBuild', false,'RunnablePeriod',Periodic)
+    end
+
+    % 链接模型
     if isempty(component.ReferenceName)
-        createModel(component);
-        createModExportFun(SWCName, 'Periodic', Periodic)
-        changeAutosarRunnable(SWCName, 'AutoBuild', false)
+        linkToModel(component,which(SWCName));
+    else
+        fprintf('ERT组件模型%s有引用模型%s\n', SWCName, component.ReferenceName);
     end
 end
+save(ArchModel)
 
 %% 5. 创建输入输出端口
 createArchPort(ArchModel, 'RxComponentName', 'SdbRxSigProc', 'TxComponentName', 'SdbTxSigProc');
+
 
 %% 6. 自动连线
 createArchLines(ArchModel);
 
 %% 7. 根据模型，创建架构Interface Dictionary，为每个端口，配置Bus 数据类型
+linkDictionary(ArchModel, 'CcmArch.sldd')
+save(ArchModel)
+% unlinkDictionary(ArchModel)
 
 % interfaceDict = Simulink.interface.dictionary.open('ccmArxml.sldd')
 % ifTest = getInterface(interfaceDict, 'IF_ToSWC')

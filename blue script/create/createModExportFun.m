@@ -1,39 +1,54 @@
-function createModExportFun(modelName, varargin)
+function modelPath = createModExportFun(modelName, varargin)
 %CREATEMODEXPORTFUN 创建或加载导出函数模型
 %   CREATEMODEXPORTFUN(MODELNAME) 创建或加载导出函数模型
-%   CREATEMODEXPORTFUN(MODELNAME, 'Periodic', VALUE, 'AutoSave', VALUE) 使用指定参数创建或加载导出函数模型
+%   CREATEMODEXPORTFUN(MODELNAME, 'Periodic', VALUE, 'TargetFolder', VALUE, 'ModelType', VALUE) 使用指定参数创建或加载导出函数模型
 %
 %   必需参数:
 %      modelName    - 模型名称 (字符串)
 %                     如果模型文件不存在，将创建新模型；如果存在，将加载现有模型
 %
 %   可选参数 (名称-值对):
-%      'Periodic'   - 采样周期 (数值, 默认: 0.02)
-%                     用于设置模型的固定步长和函数调用端口的采样时间
-%      'AutoSave'   - 是否自动保存模型 (逻辑值, 默认: true)
+%      'Periodic'     - 采样周期 (数值, 默认: 0.02)
+%                       用于设置模型的固定步长和函数调用端口的采样时间
+%      'TargetFolder' - 目标文件夹 (字符串, 默认: '')
+%                       如果指定，模型将保存到该文件夹下，例如 'ModelErt' 会保存到 ./ModelErt/
+%                       如果文件夹不存在，将自动创建
+%      'ModelType'    - 模型类型 (字符串, 默认: 'ert')
+%                       可选值: 'autosar' 或 'ert'
+%                       根据不同的类型配置不同的TLC文件
 %
 %   输出参数:
-%      无
+%      modelPath    - 模型文件的完整路径 (字符串)
+%                     如果指定了TargetFolder，返回目标文件夹中的路径
+%                     否则返回当前目录或MATLAB路径中的模型路径
 %
 %   功能描述:
 %      1. 检查模型是否存在，不存在则创建新模型，存在则加载
 %      2. 配置模型为Export-Function模式
-%      3. 设置固定步长求解器和采样周期
-%      4. 创建函数调用输入端口（ModelName_Runnable）
-%      5. 创建可执行子系统（ModelName_Runnable_sys）
-%      6. 在子系统中创建函数调用触发端口
-%      7. 创建常量模块避免空模型
-%      8. 连接输入端口到子系统的触发端口
+%      3. 根据ModelType设置对应的TLC文件（autosar.tlc 或 ert.tlc）
+%      4. 设置固定步长求解器和采样周期
+%      5. 创建函数调用输入端口（ModelName_Runnable）
+%      6. 创建可执行子系统（ModelName_Runnable_sys）
+%      7. 在子系统中创建函数调用触发端口
+%      8. 创建常量模块避免空模型
+%      9. 连接输入端口到子系统的触发端口
+%      10. 保存模型到指定文件夹（如果指定了TargetFolder）
 %
 %   示例:
 %      % 基本用法
-%      createModExportFun('MyModel')
+%      modelPath = createModExportFun('MyModel')
 %      
 %      % 指定采样周期
-%      createModExportFun('MyModel', 'Periodic', 0.01)
+%      modelPath = createModExportFun('MyModel', 'Periodic', 0.01)
 %      
-%      % 不自动保存
-%      createModExportFun('MyModel', 'AutoSave', false)
+%      % 指定目标文件夹
+%      modelPath = createModExportFun('MyModel', 'TargetFolder', 'ModelErt')
+%      
+%      % 指定模型类型为AUTOSAR
+%      modelPath = createModExportFun('MyModel', 'ModelType', 'autosar')
+%      
+%      % 组合使用
+%      modelPath = createModExportFun('MyModel', 'Periodic', 0.01, 'TargetFolder', 'ModelErt', 'ModelType', 'ert')
 %
 %   注意事项:
 %      1. 模型名称必须是有效的MATLAB标识符
@@ -41,12 +56,14 @@ function createModExportFun(modelName, varargin)
 %      3. 如果模型文件不存在，函数会创建新模型
 %      4. 函数调用端口需要设置为函数调用类型
 %      5. 采样周期必须为正数
+%      6. 如果指定了TargetFolder，函数会自动创建文件夹（如果不存在）
+%      7. 函数默认会自动保存模型
 %
 %   参见: NEW_SYSTEM, LOAD_SYSTEM, ADD_BLOCK, SET_PARAM, GET_PARAM,
-%         ADD_LINE, FIND_SYSTEM
+%         ADD_LINE, FIND_SYSTEM, SWITCHTARGET
 %
 %   作者: Blue.ge
-%   版本: 3.0
+%   版本: 4.0
 %   日期: 20251120
 
     %% 参数解析和验证
@@ -68,20 +85,33 @@ function createModExportFun(modelName, varargin)
     % 添加可选参数
     addParameter(p, 'Periodic', 0.02, ...
                  @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive', 'finite'}));
-    addParameter(p, 'AutoSave', true, ...
-                 @(x) validateattributes(x, {'logical'}, {'scalar'}));
+    addParameter(p, 'TargetFolder', '', ...
+                 @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
+    addParameter(p, 'ModelType', 'autosar', ...
+                 @(x) (ischar(x) || (isstring(x) && isscalar(x))) && ...
+                      (strcmpi(char(x), 'autosar') || strcmpi(char(x), 'ert')));
     
     % 解析输入参数
     parse(p, varargin{:});
     
     % 提取参数值
     periodic = p.Results.Periodic;
-    autoSave = p.Results.AutoSave;
+    targetFolder = char(p.Results.TargetFolder);
+    modelType = lower(char(p.Results.ModelType));
 
     %% 步骤1: 创建或加载模型
     try
         % 检查模型文件是否存在
         modelFile = which([modelName, '.slx']);
+        
+        % 如果指定了目标文件夹，也检查目标文件夹中是否存在模型文件
+        if isempty(modelFile) && ~isempty(targetFolder)
+            targetModelFile = fullfile(targetFolder, [modelName, '.slx']);
+            if exist(targetModelFile, 'file')
+                modelFile = targetModelFile;
+            end
+        end
+        
         if isempty(modelFile)
             % 模型文件不存在，创建新模型
             new_system(modelName);
@@ -89,7 +119,7 @@ function createModExportFun(modelName, varargin)
         else
             % 模型文件存在，加载模型
             if ~bdIsLoaded(modelName)
-                load_system(modelName);
+                load_system(modelFile);
                 fprintf('已加载现有模型: %s\n', modelName);
             else
                 fprintf('模型已加载: %s\n', modelName);
@@ -120,6 +150,28 @@ function createModExportFun(modelName, varargin)
     catch ME
         warning('MATLAB:createModExportFun:ConfigSolverFailed', ...
                 '配置求解器失败: %s', ME.message);
+    end
+
+    %% 步骤3.5: 根据ModelType设置TLC文件
+    try
+        activeConfigSet = getActiveConfigSet(modelName);
+        % 根据模型类型设置对应的TLC文件
+        switch modelType
+            case 'autosar'
+                tlcFile = 'autosar.tlc';
+            case 'ert'
+                tlcFile = 'ert.tlc';
+            otherwise
+                error('MATLAB:createModExportFun:InvalidModelType', ...
+                      '不支持的模型类型: %s，仅支持 ''autosar'' 或 ''ert''', modelType);
+        end
+        
+        % 切换目标TLC文件
+        switchTarget(activeConfigSet, tlcFile, '');
+        fprintf('已设置TLC文件: %s (模型类型: %s)\n', tlcFile, modelType);
+    catch ME
+        warning('MATLAB:createModExportFun:SetTLCFailed', ...
+                '设置TLC文件失败: %s', ME.message);
     end
 
     %% 步骤4: 创建函数调用输入端口
@@ -175,7 +227,7 @@ function createModExportFun(modelName, varargin)
     %% 步骤6: 进入子系统，配置触发端口和常量模块
     try
         % 打开子系统
-        open_system(subsystemPath);
+        % open_system(subsystemPath);
         
         % 查找或创建触发端口
         triggerPorts = find_system(subsystemPath, 'SearchDepth', 1, ...
@@ -207,16 +259,16 @@ function createModExportFun(modelName, varargin)
             termPos = [250 100 280 120];
             
             % 创建Constant模块
-            add_block('built-in/Constant', [gcs, '/Constant'], ...
+            add_block('built-in/Constant', [subsystemPath, '/Constant'], ...
                     'Value', '1', 'Position', constPos);
             fprintf('已创建Constant模块\n');
             
             % 创建Terminator模块
-            add_block('built-in/Terminator', [gcs, '/Terminator'], 'Position', termPos);
+            add_block('built-in/Terminator', [subsystemPath, '/Terminator'], 'Position', termPos);
             fprintf('已创建Terminator模块\n');
             
             % 创建模块间连线
-            add_line(gcs, 'Constant/1', 'Terminator/1', 'autorouting', 'on');
+            add_line(subsystemPath, 'Constant/1', 'Terminator/1', 'autorouting', 'on');
             fprintf('已创建模块间连线\n');
 
             fprintf('基础模块创建完成\n');
@@ -292,16 +344,47 @@ function createModExportFun(modelName, varargin)
                 '连接端口失败: %s', ME.message);
     end
 
-    %% 步骤8: 保存模型（如果需要）
-    if autoSave
-        try
+    %% 步骤8: 保存模型到指定文件夹
+    modelPath = '';
+    try
+        % 如果指定了目标文件夹，需要处理文件夹路径
+        if ~isempty(targetFolder)
+            % 确保目标文件夹存在
+            if ~exist(targetFolder, 'dir')
+                mkdir(targetFolder);
+                fprintf('已创建目标文件夹: %s\n', targetFolder);
+            end
+            
+            % 构建完整的保存路径
+            savePath = fullfile(targetFolder, modelName);
+            save_system(modelName, savePath);
+            modelPath = [savePath, '.slx'];
+            fprintf('已保存模型到: %s\n', savePath);
+        else
+            % 保存到当前目录
             save_system(modelName);
+            % 获取模型文件的完整路径
+            modelPath = which([modelName, '.slx']);
+            if isempty(modelPath)
+                modelPath = fullfile(pwd, [modelName, '.slx']);
+            end
             fprintf('已保存模型: %s\n', modelName);
-        catch ME
-            warning('MATLAB:createModExportFun:SaveModelFailed', ...
-                    '保存模型失败: %s', ME.message);
+        end
+    catch ME
+        warning('MATLAB:createModExportFun:SaveModelFailed', ...
+                '保存模型失败: %s', ME.message);
+        % 即使保存失败，也尝试返回模型路径
+        if isempty(modelPath)
+            if ~isempty(targetFolder)
+                modelPath = fullfile(targetFolder, [modelName, '.slx']);
+            else
+                modelPath = which([modelName, '.slx']);
+                if isempty(modelPath)
+                    modelPath = fullfile(pwd, [modelName, '.slx']);
+                end
+            end
         end
     end
-    
+    close_system(modelName)
     fprintf('导出函数模型 "%s" 创建完成\n', modelName);
 end

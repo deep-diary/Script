@@ -158,4 +158,5 @@ function createArchLines(ArchModel, varargin)
     end
     
     fprintf('架构模型 "%s" 自动连线完成\n', modelNameForDisplay);
+    save(archModel)
 end
