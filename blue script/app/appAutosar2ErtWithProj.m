@@ -1,13 +1,12 @@
-function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
+function [success, errorMsg, codePaths, summary] = appAutosar2ErtWithProj(mdName, varargin)
 %APPAUTOSAR2ERT 将AUTOSAR模型转换为ERT模型
 %
-%   [SUCCESS, ERRORMSG, CODEPATHS, SUMMARY] = APPAUTOSAR2ERT() 从当前目录的模型文件中自动提取模型名称并转换为ERT模型
-%   [SUCCESS, ERRORMSG, CODEPATHS, SUMMARY] = APPAUTOSAR2ERT(Name, Value) 
+%   [SUCCESS, ERRORMSG, CODEPATHS, SUMMARY] = APPAUTOSAR2ERT(MDNAME) 将AUTOSAR模型转换为ERT模型
+%   [SUCCESS, ERRORMSG, CODEPATHS, SUMMARY] = APPAUTOSAR2ERT(MDNAME, Name, Value) 
 %   使用一个或多个名称-值对参数指定转换选项。
 %
-%   说明:
-%       函数会自动从当前目录的.slx文件中提取模型名称。当前目录应包含一个或两个模型文件。
-%       如果存在以"_lib.slx"结尾的库文件，将提取主模型名称；否则从普通模型文件名中提取。
+%   INPUTS:
+%       MDNAME      - 模型名称，指定为字符向量或字符串标量
 %
 %   Name-Value Arguments:
 %       'AutosarMode' - AUTOSAR信号名解析模式，指定为字符向量或字符串标量
@@ -43,16 +42,19 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
 %       8. 运行初始化函数导入相关变量
 %       9. 导入Excel模板中的接口信号解析
 %       10. 更改原始变量的头文件定义（包含仿真）
-%       11. 生成代码
-%       12. 提取代码到指定目录
+%       11. 清空仿真和代码缓存目录
+%       12. 生成代码
+%       13. 提取代码到指定目录
 %
 %   EXAMPLES:
-%       % 基本用法（从当前目录自动提取模型名称）
-%       [success, errorMsg, codePaths, summary] = appAutosar2Ert();
+%       % 基本用法
+%       [success, errorMsg, codePaths, summary] = appAutosar2ErtWithProj(bdroot);
+%       [success, errorMsg, codePaths, summary] = appAutosar2ErtWithProj('PrkgClimaEgyMgr');
+%       [success, errorMsg, codePaths, summary] = appAutosar2ErtWithProj(bdroot,'prefixName','Smart');
 %       
 %       % 使用不同的AUTOSAR模式和合并设置
-%       [success, errorMsg, codePaths, summary] = appAutosar2Ert( ...
-%           'AutosarMode', 'prefixHalf', 'Combine', true, 'prefixName', 'Smart');
+%       [success, errorMsg, codePaths, summary] = appAutosar2ErtWithProj('PrkgClimaEgyMgr', ...
+%           'AutosarMode', 'prefixHalf', 'Combine', true);
 %       
 %       % 检查结果
 %       if success
@@ -68,13 +70,12 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
 %       - 配置文件应为.mat格式
 %       - 函数具有完整的错误处理，不会因单个步骤失败而崩溃
 %       - 如果配置引用已存在，将更新其源文件
-%       - 当前目录应包含一个或两个.slx模型文件
 %
 %   See also: SLBUILD, LOAD_SYSTEM, FINDSYSTEM
 %
 %   Author: Blue.ge
-%   Version: 2.1
-%   Date: 2025-11-26
+%   Version: 2.0
+%   Date: 2025-09-17
 
     %% 初始化和输入验证
     success = false;
@@ -82,67 +83,26 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
     codePaths = struct();
     summary = struct();
     
-    %% 从文件名提取模型名称
-    try
-        % 获取当前目录下的模型文件
-        modelFiles = dir('*.slx');
-        modelCount = length(modelFiles);
-        
-        if modelCount == 0
-            errorMsg = '当前目录下未找到.slx模型文件';
-            fprintf('错误: %s\n', errorMsg);
-            return;
-        elseif modelCount > 2
-            errorMsg = sprintf('当前目录下找到 %d 个模型文件，正常只能有一个或两个模型文件，请检查模型路径', modelCount);
-            fprintf('错误: %s\n', errorMsg);
-            return;
-        end
-        
-        % 提取模型名称
-        % 优先查找库文件来确定主模型名称
-        mdName = '';
-        libFileFound = false;
-        
-        for i = 1:modelCount
-            modelName = modelFiles(i).name;
-            if endsWith(modelName, '_lib.slx')
-                % 如果找到库文件，提取主模型名称
-                mdName = modelName(1:end-8);
-                libFileFound = true;
-                break;
-            end
-        end
-        
-        % 如果没有找到库文件，从普通模型文件名中提取
-        if ~libFileFound
-            for i = 1:modelCount
-                modelName = modelFiles(i).name;
-                if ~endsWith(modelName, '_lib.slx')
-                    % 从普通模型文件名中提取（去掉.slx扩展名）
-                    mdName = modelName(1:end-4);
-                    break;
-                end
-            end
-        end
-        
-        if isempty(mdName)
-            errorMsg = '无法从文件名中提取模型名称';
-            fprintf('错误: %s\n', errorMsg);
-            return;
-        end
-        
-        % 验证模型文件是否存在（检查当前目录）
-        if ~exist([mdName '.slx'], 'file')
-            errorMsg = sprintf('模型文件 "%s.slx" 不存在于当前目录', mdName);
-            fprintf('错误: %s\n', errorMsg);
-            return;
-        end
-        
-    catch ME
-        errorMsg = sprintf('提取模型名称失败: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
+    % 输入参数验证
+    if nargin < 1 || isempty(mdName)
+        errorMsg = '模型名称不能为空';
         return;
     end
+    
+    % 确保输入为字符向量
+    if isstring(mdName)
+        mdName = char(mdName);
+    end
+    
+    % 验证模型是否存在
+    if isempty(which(mdName))
+        errorMsg = sprintf('模型 "%s" 不存在或未在MATLAB路径中', mdName);
+        return;
+    end
+    %% 测试参数
+%     mdName = 'PrkgClimaActvMgr'
+%     autosarMode = 'prefixHalf'
+%     combine = true
     
     %% 解析可选参数
     p = inputParser;
@@ -162,20 +122,36 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
     fprintf('    开始AUTOSAR到ERT转换\n');
     fprintf('========================================\n');
     fprintf('模型名称: %s\n', mdName);
-    fprintf('当前工作目录: %s\n', pwd);
     fprintf('AUTOSAR模式: %s\n', autosarMode);
     fprintf('合并模式: %s\n', mat2str(combine));
     fprintf('----------------------------------------\n');
     
-    %% 1. 初始化配置
+    %% 1. 初始化项目路径和配置
     try
-        fprintf('步骤1: 初始化配置...\n');
-        fprintf('  模型名称: %s\n', mdName);
-        fprintf('  模型路径: %s\n', pwd);
+        fprintf('步骤1: 初始化项目路径和配置...\n');
+        
+        % 获取项目路径
+        proj = currentProject; 
+        rootPath = proj.RootFolder;
+        subPath = fullfile(rootPath,'SubModel');
+        % codePath = fullfile(rootPath,'CodeGen');
+        % simPath = fullfile(rootPath,'Sim');
+        codePath = proj.SimulinkCodeGenFolder;
+        simPath = proj.SimulinkCacheFolder;
+
+        
+        % 验证必要路径
+        if ~exist(subPath, 'dir')
+            errorMsg = sprintf('子模型路径不存在: %s', subPath);
+            return;
+        end
+        
+        fprintf('  项目根路径: %s\n', rootPath);
+        fprintf('  子模型路径: %s\n', subPath);
+        fprintf('  代码生成路径: %s\n', codePath);
         
     catch ME
-        errorMsg = sprintf('步骤1失败 - 初始化配置: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
+        errorMsg = sprintf('步骤1失败 - 初始化项目路径: %s', ME.message);
         return;
     end
     
@@ -193,7 +169,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
                 evalin('base', sprintf('load(''%s'', ''-mat'', ''%s'')', ConfigFile, ConfigFile));
                 fprintf('  已将配置文件 "%s" 加载到基础工作区\n', ConfigFile);
             else
-                error('  配置文件"%s.mat"未找到！', ConfigFile);
+                warning('  配置文件"%s.mat"未找到！', ConfigFile);
             end
         else
             fprintf('  配置文件 "%s" 已存在于基础工作区中\n', ConfigFile);
@@ -205,7 +181,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤2失败 - 加载配置文件: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
     
@@ -222,7 +197,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤3失败 - 更改配置: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -232,7 +206,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤4失败 - 为模型添加一层壳并对所有信号插入Signal Conversion模块（TODO）: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -245,7 +218,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
         if isempty(subModPath)
             errorMsg = sprintf('在模型 "%s" 中未找到子模型', mdName);
-            fprintf('错误: %s\n', errorMsg);
             return;
         end
         
@@ -258,7 +230,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤5失败 - 解析输出信号: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
     
@@ -271,7 +242,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
         if isempty(outputFile)
             errorMsg = 'Excel文件导出失败';
-            fprintf('错误: %s\n', errorMsg);
             return;
         end
         
@@ -279,7 +249,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤6失败 - 导出信号到Excel: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -301,10 +270,35 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
         fprintf('  原始枚举变量定义更改完成\n');
 
+        % % 更改_swc_logging 文件中的内存段
+        % file = [mdName '_swc_logging.m'];
+        % delText = 'CoderInfo.CustomAttributes.MemorySection';
+        % [numDeleted, success] = delFileTargetLine(file, delText, ...
+        %     'Overwrite', true, 'CreateBackup', false);
+        
+        % if success
+        %     fprintf('  已删除 %d 行包含 "%s" 的内容\n', numDeleted, delText);
+        % else
+        %     warning('  删除操作失败或未找到匹配内容');
+        % end
+        
+        % fprintf('  logging 文件中的内存段更改完成\n');
 
+        % % 更改_swc_parameters 文件中的内存段    
+        % file = [mdName '_swc_parameters.m'];
+        % delText = 'CoderInfo.CustomAttributes.MemorySection';
+        % [numDeleted, success] = delFileTargetLine(file, delText, ...
+        %     'Overwrite', true, 'CreateBackup', false);
+        
+        % if success
+        %     fprintf('  已删除 %d 行包含 "%s" 的内容\n', numDeleted, delText);
+        % else
+        %     warning('  删除操作失败或未找到匹配内容');
+        % end
+        
+        % fprintf('  parameters 文件中的内存段更改完成\n');
     catch ME
         errorMsg = sprintf('步骤7失败 - 更改原始枚举变量定义: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -328,7 +322,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤8失败 - 运行初始化函数: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -342,7 +335,6 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
     catch ME
         errorMsg = sprintf('步骤9失败 - 导入excel 模板中的接口信号解析: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
 
@@ -385,36 +377,63 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         fprintf('2. 检查输出信号解析，是否不同的信号内部是连接到一起的，从而导致冲突，\n如果是，请使用Signal Conversion 模块进行隔离\n');
         fprintf('========================================\n');
         errorMsg = sprintf('步骤10失败 - 模型编译错误: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
         return;
     end
     
-    %% 11.生成代码
+    %% 11. 清空仿真和代码缓存目录
     try
-        fprintf('步骤11: 生成代码...\n');
+        fprintf('步骤11: 清空仿真和代码缓存目录...\n');
+        
+        % 清空仿真缓存目录
+        if exist(simPath, 'dir')
+            rmdir(simPath, 's');
+            mkdir(simPath);
+            fprintf('  已清空仿真缓存目录内容: %s\n', simPath);
+        else
+            mkdir(simPath);
+            fprintf('  创建仿真缓存目录: %s\n', simPath);
+        end
+        
+        % 清空代码缓存目录
+        if exist(codePath, 'dir')
+            rmdir(codePath, 's');
+            mkdir(codePath);
+            fprintf('  已清空代码缓存目录内容: %s\n', codePath);
+        else
+            mkdir(codePath);
+            fprintf('  创建代码缓存目录: %s\n', codePath);
+        end
+        
+    catch ME
+        errorMsg = sprintf('步骤11失败 - 清空缓存目录: %s', ME.message);
+        return;
+    end
+    
+    %% 12.生成代码
+    try
+        fprintf('步骤12: 生成代码...\n');
 
         % 生成代码
         slbuild(bdroot,'OpenBuildStatusAutomatically',true);
         fprintf('  代码生成完成\n');
         
     catch ME
-        errorMsg = sprintf('步骤11失败 - 生成代码: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
+        errorMsg = sprintf('步骤12失败 - 生成代码: %s', ME.message);
         return;
     end
 
-    %% 12. 提取代码到指定目录
+    %% 13. 提取代码到指定目录
     try
-        fprintf('步骤12: 提取代码到指定目录...\n');
-        % 生成a2l
-        % coder.asap2.export(mdName) % 默认路径是代码生成路径，更改了配置，生成的代码中已经包含a2l文件
+        fprintf('步骤13: 提取代码到指定目录...\n');
+        
         % 提取代码到指定目录
-        appCopyCode();
+        [codePaths, summary] = createCodeMod(mdName,'type','ert', 'combine', combine);
         fprintf('  代码提取完成\n');
+        fprintf('  代码根目录: %s\n', codePaths.root);
+        fprintf('  总文件数: %d\n', summary.totalFiles);
         
     catch ME
-        errorMsg = sprintf('步骤12失败 - 提取代码: %s', ME.message);
-        fprintf('错误: %s\n', errorMsg);
+        errorMsg = sprintf('步骤13失败 - 提取代码: %s', ME.message);
         return;
     end
     
@@ -427,6 +446,8 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
     fprintf('模型: %s\n', mdName);
     fprintf('AUTOSAR模式: %s\n', autosarMode);
     fprintf('合并模式: %s\n', mat2str(combine));
+    fprintf('代码根目录: %s\n', codePaths.root);
+    fprintf('总文件数: %d\n', summary.totalFiles);
     fprintf('所有步骤执行成功！\n');
     fprintf('========================================\n');
     
