@@ -72,7 +72,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
 %
 %   See also: SLBUILD, LOAD_SYSTEM, FINDSYSTEM
 %
-%   Author: Blue.ge
+%   Author: Blue.ge (葛维冬 @ Smart)
 %   Version: 2.1
 %   Date: 2025-11-26
 
@@ -149,6 +149,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
     p.FunctionName = mfilename;
     
     validModes = {'prefixHalf', 'deleteTail', 'halfTail', 'justHalf', 'modelHalf'};
+    addParameter(p, 'enSigResolve', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     addParameter(p, 'AutosarMode', 'deleteTail', @(x) any(validatestring(x, validModes)));
     addParameter(p, 'Combine', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
     addParameter(p, 'prefixName', 'CcmIF', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
@@ -156,6 +157,7 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
     parse(p, varargin{:});
     autosarMode = p.Results.AutosarMode;
     combine = p.Results.Combine;
+    enSigResolve = p.Results.enSigResolve;
     prefixName = char(p.Results.prefixName);
     
     fprintf('========================================\n');
@@ -253,7 +255,12 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         
         % 创建模型信号
         % createModSig(subModPath{1},'isEnableIn',true,'resoveValue',true,'autosarMode',autosarMode); % 基于模型信号
-        changeLinesPortAttr(mdName,'resoveValue',true,'autosarMode',autosarMode, 'prefixName', prefixName); % 基于端口信号
+        changeLinesPortAttr(mdName,...
+            'enableIn',enSigResolve,...
+            'enableOut',enSigResolve,...
+            'resoveValue',true,...
+            'autosarMode',autosarMode,...
+            'prefixName', prefixName); % 基于端口信号
         fprintf('  信号解析完成\n');
         
     catch ME
@@ -267,7 +274,11 @@ function [success, errorMsg, codePaths, summary] = appAutosar2Ert(varargin)
         fprintf('步骤6: 导出信号到Excel模板...\n');
         
         % 导出到excel模板中
-        outputFile = createSlddSigGee(mdName,'autosarMode',autosarMode, 'prefixName', prefixName);
+        outputFile = createSlddSigGee(mdName,...
+            'autosarMode',autosarMode,...
+            'prefixName', prefixName,...
+            'ignoreInput',~enSigResolve,...
+            'ignoreOutput',~enSigResolve);
         
         if isempty(outputFile)
             errorMsg = 'Excel文件导出失败';
