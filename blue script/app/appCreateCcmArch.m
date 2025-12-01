@@ -1,129 +1,332 @@
-%% 创建CCM autosar 软件架构
+%% 创建CCM AUTOSAR软件架构
+%APPCREATECCMARCH 创建完整的CCM AUTOSAR软件架构
+%
+% 描述:
+%   此脚本用于自动化创建CCM AUTOSAR软件架构，包括以下步骤：
+%   1. 从Excel模板获取SWC清单及周期属性，创建架构SWC
+%   2. 将AUTOSAR模型的端口转换成Bus类型
+%   3. 将AUTOSAR SWC链接到对应的Simulink模型
+%   4. 为非AUTOSAR SWC创建新的Simulink模型
+%   5. 创建架构的输入输出端口
+%   6. 自动连接架构中的组件
+%   7. 创建Interface Dictionary并为端口配置Bus数据类型
+%   8. 导出架构代码及ARXML文件
+%
+% 功能清单:
+%   [x] 获取SWC清单及周期属性并创建架构SWC
+%   [x] 将AUTOSAR的模型端口转换成Bus
+%   [x] 对AUTOSAR SWC进行链接到模型
+%   [x] 对非AUTOSAR SWC创建新模型
+%   [x] 创建输入输出端口
+%   [x] 自动连线
+%   [x] 根据模型，创建架构Interface Dictionary，为每个端口配置Bus数据类型
+%   [x] 生成架构代码及ARXML
+%
+% 作者: Auto-generated
+% 日期: 2024
 
-% [x] 获取SWC清单及周期属性并创建架构SWC
-% [x] 将Autosar的模型端口，转换成bus
-% [] 对Autosar SWC进行链接到模型
-% [] 对非Autosar SWC 创建新模型
-% [] 创建输入输出端口
-% [x] 自动连线
-% [] 根据模型，创建架构Interface Dictionary，为每个端口，配置Bus 数据类型
-% [] 更改arxml 配置
-% [] 生成架构代码及arxml
+%% 初始化
+fprintf('========================================\n');
+fprintf('开始创建CCM AUTOSAR软件架构\n');
+fprintf('========================================\n\n');
+tic;
 
+%% ========================================================================
+% 步骤1: 获取SWC清单及周期属性并创建架构SWC
+% ========================================================================
+fprintf('步骤 1/8: 获取SWC清单及周期属性并创建架构SWC\n');
+fprintf('------------------------------------------------\n');
+
+% 配置参数
 ArchName = 'CcmArch';
 templateFile = 'CCMtaskmappingV2.0.xlsx';
-%% 1. 获取SWC清单及周期属性
-[Tb_autosarSWC, Tb_ertSWC, ArchModel] = createArchSWC(templateFile, ArchName);
+
+% 从Excel模板创建架构SWC
+try
+    [Tb_autosarSWC, Tb_ertSWC, ArchModel] = createArchSWC(templateFile, ArchName);
+    fprintf('  成功创建架构模型: %s\n', ArchName);
+    fprintf('  AUTOSAR SWC数量: %d\n', height(Tb_autosarSWC));
+    fprintf('  ERT SWC数量: %d\n', height(Tb_ertSWC));
+catch ME
+    error('MATLAB:appCreateCcmArch:CreateArchSWCFailed', ...
+        '创建架构SWC失败: %s', ME.message);
+end
+
+% 获取AUTOSAR组件和ERT组合
 autosarSwcs = ArchModel.Components;
-ertComposition = find(ArchModel,'Composition', 'Name', 'ERT');
+numAutosarSwcs = numel(autosarSwcs);
+ertComposition = find(ArchModel, 'Composition', 'Name', 'ERT');
 
-%% 2. 将Autosar的模型端口，转换成bus
-for i = 1:length(autosarSwcs)
-    try
-        changeAutosarPortToBus(autosarSwcs(i).Name);
-    catch ME
-        warning('MATLAB:appCreateCcmArch:ChangeAutosarPortToBusFailed', ...
-            '将Autosar的模型%s的端口转换成bus失败: %s', autosarSwcs(i).Name, ME.message);
-    end
-end
+fprintf('  完成步骤 1\n\n');
 
-%% 3. 对Autosar SWC进行链接到模型
+%% ========================================================================
+% 步骤2: 将AUTOSAR模型的端口转换成Bus类型
+% ========================================================================
+fprintf('步骤 2/8: 将AUTOSAR模型的端口转换成Bus类型\n');
+fprintf('------------------------------------------------\n');
 
-for i = 1:length(autosarSwcs)
-    try
-        swcComponent = autosarSwcs(i);
-        % Link to Simulink implementation model and inherit its interface
-        if isempty(autosarSwcs(i).ReferenceName)
-            linkToModel(swcComponent,swcComponent.Name);
-        else
-            fprintf('Autosar的模型%s有引用模型%s\n', swcComponent.Name, swcComponent.ReferenceName);
+if numAutosarSwcs > 0
+    successCount = 0;
+    for iSwc = 1:numAutosarSwcs
+        swcName = autosarSwcs(iSwc).Name;
+        fprintf('  处理AUTOSAR SWC (%d/%d): %s\n', iSwc, numAutosarSwcs, swcName);
+        
+        try
+            changeAutosarPortToBus(swcName);
+            successCount = successCount + 1;
+            fprintf('    ✓ 成功转换端口为Bus类型\n');
+        catch ME
+            warning('MATLAB:appCreateCcmArch:ChangeAutosarPortToBusFailed', ...
+                '将AUTOSAR模型 %s 的端口转换成Bus失败: %s', swcName, ME.message);
         end
+    end
+    fprintf('  完成: 成功转换 %d/%d 个SWC\n', successCount, numAutosarSwcs);
+else
+    fprintf('  警告: 未找到AUTOSAR SWC\n');
+end
+
+fprintf('  完成步骤 2\n\n');
+
+%% ========================================================================
+% 步骤3: 将AUTOSAR SWC链接到对应的Simulink模型
+% ========================================================================
+fprintf('步骤 3/8: 将AUTOSAR SWC链接到对应的Simulink模型\n');
+fprintf('------------------------------------------------\n');
+
+if numAutosarSwcs > 0
+    successCount = 0;
+    for iSwc = 1:numAutosarSwcs
+        swcComponent = autosarSwcs(iSwc);
+        swcName = swcComponent.Name;
+        fprintf('  链接AUTOSAR SWC (%d/%d): %s\n', iSwc, numAutosarSwcs, swcName);
+        
+        try
+            % 检查是否已有引用模型
+            if isempty(swcComponent.ReferenceName)
+                % 链接到Simulink实现模型并继承其接口
+                linkToModel(swcComponent, swcName);
+                successCount = successCount + 1;
+                fprintf('    ✓ 成功链接到模型: %s\n', swcName);
+            else
+                fprintf('    → 已有引用模型: %s，跳过\n', swcComponent.ReferenceName);
+                successCount = successCount + 1;
+            end
+        catch ME
+            warning('MATLAB:appCreateCcmArch:LinkToModelFailed', ...
+                '链接AUTOSAR模型 %s 到Simulink模型失败: %s', swcName, ME.message);
+        end
+    end
+    fprintf('  完成: 成功链接 %d/%d 个SWC\n', successCount, numAutosarSwcs);
+    
+    % 自动布局并保存模型
+    try
+        layout(ArchModel);
+        save(ArchModel);
+        fprintf('  已保存架构模型并自动布局\n');
     catch ME
-        warning('MATLAB:appCreateCcmArch:LinkToModelFailed', ...
-            '对Autosar的模型%s进行链接到模型失败: %s', autosarSwcs(i).Name, ME.message);
+        warning('MATLAB:appCreateCcmArch:SaveFailed', ...
+            '保存架构模型失败: %s', ME.message);
     end
+else
+    fprintf('  警告: 未找到AUTOSAR SWC\n');
 end
-layout(ArchModel)
-save(ArchModel)
-% unlinkFromModel(component) % backup code
 
-%% 4. 对非Autosar SWC 创建新模型
-% 找到ERT组合，创建新模型
+% 备用代码: unlinkFromModel(component) % 用于取消链接
 
+fprintf('  完成步骤 3\n\n');
+
+%% ========================================================================
+% 步骤4: 为非AUTOSAR SWC创建新的Simulink模型
+% ========================================================================
+fprintf('步骤 4/8: 为非AUTOSAR SWC创建新的Simulink模型\n');
+fprintf('------------------------------------------------\n');
+
+% 验证ERT组合是否存在
 if isempty(ertComposition)
-    error('未找到ERT组合');
+    error('MATLAB:appCreateCcmArch:ERTCompositionNotFound', ...
+        '未找到ERT组合，无法继续创建非AUTOSAR SWC模型');
 end
-for i = 1:height(Tb_ertSWC)
-    SWCName = Tb_ertSWC(i,:).SWCName{1}; 
-    Periodic = Tb_ertSWC(i,:).Periodic;
 
-    % 判断是否有对应的component
-    component = find(ertComposition,'Component', 'Name', SWCName);
-    if isempty(component)
-        error('未找到对应的组件%s', SWCName);
+numErtSwcs = height(Tb_ertSWC);
+if numErtSwcs > 0
+    createdCount = 0;
+    linkedCount = 0;
+    
+    for iErt = 1:numErtSwcs
+        % 获取SWC信息
+        swcName = Tb_ertSWC(iErt, :).SWCName{1};
+        periodic = Tb_ertSWC(iErt, :).Periodic;
+        
+        fprintf('  处理ERT SWC (%d/%d): %s (周期: %.1f ms)\n', ...
+            iErt, numErtSwcs, swcName, periodic);
+        
+        % 查找对应的组件
+        component = find(ertComposition, 'Component', 'Name', swcName);
+        if isempty(component)
+            error('MATLAB:appCreateCcmArch:ComponentNotFound', ...
+                '未找到对应的组件: %s', swcName);
+        end
+        
+        % 检查工作空间中是否存在对应的模型
+        modelPath = which(swcName);
+        if isempty(modelPath)
+            % 创建新的ERT组件模型
+            fprintf('    → 创建新模型: %s\n', swcName);
+            try
+                createModExportFun(swcName, ...
+                    'Periodic', periodic, ...
+                    'TargetFolder', 'ModelErt', ...
+                    'ModelType', 'autosar');
+                
+                % 配置AUTOSAR Runnable属性
+                changeAutosarRunnable(swcName, ...
+                    'AutoBuild', false, ...
+                    'RunnablePeriod', periodic);
+                
+                createdCount = createdCount + 1;
+                fprintf('    ✓ 成功创建模型\n');
+            catch ME
+                warning('MATLAB:appCreateCcmArch:CreateModelFailed', ...
+                    '创建ERT组件模型 %s 失败: %s', swcName, ME.message);
+                continue;
+            end
+        else
+            fprintf('    → 模型已存在: %s\n', modelPath);
+        end
+        
+        % 链接模型到组件
+        try
+            if isempty(component.ReferenceName)
+                modelPath = which(swcName);
+                linkToModel(component, modelPath);
+                linkedCount = linkedCount + 1;
+                fprintf('    ✓ 成功链接模型\n');
+            else
+                fprintf('    → 已有引用模型: %s，跳过\n', component.ReferenceName);
+                linkedCount = linkedCount + 1;
+            end
+        catch ME
+            warning('MATLAB:appCreateCcmArch:LinkERTModelFailed', ...
+                '链接ERT组件模型 %s 失败: %s', swcName, ME.message);
+        end
     end
-    % 及工作空间中是否存在对应的模型
-    if isempty(which(SWCName))
-        fprintf('-------------------创建ERT组件模型: %s\n, %d / %d-------------\n', SWCName, i, height(Tb_ertSWC));
-        createModExportFun(SWCName, 'Periodic', Periodic, 'TargetFolder', 'ModelErt', 'ModelType', 'autosar')
-        changeAutosarRunnable(SWCName, 'AutoBuild', false,'RunnablePeriod',Periodic)
+    
+    fprintf('  完成: 创建 %d 个新模型，链接 %d/%d 个SWC\n', ...
+        createdCount, linkedCount, numErtSwcs);
+    
+    % 保存架构模型
+    try
+        save(ArchModel);
+        fprintf('  已保存架构模型\n');
+    catch ME
+        warning('MATLAB:appCreateCcmArch:SaveFailed', ...
+            '保存架构模型失败: %s', ME.message);
     end
-
-    % 链接模型
-    if isempty(component.ReferenceName)
-        linkToModel(component,which(SWCName));
-    else
-        fprintf('ERT组件模型%s有引用模型%s\n', SWCName, component.ReferenceName);
-    end
+else
+    fprintf('  警告: 未找到ERT SWC\n');
 end
-save(ArchModel)
 
-%% 5. 创建输入输出端口
-createArchPort(ArchModel, 'RxComponentName', 'SdbRxSigProc', 'TxComponentName', 'SdbTxSigProc');
+fprintf('  完成步骤 4\n\n');
 
+%% ========================================================================
+% 步骤5: 创建架构的输入输出端口
+% ========================================================================
+fprintf('步骤 5/8: 创建架构的输入输出端口\n');
+fprintf('------------------------------------------------\n');
 
-%% 6. 自动连线
-createArchLines(ArchModel);
+try
+    [inport, outport] = createArchPort(ArchModel);
+    fprintf('  成功创建架构输入输出端口\n');
+catch ME
+    warning('MATLAB:appCreateCcmArch:CreateArchPortFailed', ...
+        '创建架构端口失败: %s', ME.message);
+end
 
-%% 7. 根据模型，创建架构Interface Dictionary，为每个端口，配置Bus 数据类型
-linkDictionary(ArchModel, 'CcmArch.sldd')
-save(ArchModel)
-% unlinkDictionary(ArchModel)
+fprintf('  完成步骤 5\n\n');
 
-% interfaceDict = Simulink.interface.dictionary.open('ccmArxml.sldd')
-% ifTest = getInterface(interfaceDict, 'IF_ToSWC')
+%% ========================================================================
+% 步骤6: 自动连接架构中的组件
+% ========================================================================
+fprintf('步骤 6/8: 自动连接架构中的组件\n');
+fprintf('------------------------------------------------\n');
 
-% port = find(ArchModel,'Port','Name','ActvnOfWshrFrntSafe')
-% setInterface(port,ifTest)
+try
+    createArchLines(ArchModel);
+    fprintf('  成功完成自动连线\n');
+catch ME
+    warning('MATLAB:appCreateCcmArch:CreateArchLinesFailed', ...
+        '自动连线失败: %s', ME.message);
+end
 
-% 
-% 
-% % 步骤1: 加载架构模型（如果未加载）
-% archModel = autosar.arch.loadModel('myArchModel');
-% 
-% % 步骤2: 获取端口对象（假设端口已存在）
-% ports = find(archModel, 'Port');  % 查找所有端口
-% port = ports(strcmp(get(ports, 'Name'), 'ActvnOfWshrFrntSafe666'));  % 根据名称过滤，替换为你的端口名
-% 
-% % 如果端口路径已知，直接获取：
-% % port = autosar.arch.ArchPort('myArchModel/Path/To/Port');
-% 
-% % 步骤3: 获取接口字典和接口对象（如果未有 ifTest）
-% dictObj = Simulink.data.dictionary.open('myInterfaces.sldd');  % 替换为你的 .sldd 文件
-% archDataObj = getSection(dictObj, 'ArchitecturalData');  % 获取 ArchitecturalData 部分
-% ifTest = getInterface(archDataObj, 'AqsPwrSplySta');  % 获取目标接口对象
-% 
-% % 步骤4: 设置接口
-% setInterface(port, ifTest);
-% 
-% % 步骤5: 验证
-% disp(port.Interface.Name);  % 应输出 'AqsPwrSplySta'
-% 
-% % 保存模型
-% save_system('myArchModel');
-% close_system('myArchModel');  % 可选，关闭模型
-% 
-% autosar.dictionary.UI.utils.linkDictToModel('myArchModel', 'myInterfaces.sldd')
+fprintf('  完成步骤 6\n\n');
 
-%% 8. 生成架构代码及arxml
+%% ========================================================================
+% 步骤7: 创建Interface Dictionary并为端口配置Bus数据类型
+% ========================================================================
+fprintf('步骤 7/8: 创建Interface Dictionary并为端口配置Bus数据类型\n');
+fprintf('------------------------------------------------\n');
 
+% 创建或链接Interface Dictionary
+archSldd = [ArchModel.Name, '.sldd'];
+if isempty(ArchModel.Interfaces)
+    try
+        linkDictionary(ArchModel, archSldd);
+        fprintf('  成功链接Interface Dictionary: %s\n', archSldd);
+    catch ME
+        warning('MATLAB:appCreateCcmArch:LinkDictionaryFailed', ...
+            '链接Interface Dictionary失败: %s', ME.message);
+    end
+else
+    fprintf('  Interface Dictionary已存在\n');
+end
+
+% 保存架构模型
+try
+    save(ArchModel);
+catch ME
+    warning('MATLAB:appCreateCcmArch:SaveFailed', ...
+        '保存架构模型失败: %s', ME.message);
+end
+
+% 备用代码: unlinkDictionary(ArchModel) % 用于取消链接字典
+
+% 打开Interface Dictionary并创建接口
+try
+    interfaceDict = Simulink.interface.dictionary.open(archSldd);
+    fprintf('  已打开Interface Dictionary\n');
+    
+    [successPort, failPort] = createArchInterface(ArchModel, interfaceDict);
+    
+    fprintf('  接口创建完成: 成功 %d 个，失败 %d 个\n', ...
+        numel(successPort), numel(failPort));
+catch ME
+    warning('MATLAB:appCreateCcmArch:CreateInterfaceFailed', ...
+        '创建Interface失败: %s', ME.message);
+end
+
+fprintf('  完成步骤 7\n\n');
+
+%% ========================================================================
+% 步骤8: 导出架构代码及ARXML文件
+% ========================================================================
+fprintf('步骤 8/8: 导出架构代码及ARXML文件\n');
+fprintf('------------------------------------------------\n');
+
+try
+    export(ArchModel);
+    fprintf('  成功导出架构代码及ARXML文件\n');
+catch ME
+    warning('MATLAB:appCreateCcmArch:ExportFailed', ...
+        '导出架构代码及ARXML失败: %s', ME.message);
+end
+
+fprintf('  完成步骤 8\n\n');
+
+%% ========================================================================
+% 完成
+% ========================================================================
+elapsedTime = toc;
+fprintf('========================================\n');
+fprintf('CCM AUTOSAR软件架构创建完成！\n');
+fprintf('总耗时: %.2f 秒\n', elapsedTime);
+fprintf('========================================\n');
