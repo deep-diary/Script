@@ -26,7 +26,7 @@ function numCreated = creatIFIn(varargin)
         % 添加参数及其验证
         addParameter(p, 'pos', [0,0], @(x) isnumeric(x) && numel(x) == 2);
         addParameter(p, 'template', 'Template.xlsx', @ischar);
-        addParameter(p, 'sheetNames', {'IF_InportsCommon','IF_InportsDiag','IF_Inports2F'}, @iscell);
+        addParameter(p, 'sheetNames', {'IF_InportsCommon'}, @iscell);
         
         parse(p, varargin{:});
         

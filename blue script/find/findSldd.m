@@ -34,7 +34,7 @@ validateattributes(pathMd, {'char', 'string'}, {'scalartext'}, mfilename, 'pathM
 % 创建输入解析器
 p = inputParser;
 addParameter(p, 'overwrite', false, @islogical);
-addParameter(p, 'projectList', {'PCMU','VCU','XCU','CUSTOM'}, ...
+addParameter(p, 'projectList', {'PCMU'}, ...
     @(x) all(ismember(x, {'PCMU','VCU','XCU','CUSTOM'})));
 parse(p, varargin{:});
 

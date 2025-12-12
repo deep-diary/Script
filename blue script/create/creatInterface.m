@@ -10,6 +10,7 @@ function numCreated = creatInterface(varargin)
 %       'posX' - 横坐标位置，默认为0
 %       'posY' - 纵坐标位置，默认为0
 %       'gndBlock' - 接地模块类型，可选'Ground'或'Constant'，默认为'Constant'
+%       'isWithoutTypeCov' - 是否忽略信号转换模块，true时不创建类型转换模块，默认为false
 %
 %   输出参数:
 %       numCreated - 成功创建的信号数量
@@ -41,6 +42,7 @@ function numCreated = creatInterface(varargin)
         addParameter(p, 'posX', 0, @isnumeric);
         addParameter(p, 'posY', 0, @isnumeric);
         addParameter(p, 'gndBlock', 'Constant', @(x) any(strcmp(x, {'Ground', 'Constant'})));
+        addParameter(p, 'isWithoutTypeCov', true, @islogical);
         
         parse(p, varargin{:});
         
@@ -52,6 +54,7 @@ function numCreated = creatInterface(varargin)
         posX = p.Results.posX;
         posY = p.Results.posY;
         gndBlock = p.Results.gndBlock;
+        isWithoutTypeCov = p.Results.isWithoutTypeCov;
         
         %% 验证Excel文件
         if ~exist(template, 'file')
@@ -92,12 +95,12 @@ function numCreated = creatInterface(varargin)
                 end
                 
                 % 获取信号类型
-                [inType, outType, isDifType] = getSignalTypes(sigin{i}, sigout{i}, mode);
-                
+                [inType, outType, ~] = getSignalTypes(sigin{i}, sigout{i}, mode);
+
                 % 创建模块
                 posY = posInit(2) + 30 * numCreated;
-                createSignalBlocks(type, sigin{i}, sigout{i}, inType, outType, isDifType, ...
-                    posInit(1), posY, mode, sigUse, gndBlock);
+                createSignalBlocks(type, sigin{i}, sigout{i}, inType, outType, ...
+                    posInit(1), posY, mode, sigUse, gndBlock, isWithoutTypeCov);
                 
                 numCreated = numCreated + 1;
             catch ME
@@ -133,7 +136,7 @@ function numCreated = creatInterface(varargin)
                         % 创建输出模块
                         if ~strcmp(sigout{m(j)}, NAStr)
                             createOutputBlocks(siginDu{i}, sigout{m(j)}, inType, outType, ...
-                                posInit(1), posY, mode, sigUse);
+                                posInit(1), posY, mode, sigUse, isWithoutTypeCov);
                             numCreated = numCreated + 1;
                         end
                     catch ME
@@ -165,10 +168,10 @@ function [inType, outType, isDifType] = getSignalTypes(sigin, sigout, mode)
     isDifType = ~strcmp(inType, outType);
 end
 
-function createSignalBlocks(type, sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse, gndBlock)
+function createSignalBlocks(type, sigin, sigout, inType, outType, posXbase, posY, mode, sigUse, gndBlock, isWithoutTypeCov)
     switch type
         case 0 % 正常模式
-            createNormalBlocks(sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse);
+            createNormalBlocks(sigin, sigout, inType, outType, posXbase, posY, mode, sigUse, isWithoutTypeCov);
         case 1 % Inport和Terminator
             createInportTerminator(sigin, inType, posXbase, posY);
         case 2 % Ground和Outport
@@ -176,7 +179,7 @@ function createSignalBlocks(type, sigin, sigout, inType, outType, isDifType, pos
     end
 end
 
-function createNormalBlocks(sigin, sigout, inType, outType, isDifType, posXbase, posY, mode, sigUse)
+function createNormalBlocks(sigin, sigout, inType, outType, posXbase, posY, mode, sigUse, isWithoutTypeCov)
     % 创建输入端口
     posX = posXbase - 300;
     posIn = [posX-15 posY-7 posX+15 posY+7];
@@ -192,8 +195,9 @@ function createNormalBlocks(sigin, sigout, inType, outType, isDifType, posXbase,
     posOut = [posX-15 posY-7 posX+15 posY+7];
     bkOut = createBlockWithUniqueName('built-in/Outport', sigout, posOut, outType);
     
-    % 创建类型转换模块（如果需要）
-    if isDifType
+    % 创建类型转换模块（如果需要且未忽略）
+    isDifType = ~strcmp(inType, outType);
+    if isDifType && ~isWithoutTypeCov
         if strcmp(mode, 'outport')
             posX = posXbase + 180;
             posCov = [posX-25 posY-7 posX+25 posY+7];
@@ -249,7 +253,7 @@ function createInputBlock(sigin, inType, posXbase, posY)
     createBlockWithUniqueName('built-in/Inport', sigin, posIn, inType);
 end
 
-function createOutputBlocks(sigin, sigout, inType, outType, posXbase, posY, mode, sigUse)
+function createOutputBlocks(sigin, sigout, inType, outType, posXbase, posY, mode, sigUse, isWithoutTypeCov)
     % 创建调试模块
     posX = posXbase;
     posDb = [posX-100 posY-10 posX+100 posY+10];
@@ -260,9 +264,9 @@ function createOutputBlocks(sigin, sigout, inType, outType, posXbase, posY, mode
     posOut = [posX-15 posY-7 posX+15 posY+7];
     bkOut = createBlockWithUniqueName('built-in/Outport', sigout, posOut, outType);
     
-    % 创建类型转换模块（如果需要）
+    % 创建类型转换模块（如果需要且未忽略）
     isDifType = ~strcmp(inType, outType);
-    if isDifType
+    if isDifType && ~isWithoutTypeCov
         if strcmp(mode, 'outport')
             posX = posXbase + 180;
             posCov = [posX-25 posY-7 posX+25 posY+7];
@@ -280,6 +284,12 @@ function createOutputBlocks(sigin, sigout, inType, outType, posXbase, posY, mode
 end
 
 function bk = createBlockWithUniqueName(blockType, name, pos, dataType)
+    % Constant模块不支持'Inherit: auto'，需要转换为'Inherit: Inherit from ''Constant value'''
+    isAutoType = strcmp(dataType, 'Inherit: auto');
+    if strcmp(blockType, 'built-in/Constant') && isAutoType
+        dataType = 'Inherit: Inherit from ''Constant value''';
+    end
+    
     try
         bk = add_block(blockType, [gcs '/' name], 'Position', pos);
         if ~isempty(dataType)
@@ -292,8 +302,9 @@ function bk = createBlockWithUniqueName(blockType, name, pos, dataType)
         end
         set_param(bk, 'BackgroundColor', 'green');
     end
-    if strcmp(dataType, 'Inherit: auto')
-        set_param(bk, 'BackgroundColor', 'red');
+    % 标记自动类型为黄色背景
+    if isAutoType
+        set_param(bk, 'BackgroundColor', 'yellow');
     end
 end
 

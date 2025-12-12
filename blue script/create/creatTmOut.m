@@ -29,7 +29,7 @@ function nums = creatTmOut(varargin)
         
         % 添加参数及其验证
         addParameter(p, 'template', 'Template.xlsx', @ischar);
-        addParameter(p, 'sheetNames', {'IF_OutportsCommon','IF_OutportsDiag','IF_Outports2F'}, @iscell);
+        addParameter(p, 'sheetNames', {'IF_OutportsCommon'}, @iscell);
         addParameter(p, 'posBase', [0,0], @(x) isnumeric(x) && numel(x) == 2);
         addParameter(p, 'posMod', [10500,0,11000,5000], @(x) isnumeric(x) && numel(x) == 4);
         addParameter(p, 'NAStr', 'NA', @ischar);
@@ -95,7 +95,7 @@ function nums = creatTmOut(varargin)
         %% 调整模型位置和信号处理
         try
             changeModPos(path, posMod);
-            createSigOnLine(path, 'isEnableIn', false, 'resoveValue', true);
+%             createSigOnLine(path, 'isEnableIn', false, 'resoveValue', true);
             createModGoto(path, 'mode', 'both');
         catch ME
             warning(ME.identifier, '处理模型时发生错误: %s', ME.message);
@@ -270,19 +270,20 @@ function nums = createDuplicateOutput(bkIn, name, posBase, step, nums)
 end
 
 function bk = createBlockWithUniqueName(blockType, name, pos, dataType)
-    try
-        bk = add_block(blockType, [gcs '/' name], 'Position', pos);
-        if ~isempty(dataType)
-            set_param(bk, 'OutDataTypeStr', dataType);
-        end
-    catch
-        bk = add_block(blockType, [gcs '/' name], 'MakeNameUnique', 'on', 'Position', pos);
-        if ~isempty(dataType)
-            set_param(bk, 'OutDataTypeStr', dataType);
-        end
-        set_param(bk, 'BackgroundColor', 'green');
+    % Constant模块不支持'Inherit: auto'，需要转换为'Inherit: Inherit from ''Constant value'''
+    isAutoType = strcmp(dataType, 'Inherit: auto');
+    if strcmp(blockType, 'built-in/Constant') && isAutoType
+        dataType = 'Inherit: Inherit from ''Constant value''';
     end
-    if strcmp(dataType, 'Inherit: auto')
-        set_param(bk, 'BackgroundColor', 'red');
+    
+    % 直接使用MakeNameUnique避免名字重复问题
+    bk = add_block(blockType, [gcs '/' name], 'MakeNameUnique', 'on', 'Position', pos);
+    if ~isempty(dataType)
+        set_param(bk, 'OutDataTypeStr', dataType);
+    end
+    
+    % 标记自动类型为红色背景
+    if isAutoType
+        set_param(bk, 'BackgroundColor', 'yellow');
     end
 end

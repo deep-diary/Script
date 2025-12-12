@@ -26,7 +26,7 @@ function numCreated = creatIFOut(varargin)
         % 添加参数及其验证
         addParameter(p, 'pos', [12000,0], @(x) isnumeric(x) && numel(x) == 2);
         addParameter(p, 'template', 'Template.xlsx', @ischar);
-        addParameter(p, 'sheetNames', {'IF_OutportsCommon','IF_OutportsDiag','IF_Outports2F'}, @iscell);
+        addParameter(p, 'sheetNames', {'IF_OutportsCommon'}, @iscell);
         
         parse(p, varargin{:});
         
