@@ -1,4 +1,6 @@
-%% 打开模型
+%% 目的： 为RX, TX 模块创建debug 模块，创建信号解析
+
+%% 打开临时模型
 MOUDLE_NAME = 'demo_interface';
 
 if bdIsLoaded(MOUDLE_NAME)

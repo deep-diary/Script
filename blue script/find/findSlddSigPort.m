@@ -1,5 +1,5 @@
 function [fSlddList, DataList] = findSlddSigPort(pathMd, varargin)
-%FINDSLDDSIGPORT 获取模型的输入输出信号数据并保存到Excel文件中
+%FINDSLDDSIGPORT 获取模型的输入输出信号数据并（可选）保存到Excel文件中
 %
 %   [FSLDDLIST, DATALIST] = FINDSLDDSIGPORT(PATHMD) 获取指定模型的输入输出信号数据并保存。
 %
@@ -14,6 +14,8 @@ function [fSlddList, DataList] = findSlddSigPort(pathMd, varargin)
 %   可选参数:
 %       'overwrite' - 是否覆盖现有文件，可选值: true, false
 %                    (默认值: false)
+%       'saveExcel' - 是否保存为 Excel / SLDD 等文件，可选值: true, false
+%                    (默认值: true)
 %
 %   输出参数:
 %       FSLDDLIST   - 保存的文件路径列表 (元胞数组)
@@ -29,20 +31,51 @@ function [fSlddList, DataList] = findSlddSigPort(pathMd, varargin)
 
 % 验证输入参数
 validateattributes(pathMd, {'char', 'string'}, {'scalartext'}, mfilename, 'pathMd');
+pathStr = char(pathMd);
+
+% 解析模型名与文件路径（既支持模型名也支持 .slx 完整路径）
+[folderPath, baseName, ext] = fileparts(pathStr);
+if isempty(ext)
+    % 形如 'TmComprCtrlDev'，仅模型名
+    mdlName   = baseName;
+    modelSpec = mdlName;      % 供 bdIsLoaded 使用
+    loadSpec  = mdlName;      % 供 load_system 使用
+else
+    % 形如 'D:\...\TmComprCtrlDev.slx'，完整路径
+    mdlName   = baseName;
+    modelSpec = mdlName;      % bdIsLoaded 只能用模型名
+    loadSpec  = pathStr;      % load_system 用完整路径
+end
+
+% 确保模型已加载
+try
+    isLoaded = bdIsLoaded(modelSpec);
+catch
+    isLoaded = false;
+end
+if ~isLoaded
+    try
+        load_system(loadSpec);
+    catch ME
+        error('%s: 无法加载模型 "%s": %s', mfilename, pathStr, ME.message);
+    end
+end
 
 % 创建输入解析器
 p = inputParser;
 addParameter(p, 'overwrite', false, @islogical);
 addParameter(p, 'projectList', {'CUSTOM'}, ...
     @(x) all(ismember(x, {'PCMU','VCU','XCU','CUSTOM'})));
+addParameter(p, 'saveExcel', true, @islogical);
 parse(p, varargin{:});
 
 % 获取解析后的参数
-overwrite = p.Results.overwrite;
+overwrite  = p.Results.overwrite;
 projectList = p.Results.projectList;
+saveExcel  = p.Results.saveExcel;
 
-% 获取模型端口信息
-[ModelName, PortsIn, PortsOut] = findModPorts(pathMd);
+% 获取模型端口信息（统一使用模型名）
+[ModelName, PortsIn, PortsOut] = findModPorts(mdlName);
 
 % 初始化输出列表
 projNum = length(projectList);
@@ -60,12 +93,18 @@ end
 
 % 合并并保存数据
 for i = 1:projNum
-    project = projectList{i};
+    project     = projectList{i};
     DataList{i} = sigPortList{i};
-    fSlddList{i} = saveSldd(ModelName, DataList{i}, ...
-        'project', project, ...
-        'dataType', 'Signals', ...
-        'overwrite', overwrite);
+
+    if saveExcel
+        fSlddList{i} = saveSldd(ModelName, DataList{i}, ...
+            'project', project, ...
+            'dataType', 'Signals', ...
+            'overwrite', overwrite);
+    else
+        % 不保存文件时，返回空字符串占位
+        fSlddList{i} = '';
+    end
 end
 
 end
