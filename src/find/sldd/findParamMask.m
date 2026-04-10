@@ -1,40 +1,64 @@
-function maskParams = findMaskParams(blockPath, varargin)
-%FINDMASKPARAMS 查找Mask模块中的参数
-%   MASKPARAMS = FINDMASKPARAMS(BLOCKPATH) 查找指定Mask模块的参数
-%   MASKPARAMS = FINDMASKPARAMS(BLOCKPATH, 'Parameter', Value, ...) 使用指定参数查找
+function maskParams = findParamMask(blockPath, varargin)
+%FINDPARAMMASK 从 Mask 子系统中提取可能参与标定/变量的标识符列表
 %
-%   输入参数:
-%      blockPath    - 模块路径或句柄 (字符串或数值)
+% 语法:
+%   maskParams = findParamMask(blockPath)
+%   maskParams = findParamMask(blockPath, 'Name', Value, ...)
 %
-%   可选参数（名值对）:
-%      'IncludeValues' - 是否包含参数值中的变量 (逻辑值), 默认值: true
-%      'FilterEditable'- 是否只返回可编辑参数 (逻辑值), 默认值: true
-%      'FilterTunable' - 是否只返回可调参数 (逻辑值), 默认值: true
-%      'FilterEnabled' - 是否只返回启用的参数 (逻辑值), 默认值: true
-%      'FilterVisible' - 是否只返回可见参数 (逻辑值), 默认值: true
-%      'FilterEvaluate'- 是否只返回可求值参数 (逻辑值), 默认值: true
+% 功能描述:
+%   对指定 Simulink 模块调用 Simulink.Mask.get，遍历 Mask.Parameters，按各 Filter*
+%   开关过滤；仅当参数名为合法 MATLAB 标识符且以字母开头时才继续处理（否则跳过）。
+%   当前实现不把 Mask 参数名本身写入结果（历史上曾注释掉直接收集参数名）；若
+%   IncludeValues 为 true，则 get_param 读取该参数的取值字符串，用正则拆出疑似
+%   变量名并合并去重。IncludeValues 为 false 时通常得到空元胞（无解析来源）。
+%   用于从 Mask 对话框表达式中粗提与标定相关的符号（非完整语义解析）。
 %
-%   输出参数:
-%      maskParams  - 找到的Mask参数列表 (元胞数组)
+% 输入参数:
+%   blockPath - 模块全路径 (char)、模块句柄 (numeric) 或图形句柄 (handle)
 %
-%   功能描述:
-%      查找Simulink Mask模块中的参数，可以根据参数的属性进行过滤：
-%      - 可编辑参数 (Type: 'edit')
-%      - 可调参数 (Tunable: 'on')
-%      - 启用参数 (Enabled: 'on')
-%      - 可见参数 (Visible: 'on')
-%      - 可求值参数 (Evaluate: 'on')
+% 可选参数（Name-Value）:
+%   'IncludeValues'   - 为 true 时解析各参数取值字符串中的标识符并加入结果；
+%                       为 false 时通常无输出（本函数不向结果写入参数名本身）(logical)
+%                       默认: true
+%   'FilterEditable'  - 为 true 时仅保留 Type 为 'edit' 的参数 (logical)
+%                       默认: false（不过滤类型，保留非 edit 等类型）
+%   'FilterTunable'   - 为 true 时仅保留 Tunable 为 'on' 的参数 (logical)
+%                       默认: true
+%   'FilterEnabled'   - 为 true 时仅保留 Enabled 为 'on' 的参数 (logical)
+%                       默认: true
+%   'FilterVisible'   - 为 true 时仅保留 Visible 为 'on' 的参数 (logical)
+%                       默认: true
+%   'FilterEvaluate'  - 为 true 时仅保留 Evaluate 为 'on' 的参数 (logical)
+%                       默认: true
+%   各 Filter* 为 false 时表示不对该项施加过滤。某属性在 Mask API 中不可读时，按
+%   'on' 处理（与实现中 try/catch 默认一致）。
 %
-%   示例:
-%      params = findMaskParams(gcb)
-%      params = findMaskParams(gcs, 'FilterEditable', false)
-%      params = findMaskParams('myModel/MaskSubsystem', 'IncludeValues', false)
+% 输出参数:
+%   maskParams - 去重后的标识符元胞数组 (cellstr)，每项为 char；无匹配或异常时
+%                可能为空元胞数组 {}
 %
-%   参见: SIMULINK.MASK.GET, GET_PARAM, FINDCALIBPARAMSTRADITIONAL
+% 异常与边界行为:
+%   - blockPath 无法解析为合法模块路径时 error（含本函数名）。
+%   - 模块未开启 Mask 或无法取得 Mask 对象时 warning 并返回空或已有部分结果。
+%   - 单个参数处理失败时 warning 并跳过该参数。
+%   - 外层 try 失败时 warning，不保证结果完整。
 %
-%   作者: Blue.ge
-%   版本: 1.0
-%   日期: 20250312
+% 示例:
+%   % 示例1：当前模块，默认过滤并从 Mask 参数取值中解析标识符
+%   p = findParamMask(gcb);
+%
+%   % 示例2：仅针对 Type 为 edit 且满足默认 Tunable 等条件的参数解析取值
+%   p = findParamMask(gcb, 'FilterEditable', true);
+%
+% 参见: SIMULINK.MASK.GET, GET_PARAM, FINDCALIBPARAMSTRADITIONAL
+%
+% 作者: blue.ge(葛维冬@Smart)
+% 版本: 1.1
+% 日期: 2026-04-10
+% 变更记录:
+%   2026-04-10 v1.1 按项目规则重写帮助文档；修正 FilterEditable 默认值与代码一致；
+%                  说明 IncludeValues/输出与实现一致；warning/error 带函数名；本地子函数更名为 i_addCalibParam。
+%   2025-03-12 v1.0 初版。
 
     %% 输入参数处理
     p = inputParser;
@@ -61,7 +85,7 @@ function maskParams = findMaskParams(blockPath, varargin)
             blockPath = getfullname(blockPath);
         end
     catch
-        error('无效的模块路径或句柄');
+        error('%s: 无效的模块路径或句柄。', mfilename);
     end
     
     %% 获取Mask参数
@@ -70,14 +94,14 @@ function maskParams = findMaskParams(blockPath, varargin)
     try
         % 检查是否是Mask模块
         if ~strcmp(get_param(blockPath, 'Mask'), 'on')
-            warning('指定的模块不是Mask模块: %s', blockPath);
+            warning('%s: 指定的模块不是 Mask 模块: %s', mfilename, blockPath);
             return;
         end
         
         % 获取Mask对象
         maskObj = Simulink.Mask.get(blockPath);
         if isempty(maskObj)
-            warning('无法获取Mask对象: %s', blockPath);
+            warning('%s: 无法获取 Mask 对象: %s', mfilename, blockPath);
             return;
         end
         
@@ -137,8 +161,8 @@ function maskParams = findMaskParams(blockPath, varargin)
                             % 获取参数值
                             paramValue = get_param(blockPath, paramName);
                             if ischar(paramValue)
-                                % 使用addCalibParam函数处理可能包含的变量
-                                maskParams = addCalibParam(maskParams, paramValue);
+                                % 使用 i_addCalibParam 处理取值中可能包含的变量名
+                                maskParams = i_addCalibParam(maskParams, paramValue);
                             end
                         catch
                             % 如果无法获取参数值，继续处理
@@ -147,7 +171,7 @@ function maskParams = findMaskParams(blockPath, varargin)
                 end
             catch ME
                 % 如果处理某个参数失败，记录错误并继续
-                warning('处理参数 %s 失败: %s', params(i).Name, ME.message);
+                warning('%s: 处理参数 %s 失败: %s', mfilename, params(i).Name, ME.message);
                 continue;
             end
         end
@@ -156,12 +180,12 @@ function maskParams = findMaskParams(blockPath, varargin)
         maskParams = unique(maskParams);
         
     catch ME
-        warning('查找Mask参数失败: %s', ME.message);
+        warning('%s: 查找 Mask 参数失败: %s', mfilename, ME.message);
     end
 end
 
-function calibParams = addCalibParam(calibParams, value)
-    % 辅助函数：检查并添加标定量
+function calibParams = i_addCalibParam(calibParams, value)
+    % 从参数字符串中提取疑似变量名并追加到元胞列表（本地子函数）
     if ischar(value) && ~isempty(regexp(value, '^[A-Za-z]', 'once')) && ...
        ~any(strcmp(value, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin'}))
         

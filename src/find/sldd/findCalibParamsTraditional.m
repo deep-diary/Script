@@ -33,7 +33,7 @@ function calibParams = findCalibParamsTraditional(path, varargin)
 %      params = findCalibParamsTraditional(gcs, 'SearchDepth', 'all')
 %      params = findCalibParamsTraditional(gcs, 'SearchDepth', 'all','SkipMask',false)
 %
-%   参见: FIND_SYSTEM, GET_PARAM, SIMULINK.FINDVARS, FINDMASKPARAMS
+%   参见: FIND_SYSTEM, GET_PARAM, SIMULINK.FINDVARS, findParamMask
 %
 %   作者: Blue.ge
 %   版本: 1.4
@@ -90,7 +90,7 @@ function calibParams = findCalibParamsTraditional(path, varargin)
     for i = 1:length(maskBlocks)
         try
             blockPath = getfullname(maskBlocks(i));
-            blockParams = findMaskParams(blockPath);
+            blockParams = findParamMask(blockPath);
             calibParams = [calibParams, blockParams];
         catch
             % 跳过有问题的模块

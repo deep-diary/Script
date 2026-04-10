@@ -22,12 +22,16 @@ function result = findPortFromPortsInfo(portName, varargin)
 % 输出参数:
 %   result - 含 outputProviders, inputConsumers, allMatches, excelFile, queryPortName
 %
-% 参见: FINDPORTCONNECTIONSIGNALS, GETREPOROOT
+% 参见: FINDCOMPONENTPORTSFROMPORTSINFO, FINDPORTCONNECTIONSIGNALS,
+%        GETDEFAULTPORTSINFOEXCELPATH, GETREPOROOT
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.0
+% 版本: 1.3
 % 日期: 2026-04-10
 % 变更记录:
+%   2026-04-10 v1.3 默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.2 参见补充 FINDCOMPONENTPORTSFROMPORTSINFO。
+%   2026-04-10 v1.1 默认 Excel 查找与 findPortConnectionSignals 同步（artifacts 固定名与 *PortsInfo*.xlsx）。
 %   2026-04-10 v1.0 由 query 前缀更名为 find，并统一默认 Excel 解析路径。
 
 validateattributes(portName, {'char','string'}, {'scalartext'}, mfilename, 'portName');
@@ -52,7 +56,7 @@ matchMode = lower(char(p.Results.matchMode));
 ignoreCase = p.Results.ignoreCase;
 
 if isempty(excelFile)
-    excelFile = i_getDefaultPortsInfoExcelForQuery();
+    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);
@@ -115,28 +119,4 @@ if height(consumers) > 0
     disp(consumers(:, {'ComponentName','PortName'}));
 end
 
-end
-
-function f = i_getDefaultPortsInfoExcelForQuery()
-repoRoot = getRepoRoot();
-fixedFile = fullfile(repoRoot, 'data', 'ccm', 'CCM_Internal_swc_PortsInfo.xlsx');
-if isfile(fixedFile)
-    f = fixedFile;
-    return;
-end
-pat = fullfile(repoRoot, 'artifacts', '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-pat = fullfile(pwd, '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-error('%s: 未找到默认 PortsInfo 文件，请传入 ''excelFile''。', mfilename);
 end

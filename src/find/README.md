@@ -226,7 +226,7 @@
   params = findCalibParams(gcs, 'SearchDepth', 'all')
   ```
 
-#### findMaskParams.m
+#### findParamMask.m
 
 **功能**: 查找 Mask 模块中的参数
 
@@ -243,8 +243,8 @@
   - `maskParams`: 找到的 Mask 参数列表（元胞数组）
 - **示例**:
   ```matlab
-  params = findMaskParams(gcb)
-  params = findMaskParams(gcs, 'FilterEditable', false)
+  params = findParamMask(gcb)
+  params = findParamMask(gcs, 'FilterEditable', false)
   ```
 
 ### 5. 名称解析类

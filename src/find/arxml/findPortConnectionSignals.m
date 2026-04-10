@@ -14,8 +14,8 @@ function result = findPortConnectionSignals(varargin)
 % 可选参数（Name-Value）:
 %   'excelFile'    - PortsInfo Excel 路径 (char/string)
 %                    默认: <repo>/data/ccm/CCM_Internal_swc_PortsInfo.xlsx；
-%                    若不存在则取 <repo>/artifacts 下最新 *_PortsInfo_*.xlsx；
-%                    再不行则取当前目录下最新 *_PortsInfo_*.xlsx
+%                    其次 <repo>/artifacts/CCM_Internal_swc_PortsInfo.xlsx；
+%                    再取 artifacts/pwd 下按修改时间最新的 *PortsInfo*.xlsx
 %   'sheet'        - sheet 名称或序号，默认: 1
 %   'componentCol' - 组件列名，默认: 'ComponentName'
 %   'directionCol' - 方向列名，默认: 'PortDirection'
@@ -32,12 +32,14 @@ function result = findPortConnectionSignals(varargin)
 %   R = findPortConnectionSignals();
 %   R = findPortConnectionSignals('excelFile', 'CCM_Internal_swc_PortsInfo.xlsx', 'sheet', 1);
 %
-% 参见: FINDPORTFROMPORTSINFO, GETREPOROOT
+% 参见: FINDPORTFROMPORTSINFO, GETREPOROOT, GETDEFAULTPORTSINFOEXCELPATH
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.1
+% 版本: 1.3
 % 日期: 2026-04-10
 % 变更记录:
+%   2026-04-10 v1.3 默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.2 默认 Excel 通配与 findPortsInfoFromArxml 导出名（*_PortsInfo.xlsx）一致。
 %   2026-04-10 v1.1 目录重构后默认路径与“其它组件使用”判定逻辑。
 %   2026-04-09 v1.0 初版。
 
@@ -58,7 +60,7 @@ portCol = char(p.Results.portCol);
 ignoreCase = p.Results.ignoreCase;
 
 if isempty(excelFile)
-    excelFile = i_getDefaultPortsInfoExcel();
+    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);
@@ -138,31 +140,4 @@ if isempty(arr)
 end
 [~, idx] = sort(lower(arr));
 arr = arr(idx);
-end
-
-function f = i_getDefaultPortsInfoExcel()
-repoRoot = getRepoRoot();
-fixedFile = fullfile(repoRoot, 'data', 'ccm', 'CCM_Internal_swc_PortsInfo.xlsx');
-if isfile(fixedFile)
-    f = fixedFile;
-    return;
-end
-
-pat = fullfile(repoRoot, 'artifacts', '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-
-pat = fullfile(pwd, '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-
-error('%s: 未找到默认 PortsInfo 文件，请传入 ''excelFile''。', mfilename);
 end

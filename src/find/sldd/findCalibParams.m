@@ -30,7 +30,7 @@ function calibParams = findCalibParams(path, varargin)
 %      params = findCalibParams(gcs)
 %      params = findCalibParams(gcs, 'SearchDepth', 'all')
 %
-%   参见: FINDCALIBPARAMSTRADITIONAL, FINDMASKPARAMS, SIMULINK.FINDVARS
+%   参见: FINDCALIBPARAMSTRADITIONAL, findParamMask, SIMULINK.FINDVARS
 %
 %   作者: Blue.ge
 %   版本: 1.2

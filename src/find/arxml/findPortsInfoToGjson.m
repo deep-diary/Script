@@ -12,7 +12,9 @@ function g = findPortsInfoToGjson(varargin)
 %
 % 输入参数（Name-Value）:
 %   'excelFile'    - PortsInfo Excel 路径 (char/string)
-%                    默认: 当前目录下最新 *_PortsInfo_*.xlsx
+%                    默认: <repo>/data/ccm/CCM_Internal_swc_PortsInfo.xlsx；
+%                    其次 <repo>/artifacts/CCM_Internal_swc_PortsInfo.xlsx；
+%                    再取 artifacts/pwd 下按修改时间最新的 *PortsInfo*.xlsx
 %   'outputFile'   - 输出 gjson 文件路径 (char/string)
 %                    默认: 与 Excel 同目录同名 .gjson
 %   'sheet'        - 读取的 sheet 名称或序号 (char/string/numeric)
@@ -50,12 +52,14 @@ function g = findPortsInfoToGjson(varargin)
 %       'directionCol', 'PortDirection', ...
 %       'portCol', 'PortName');
 %
-% 参见: READTABLE, DETECTIMPORTOPTIONS, JSONENCODE
+% 参见: READTABLE, DETECTIMPORTOPTIONS, JSONENCODE, GETDEFAULTPORTSINFOEXCELPATH
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.1
-% 日期: 2026-04-09
+% 版本: 1.3
+% 日期: 2026-04-10
 % 变更记录:
+%   2026-04-10 v1.3  默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.2  默认 Excel：支持 artifacts 下 CCM_Internal_swc_PortsInfo.xlsx 与 *PortsInfo*.xlsx（与 exportPorts 命名一致）。
 %   2026-04-09 v1.1  按项目规则补齐官方风格注释结构。
 %   2026-04-09 v1.0  初版实现 Excel 到 gjson 的转换。
 
@@ -78,7 +82,7 @@ portCol = char(p.Results.portCol);
 ignoreCase = p.Results.ignoreCase;
 
 if isempty(excelFile)
-    excelFile = i_getDefaultPortsInfoExcelForGjson();
+    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);
@@ -198,28 +202,3 @@ fprintf('gjson 已生成: %s\n', outputFile);
 fprintf('nodes=%d, edges=%d\n', numel(nodes), numel(edges));
 
 end
-
-function f = i_getDefaultPortsInfoExcelForGjson()
-repoRoot = getRepoRoot();
-fixedFile = fullfile(repoRoot, 'data', 'ccm', 'CCM_Internal_swc_PortsInfo.xlsx');
-if isfile(fixedFile)
-    f = fixedFile;
-    return;
-end
-pat = fullfile(repoRoot, 'artifacts', '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-pat = fullfile(pwd, '*_PortsInfo_*.xlsx');
-files = dir(pat);
-if ~isempty(files)
-    [~, idx] = max([files.datenum]);
-    f = fullfile(files(idx).folder, files(idx).name);
-    return;
-end
-error('%s: 未找到 PortsInfo Excel，请传入 ''excelFile''。', mfilename);
-end
-
