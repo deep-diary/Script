@@ -19,6 +19,7 @@ root = fileparts(here);
 addpath(genpath(fullfile(root, 'src')));
 addpath(genpath(fullfile(root, 'third_party')));
 addpath(genpath(fullfile(root, 'data')));
-fprintf('已添加路径: %s\\src 与 %s\\third_party\n', root, root);
+addpath(genpath(fullfile(root, 'examples')));
+fprintf('已添加路径: %s\\src、third_party、data、examples（均为 genpath）\n', root);
 
 end

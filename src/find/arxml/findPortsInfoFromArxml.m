@@ -3,6 +3,8 @@ function out = findPortsInfoFromArxml(ArxmlFileName, varargin)
 %
 % 目标：避免重复导入 ARXML 导致执行过慢，按“生成模型缓存 -> 导出端口 -> 可选导出接口”分步执行。
 %
+% 路径：由 findDefaultCcmArxml 解析（isfile / pwd / which / <repo>/data / data/ccm / 本函数目录）。
+%
 % 用法：
 %   % 一键执行：若模型缓存已存在则跳过生成
 %   out = findPortsInfoFromArxml('CCM_Internal_swc.arxml');
@@ -39,23 +41,10 @@ validateattributes(ArxmlFileName, {'char','string'}, {'scalartext'}, mfilename, 
 ArxmlFileName = char(ArxmlFileName);
 
 repoRoot = getRepoRoot();
-
-% 允许只传文件名：当前工作目录 -> 函数目录 -> 仓库 data/ccm
+ArxmlFileName = findDefaultCcmArxml(ArxmlFileName, 'repoRoot', repoRoot);
 if ~isfile(ArxmlFileName)
-    if isfile(fullfile(pwd, ArxmlFileName))
-        ArxmlFileName = fullfile(pwd, ArxmlFileName);
-    else
-        thisDir = fileparts(mfilename('fullpath'));
-        candidate = fullfile(thisDir, ArxmlFileName);
-        if isfile(candidate)
-            ArxmlFileName = candidate;
-        elseif isfile(fullfile(repoRoot, 'data', 'ccm', ArxmlFileName))
-            ArxmlFileName = fullfile(repoRoot, 'data', 'ccm', ArxmlFileName);
-        end
-    end
-end
-if ~isfile(ArxmlFileName)
-    error('%s: ARXML 文件不存在: %s', mfilename, ArxmlFileName);
+    error('%s: ARXML 文件不存在: %s（可将所在目录加入 path 后重试 which 解析）', ...
+        mfilename, ArxmlFileName);
 end
 
 [~, arxmlBase, ~] = fileparts(ArxmlFileName);
@@ -104,8 +93,9 @@ switch step
         % 要导接口信息，必须先有端口表或至少有模型
         out.portTable = i_exportPortsFromModels(modelCacheDir, includeRunnable);
         i_writeExcelSheet(out.portTable, excelFile, portsSheet);
-        out.interfaceTable = i_exportInterfacesFromModels(modelCacheDir);
-        i_writeExcelSheet(out.interfaceTable, excelFile, ifSheet);
+        % 导出接口逻辑暂时有问题，勿用
+        % out.interfaceTable = i_exportInterfacesFromModels(modelCacheDir);
+        % i_writeExcelSheet(out.interfaceTable, excelFile, ifSheet);
         return;
     case 'all'
         if ~isfolder(modelCacheDir) || isempty(dir(fullfile(modelCacheDir, '*.slx')))
@@ -113,10 +103,11 @@ switch step
         end
         out.portTable = i_exportPortsFromModels(modelCacheDir, includeRunnable);
         i_writeExcelSheet(out.portTable, excelFile, portsSheet);
-        if exportInterface
-            out.interfaceTable = i_exportInterfacesFromModels(modelCacheDir);
-            i_writeExcelSheet(out.interfaceTable, excelFile, ifSheet);
-        end
+        % 导出接口逻辑暂时有问题，勿用
+        % if exportInterface
+        %     out.interfaceTable = i_exportInterfacesFromModels(modelCacheDir);
+        %     i_writeExcelSheet(out.interfaceTable, excelFile, ifSheet);
+        % end
         return;
     otherwise
         error('%s: 不支持的 step: %s', mfilename, step);

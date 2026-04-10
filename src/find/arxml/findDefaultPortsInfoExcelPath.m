@@ -1,9 +1,9 @@
-function excelPath = getDefaultPortsInfoExcelPath(varargin)
-%GETDEFAULTPORTSINFOEXCELPATH 解析仓库内默认 PortsInfo Excel 绝对路径
+function excelPath = findDefaultPortsInfoExcelPath(varargin)
+%FINDDEFAULTPORTSINFOEXCELPATH 解析仓库内默认 PortsInfo Excel 绝对路径
 %
 % 语法:
-%   excelPath = getDefaultPortsInfoExcelPath()
-%   excelPath = getDefaultPortsInfoExcelPath('Name', Value, ...)
+%   excelPath = findDefaultPortsInfoExcelPath()
+%   excelPath = findDefaultPortsInfoExcelPath('Name', Value, ...)
 %
 % 功能描述:
 %   供各 find* 工具在未显式传入 excelFile 时统一解析 PortsInfo 表路径。查找顺序:
@@ -24,17 +24,18 @@ function excelPath = getDefaultPortsInfoExcelPath(varargin)
 %
 % 示例:
 %   % 示例1：在工具函数内解析（推荐传入 mfilename）
-%   f = getDefaultPortsInfoExcelPath('callerId', mfilename);
+%   f = findDefaultPortsInfoExcelPath('callerId', mfilename);
 %
-%   % 示例2：脚本中快速取默认表（错误前缀为 getDefaultPortsInfoExcelPath）
-%   f = getDefaultPortsInfoExcelPath();
+%   % 示例2：脚本中快速取默认表
+%   f = findDefaultPortsInfoExcelPath();
 %
 % 参见: GETREPOROOT, FINDPORTSINFOTOGJSON, FINDPORTCONNECTIONSIGNALS
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.0
+% 版本: 1.1
 % 日期: 2026-04-10
 % 变更记录:
+%   2026-04-10 v1.1 函数名由 getDefaultPortsInfoExcelPath 更名为 findDefaultPortsInfoExcelPath。
 %   2026-04-10 v1.0 从各 find* 内联逻辑提取，统一默认 PortsInfo 路径解析。
 
 p = inputParser;

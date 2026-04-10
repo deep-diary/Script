@@ -52,13 +52,14 @@ function g = findPortsInfoToGjson(varargin)
 %       'directionCol', 'PortDirection', ...
 %       'portCol', 'PortName');
 %
-% 参见: READTABLE, DETECTIMPORTOPTIONS, JSONENCODE, GETDEFAULTPORTSINFOEXCELPATH
+% 参见: READTABLE, DETECTIMPORTOPTIONS, JSONENCODE, FINDDEFAULTPORTSINFOEXCELPATH
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.3
+% 版本: 1.4
 % 日期: 2026-04-10
 % 变更记录:
-%   2026-04-10 v1.3  默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.4  默认 Excel 解析委托 findDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.3  默认 Excel 解析委托 getDefaultPortsInfoExcelPath（已更名）。
 %   2026-04-10 v1.2  默认 Excel：支持 artifacts 下 CCM_Internal_swc_PortsInfo.xlsx 与 *PortsInfo*.xlsx（与 exportPorts 命名一致）。
 %   2026-04-09 v1.1  按项目规则补齐官方风格注释结构。
 %   2026-04-09 v1.0  初版实现 Excel 到 gjson 的转换。
@@ -82,7 +83,7 @@ portCol = char(p.Results.portCol);
 ignoreCase = p.Results.ignoreCase;
 
 if isempty(excelFile)
-    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
+    excelFile = findDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);

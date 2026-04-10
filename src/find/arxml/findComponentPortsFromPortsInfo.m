@@ -51,13 +51,14 @@ function result = findComponentPortsFromPortsInfo(componentName, varargin)
 %   R = findComponentPortsFromPortsInfo('CCMLoad', 'dataTypeCol', '');
 %
 % 参见: FINDPORTFROMPORTSINFO, FINDPORTCONNECTIONSIGNALS,
-%        GETDEFAULTPORTSINFOEXCELPATH, GETREPOROOT
+%        FINDDEFAULTPORTSINFOEXCELPATH, GETREPOROOT
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.2
+% 版本: 1.3
 % 日期: 2026-04-10
 % 变更记录:
-%   2026-04-10 v1.2 默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.3 默认 Excel 解析委托 findDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.2 默认 Excel 解析委托 getDefaultPortsInfoExcelPath（已更名）。
 %   2026-04-10 v1.1 默认附带 OutDataTypeStr（存在则写入 outputPorts/inputPorts）。
 %   2026-04-10 v1.0 初版：按组件名查询输入输出端口表。
 
@@ -85,7 +86,7 @@ ignoreCase = p.Results.ignoreCase;
 dataTypeCol = char(p.Results.dataTypeCol);
 
 if isempty(excelFile)
-    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
+    excelFile = findDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);

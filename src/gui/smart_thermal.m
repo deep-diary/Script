@@ -18,6 +18,30 @@ classdef smart_thermal < matlab.apps.AppBase
         ChangeLogPanel                  matlab.ui.container.Panel
         VersionTextArea                 matlab.ui.control.TextArea
         VersionTextAreaLabel            matlab.ui.control.Label
+        ArxmlTab                        matlab.ui.container.Tab
+        FindComponentPanel              matlab.ui.container.Panel
+        SigInListBox                    matlab.ui.control.ListBox
+        SigInListBoxLabel               matlab.ui.control.Label
+        ComponentsListBox               matlab.ui.control.ListBox
+        ComponentsListBoxLabel          matlab.ui.control.Label
+        SigOutListBox                   matlab.ui.control.ListBox
+        SigOutListBoxLabel              matlab.ui.control.Label
+        FindSignalPanel                 matlab.ui.container.Panel
+        ModelOutListBox                 matlab.ui.control.ListBox
+        ModelOutListBoxLabel            matlab.ui.control.Label
+        ModelInListBox                  matlab.ui.control.ListBox
+        ModelInListBoxLabel             matlab.ui.control.Label
+        SignalsListBox                  matlab.ui.control.ListBox
+        SignalsListBoxLabel             matlab.ui.control.Label
+        SourcePanel                     matlab.ui.container.Panel
+        CreateGjsonButton               matlab.ui.control.Button
+        CreateModelsButton              matlab.ui.control.Button
+        CreatePortsInfoExcelButton      matlab.ui.control.Button
+        PortsInfoExcelEditField         matlab.ui.control.EditField
+        PortsInfoExcelEditFieldLabel    matlab.ui.control.Label
+        ArxmlEditField                  matlab.ui.control.EditField
+        ArxmlEditFieldLabel             matlab.ui.control.Label
+        ArchTab                         matlab.ui.container.Tab
         ModelTab                        matlab.ui.container.Tab
         TabGroup2                       matlab.ui.container.TabGroup
         AddTab                          matlab.ui.container.Tab
@@ -924,7 +948,7 @@ classdef smart_thermal < matlab.apps.AppBase
         function changeCfgRefButtonPushed(app, event)
             refCfg = app.RefConfigEditField.Value
             model = app.SubModDropDown.Value
-            changeCfgRef(model, refCfg)
+            changeCfgRef(model, 'ConfigFile',refCfg)
         end
 
         % Button pushed function: changeModPortNameButton
@@ -2210,6 +2234,121 @@ classdef smart_thermal < matlab.apps.AppBase
             logStr = sprintf("%s已创建信号表%d条，输出文件%s。\n", logStr, height(sigTable), outputFile);
             app.LogTextArea.Value = logStr;
         end
+
+        % Button down function: ArxmlTab
+        function ArxmlTabButtonDown(app, event)
+            % 载入数据源
+            CcmArxml = findDefaultCcmArxml()
+            excelPath = findDefaultPortsInfoExcelPath()
+
+            [fold, name, ext] = fileparts(CcmArxml);
+            app.ArxmlEditField.Value = [name ext];
+
+            [fold, name, ext] = fileparts(excelPath);
+            app.PortsInfoExcelEditField.Value = [name ext];
+
+            % 载入所有输出信号
+            result = findPorsInfoConnection();
+            app.SignalsListBox.Items = result.usedOutputSignals;
+            % 载入所有组件模型
+            app.ComponentsListBox.Items = result.allComponents;
+
+            % 默认点击第一个输出信号
+            signals = findPortFromPortsInfo(result.usedOutputSignals{1});
+            app.ModelOutListBox.Items = signals.outputProviders.ComponentName;
+            app.ModelInListBox.Items = signals.inputConsumers.ComponentName;
+
+            % 默认点击第一个组件
+            components = findComponentPortsFromPortsInfo(result.allComponents{1});
+            app.SigInListBox.Items = components.inputPorts.PortName;
+            app.SigOutListBox.Items = components.outputPorts.PortName;
+
+
+        end
+
+        % Button pushed function: CreateModelsButton
+        function CreateModelsButtonPushed(app, event)
+            arxml = app.ArxmlEditField.Value
+            out = findPortsInfoFromArxml(arxml, 'step', 'generateModels');
+        end
+
+        % Button pushed function: CreatePortsInfoExcelButton
+        function CreatePortsInfoExcelButtonPushed(app, event)
+            arxml = app.ArxmlEditField.Value
+            out = findPortsInfoFromArxml(arxml, 'step', 'exportPorts');
+        end
+
+        % Button pushed function: CreateGjsonButton
+        function CreateGjsonButtonPushed(app, event)
+            g = findPortsInfoToGjson()
+        end
+
+        % Value changed function: SignalsListBox
+        function SignalsListBoxValueChanged(app, event)
+            value = app.SignalsListBox.Value;
+            signals = findPortFromPortsInfo(value);
+            app.ModelOutListBox.Items = signals.outputProviders.ComponentName;
+            app.ModelInListBox.Items = signals.inputConsumers.ComponentName;
+        end
+
+        % Value changed function: ComponentsListBox
+        function ComponentsListBoxValueChanged(app, event)
+            value = app.ComponentsListBox.Value;
+            app.i_refreshComponentSignals(value);
+        end
+
+        % Value changed function: ModelOutListBox
+        function ModelOutListBoxValueChanged(app, event)
+            value = app.ModelOutListBox.Value;
+            app.ComponentsListBox.Value = value;
+            app.i_scrollListBoxValueIntoView(app.ComponentsListBox, value);
+            app.i_refreshComponentSignals(value);
+        end
+
+        % Value changed function: ModelInListBox
+        function ModelInListBoxValueChanged(app, event)
+            value = app.ModelInListBox.Value;
+            app.ComponentsListBox.Value = value;
+            app.i_scrollListBoxValueIntoView(app.ComponentsListBox, value);
+            app.i_refreshComponentSignals(value);
+        end
+
+        function i_refreshComponentSignals(app, componentName)
+            components = findComponentPortsFromPortsInfo(componentName);
+            app.SigInListBox.Items = components.inputPorts.PortName;
+            app.SigOutListBox.Items = components.outputPorts.PortName;
+        end
+
+        function i_scrollListBoxValueIntoView(app, listBox, targetValue)
+            % App Designer 的 ListBox 程序赋值不会总是自动滚动；通过“临时值->目标值”促发滚动。
+            items = string(listBox.Items);
+            if isempty(items)
+                return;
+            end
+            target = string(targetValue);
+            idx = find(items == target, 1, 'first');
+            if isempty(idx)
+                return;
+            end
+
+            if numel(items) > 1
+                pos = listBox.Position;
+                rowH = max(18, listBox.FontSize + 6);
+                nVisible = max(3, floor(pos(4) / rowH));
+                halfWin = max(1, floor(nVisible / 2));
+                preIdx = max(1, idx - halfWin);
+                if preIdx == idx
+                    preIdx = min(numel(items), idx + halfWin);
+                end
+                if preIdx ~= idx
+                    listBox.Value = char(items(preIdx));
+                    drawnow limitrate;
+                end
+            end
+
+            listBox.Value = char(items(idx));
+            drawnow limitrate;
+        end
     end
 
     % Component initialization
@@ -2273,7 +2412,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
             app.TabGroup.ButtonDownFcn = createCallbackFcn(app, @TabGroupButtonDown, true);
-            app.TabGroup.Position = [1 301 1101 398];
+            app.TabGroup.Position = [1 137 1101 562];
 
             % Create HomeTab
             app.HomeTab = uitab(app.TabGroup);
@@ -2283,7 +2422,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create ChangeLogPanel
             app.ChangeLogPanel = uipanel(app.HomeTab);
             app.ChangeLogPanel.Title = 'Change Log';
-            app.ChangeLogPanel.Position = [3 0 1099 209];
+            app.ChangeLogPanel.Position = [3 164 1099 209];
 
             % Create VersionTextAreaLabel
             app.VersionTextAreaLabel = uilabel(app.ChangeLogPanel);
@@ -2294,12 +2433,141 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create VersionTextArea
             app.VersionTextArea = uitextarea(app.ChangeLogPanel);
             app.VersionTextArea.Position = [64 2 1031 183];
-            app.VersionTextArea.Value = {'Version: V0.1.10'; 'Release Date: 20250805'; '1. updated findSlddCombineButtonPushed, change the fix fold parameter to opened fold'; ''; ''; 'Version: V0.1.9'; 'Release Date: 20250805'; '1. updated the latest cfgAutosar42'; ''; 'Version: V0.1.8'; 'Release Date: 20250805'; '1. add createSigOut'; '2. Fixed Some Bugs'; ''; 'Version: V0.1.7 '; 'Release Date: 20250704'; '1. add createDataStore'; ''; 'Version: V0.1.6'; 'Release Date: 20250703'; '1. add changeLinesSelectAttr and findLineName'; '2. add findEnumTypes'; ''; 'Version: V0.1.5'; 'Release Date: 20250702'; 'Version:V0.1.5: add the function of createModSlddFromArxml'; ''; 'Version: V0.1.4'; 'Release Date: 20250630'; '1. add: create bus and enum from template'; '2. find enum'; '3. add change arxml to model'; ''; 'Version: V0.1.3 '; 'Release Date: 20250618'; '1. add choose of createsubmodel, add the function of including the submodel parameters'; '2. if the param not included in the DCM file, then using the original value defined in the sldd excel file, add the function of findSlddExcelValueByName'; '3. add the subsytem signals, and seperate the local signals and parameters'; '4. add a button to open the model'; '5. fix the harness database config. change the filename to which(filename), previous bug: harness.mat always store in the current fold instead of config fold'; ''; 'Version: V0.1.2'; 'Release Date: 20250613'; '1. fix the integration base on the active ECU'; '2. fix find DcmValueChange function: if the DCM not lcated in the malab path, it will be an error'; ''; 'Version: V0.1.0 alpha'; 'Release Date: 20250609'; 'Description:  '; '1. Add XCU relative working folw, including find the XCU stroage class based on the name, export and import the XCU sldd '; '2. add the function of block attr change, which include goto from and ports, all the attr have been saved to the config file'; '3. add the funtion of change model name'; ''; 'Version: V0.0.7'; 'Release Date: 20250604'; 'Description:  '; '1. add function of createPortsBySheet ， so it wil be much easier to create ports by calling this function'; '2. upgrade createPortsGotoUpdate, which could resolve the output signal'; '3. fix the bug: createPortsGotoUpdate, new created port position error'; ''; ''; 'Version: V0.0.6'; 'Release Date: 20250603'; 'Description:  '; '1. add defalt template config,'; '2. add config init, change setConfig and getConfig TO configSet & configGet'; '3. add function of changeGotoSize '; ''; ''; 'Version: V0.0.5'; 'Release Date: 20250523'; 'Description:  '; '1. add control params of createPortsGotoUpdate'; '2. add config sheet'; '3. add overwrite param of findSldd'; '4. findSldd not incude Bias block'; '5. update createPortsGoto with related goto and from'; ''; 'Version: V0.0.4'; 'Release Date: 20250522'; 'Description:'; '1. fixed some bug'; '2. add functions: indLinesPorts,findLines, changeLinesPortAttr, delLinesPortAttr'; '3. add wid param of changeModSize func'; ''; 'Version: V0.0.3'; 'Release Date: 20250514'; 'Description:'; '1. Add the Sldd and Check page'; '2. Add simple Desc. about each Tab'; '3. Add PCUM and VUM integration instruction'; ''; 'Version: V0.0.2'; 'Release Date: 20250512'; 'Description:'; '1. add the test function'; ''; 'Version: V0.0.1'; 'Release Date: 20250508'; 'Description:'; '1. add the most used funcions to apps'; ''};
+            app.VersionTextArea.Value = {'Version: V0.1.11'; 'Release Date: 20250909'; '(feature): V0.1.12: 1. add create and load gee sldd formate;2. add README.md for create, delete, change, find fold'; ''; 'Version: V0.1.11'; 'Release Date: 20250908'; '(feature): V0.1.11: add stella script'; ''; 'Version: V0.1.10'; 'Release Date: 20250805'; '1. updated findSlddCombineButtonPushed, change the fix fold parameter to opened fold'; ''; ''; 'Version: V0.1.9'; 'Release Date: 20250805'; '1. updated the latest cfgAutosar42'; ''; 'Version: V0.1.8'; 'Release Date: 20250805'; '1. add createSigOut'; '2. Fixed Some Bugs'; ''; 'Version: V0.1.7 '; 'Release Date: 20250704'; '1. add createDataStore'; ''; 'Version: V0.1.6'; 'Release Date: 20250703'; '1. add changeLinesSelectAttr and findLineName'; '2. add findEnumTypes'; ''; 'Version: V0.1.5'; 'Release Date: 20250702'; 'Version:V0.1.5: add the function of createModSlddFromArxml'; ''; 'Version: V0.1.4'; 'Release Date: 20250630'; '1. add: create bus and enum from template'; '2. find enum'; '3. add change arxml to model'; ''; 'Version: V0.1.3 '; 'Release Date: 20250618'; '1. add choose of createsubmodel, add the function of including the submodel parameters'; '2. if the param not included in the DCM file, then using the original value defined in the sldd excel file, add the function of findSlddExcelValueByName'; '3. add the subsytem signals, and seperate the local signals and parameters'; '4. add a button to open the model'; '5. fix the harness database config. change the filename to which(filename), previous bug: harness.mat always store in the current fold instead of config fold'; ''; 'Version: V0.1.2'; 'Release Date: 20250613'; '1. fix the integration base on the active ECU'; '2. fix find DcmValueChange function: if the DCM not lcated in the malab path, it will be an error'; ''; 'Version: V0.1.0 alpha'; 'Release Date: 20250609'; 'Description:  '; '1. Add XCU relative working folw, including find the XCU stroage class based on the name, export and import the XCU sldd '; '2. add the function of block attr change, which include goto from and ports, all the attr have been saved to the config file'; '3. add the funtion of change model name'; ''; 'Version: V0.0.7'; 'Release Date: 20250604'; 'Description:  '; '1. add function of createPortsBySheet ， so it wil be much easier to create ports by calling this function'; '2. upgrade createPortsGotoUpdate, which could resolve the output signal'; '3. fix the bug: createPortsGotoUpdate, new created port position error'; ''; ''; 'Version: V0.0.6'; 'Release Date: 20250603'; 'Description:  '; '1. add defalt template config,'; '2. add config init, change setConfig and getConfig TO configSet & configGet'; '3. add function of changeGotoSize '; ''; ''; 'Version: V0.0.5'; 'Release Date: 20250523'; 'Description:  '; '1. add control params of createPortsGotoUpdate'; '2. add config sheet'; '3. add overwrite param of findSldd'; '4. findSldd not incude Bias block'; '5. update createPortsGoto with related goto and from'; ''; 'Version: V0.0.4'; 'Release Date: 20250522'; 'Description:'; '1. fixed some bug'; '2. add functions: indLinesPorts,findLines, changeLinesPortAttr, delLinesPortAttr'; '3. add wid param of changeModSize func'; ''; 'Version: V0.0.3'; 'Release Date: 20250514'; 'Description:'; '1. Add the Sldd and Check page'; '2. Add simple Desc. about each Tab'; '3. Add PCUM and VUM integration instruction'; ''; 'Version: V0.0.2'; 'Release Date: 20250512'; 'Description:'; '1. add the test function'; ''; 'Version: V0.0.1'; 'Release Date: 20250508'; 'Description:'; '1. add the most used funcions to apps'; ''};
 
             % Create Image
             app.Image = uiimage(app.HomeTab);
-            app.Image.Position = [3 208 1095 165];
+            app.Image.Position = [3 372 1095 165];
             app.Image.ImageSource = fullfile(pathToMLAPP, 'smart_thermal_resources', 'smart_Logo_horizontal_regular_P_rgb.png');
+
+            % Create ArxmlTab
+            app.ArxmlTab = uitab(app.TabGroup);
+            app.ArxmlTab.Title = 'Arxml';
+            app.ArxmlTab.ButtonDownFcn = createCallbackFcn(app, @ArxmlTabButtonDown, true);
+
+            % Create SourcePanel
+            app.SourcePanel = uipanel(app.ArxmlTab);
+            app.SourcePanel.Title = 'Source';
+            app.SourcePanel.Position = [18 15 297 168];
+
+            % Create ArxmlEditFieldLabel
+            app.ArxmlEditFieldLabel = uilabel(app.SourcePanel);
+            app.ArxmlEditFieldLabel.HorizontalAlignment = 'right';
+            app.ArxmlEditFieldLabel.Position = [50 108 36 22];
+            app.ArxmlEditFieldLabel.Text = 'Arxml';
+
+            % Create ArxmlEditField
+            app.ArxmlEditField = uieditfield(app.SourcePanel, 'text');
+            app.ArxmlEditField.Position = [104 108 180 22];
+
+            % Create PortsInfoExcelEditFieldLabel
+            app.PortsInfoExcelEditFieldLabel = uilabel(app.SourcePanel);
+            app.PortsInfoExcelEditFieldLabel.HorizontalAlignment = 'right';
+            app.PortsInfoExcelEditFieldLabel.Position = [7 73 82 22];
+            app.PortsInfoExcelEditFieldLabel.Text = 'PortsInfoExcel';
+
+            % Create PortsInfoExcelEditField
+            app.PortsInfoExcelEditField = uieditfield(app.SourcePanel, 'text');
+            app.PortsInfoExcelEditField.Position = [104 73 180 22];
+
+            % Create CreatePortsInfoExcelButton
+            app.CreatePortsInfoExcelButton = uibutton(app.SourcePanel, 'push');
+            app.CreatePortsInfoExcelButton.ButtonPushedFcn = createCallbackFcn(app, @CreatePortsInfoExcelButtonPushed, true);
+            app.CreatePortsInfoExcelButton.Tooltip = {'根据缓存模型，创建接口表'};
+            app.CreatePortsInfoExcelButton.Position = [138 36 146 23];
+            app.CreatePortsInfoExcelButton.Text = 'CreatePortsInfoExcel';
+
+            % Create CreateModelsButton
+            app.CreateModelsButton = uibutton(app.SourcePanel, 'push');
+            app.CreateModelsButton.ButtonPushedFcn = createCallbackFcn(app, @CreateModelsButtonPushed, true);
+            app.CreateModelsButton.Tooltip = {'根据Ccm arxml, 创建模型缓存，注：此方法会创建约74个模型，差不多需要2h+'};
+            app.CreateModelsButton.Position = [13 36 100 23];
+            app.CreateModelsButton.Text = 'CreateModels';
+
+            % Create CreateGjsonButton
+            app.CreateGjsonButton = uibutton(app.SourcePanel, 'push');
+            app.CreateGjsonButton.ButtonPushedFcn = createCallbackFcn(app, @CreateGjsonButtonPushed, true);
+            app.CreateGjsonButton.Tooltip = {'创建CCM 图结构，以模型为节点，信号为边'};
+            app.CreateGjsonButton.Position = [10 5 100 23];
+            app.CreateGjsonButton.Text = 'CreateGjson';
+
+            % Create FindSignalPanel
+            app.FindSignalPanel = uipanel(app.ArxmlTab);
+            app.FindSignalPanel.Title = 'FindSignal';
+            app.FindSignalPanel.Position = [18 194 545 335];
+
+            % Create SignalsListBoxLabel
+            app.SignalsListBoxLabel = uilabel(app.FindSignalPanel);
+            app.SignalsListBoxLabel.HorizontalAlignment = 'right';
+            app.SignalsListBoxLabel.Position = [19 278 44 22];
+            app.SignalsListBoxLabel.Text = 'Signals';
+
+            % Create SignalsListBox
+            app.SignalsListBox = uilistbox(app.FindSignalPanel);
+            app.SignalsListBox.ValueChangedFcn = createCallbackFcn(app, @SignalsListBoxValueChanged, true);
+            app.SignalsListBox.Position = [11 24 241 250];
+
+            % Create ModelInListBoxLabel
+            app.ModelInListBoxLabel = uilabel(app.FindSignalPanel);
+            app.ModelInListBoxLabel.HorizontalAlignment = 'right';
+            app.ModelInListBoxLabel.Position = [270 187 48 22];
+            app.ModelInListBoxLabel.Text = 'ModelIn';
+
+            % Create ModelInListBox
+            app.ModelInListBox = uilistbox(app.FindSignalPanel);
+            app.ModelInListBox.ValueChangedFcn = createCallbackFcn(app, @ModelInListBoxValueChanged, true);
+            app.ModelInListBox.Position = [336 47 190 162];
+
+            % Create ModelOutListBoxLabel
+            app.ModelOutListBoxLabel = uilabel(app.FindSignalPanel);
+            app.ModelOutListBoxLabel.HorizontalAlignment = 'right';
+            app.ModelOutListBoxLabel.Position = [269 248 57 22];
+            app.ModelOutListBoxLabel.Text = 'ModelOut';
+
+            % Create ModelOutListBox
+            app.ModelOutListBox = uilistbox(app.FindSignalPanel);
+            app.ModelOutListBox.ValueChangedFcn = createCallbackFcn(app, @ModelOutListBoxValueChanged, true);
+            app.ModelOutListBox.Position = [341 237 191 35];
+
+            % Create FindComponentPanel
+            app.FindComponentPanel = uipanel(app.ArxmlTab);
+            app.FindComponentPanel.Title = 'FindComponent';
+            app.FindComponentPanel.Position = [575 194 511 335];
+
+            % Create SigOutListBoxLabel
+            app.SigOutListBoxLabel = uilabel(app.FindComponentPanel);
+            app.SigOutListBoxLabel.HorizontalAlignment = 'right';
+            app.SigOutListBoxLabel.Position = [348 277 42 22];
+            app.SigOutListBoxLabel.Text = 'SigOut';
+
+            % Create SigOutListBox
+            app.SigOutListBox = uilistbox(app.FindComponentPanel);
+            app.SigOutListBox.Position = [347 23 152 250];
+
+            % Create ComponentsListBoxLabel
+            app.ComponentsListBoxLabel = uilabel(app.FindComponentPanel);
+            app.ComponentsListBoxLabel.HorizontalAlignment = 'right';
+            app.ComponentsListBoxLabel.Position = [180 278 73 22];
+            app.ComponentsListBoxLabel.Text = 'Components';
+
+            % Create ComponentsListBox
+            app.ComponentsListBox = uilistbox(app.FindComponentPanel);
+            app.ComponentsListBox.ValueChangedFcn = createCallbackFcn(app, @ComponentsListBoxValueChanged, true);
+            app.ComponentsListBox.Position = [180 22 148 251];
+
+            % Create SigInListBoxLabel
+            app.SigInListBoxLabel = uilabel(app.FindComponentPanel);
+            app.SigInListBoxLabel.HorizontalAlignment = 'right';
+            app.SigInListBoxLabel.Position = [20 280 32 22];
+            app.SigInListBoxLabel.Text = 'SigIn';
+
+            % Create SigInListBox
+            app.SigInListBox = uilistbox(app.FindComponentPanel);
+            app.SigInListBox.Position = [17 18 147 257];
+
+            % Create ArchTab
+            app.ArchTab = uitab(app.TabGroup);
+            app.ArchTab.Title = 'Arch';
 
             % Create ModelTab
             app.ModelTab = uitab(app.TabGroup);
@@ -2309,7 +2577,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create TabGroup2
             app.TabGroup2 = uitabgroup(app.ModelTab);
             app.TabGroup2.TabLocation = 'left';
-            app.TabGroup2.Position = [1 0 1099 374];
+            app.TabGroup2.Position = [1 164 1099 374];
 
             % Create AddTab
             app.AddTab = uitab(app.TabGroup2);
@@ -3200,7 +3468,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create CreateMatlabSlddPanel
             app.CreateMatlabSlddPanel = uipanel(app.SlddTab);
             app.CreateMatlabSlddPanel.Title = 'CreateMatlabSldd';
-            app.CreateMatlabSlddPanel.Position = [4 186 266 185];
+            app.CreateMatlabSlddPanel.Position = [4 350 266 185];
 
             % Create createSlddDesignDataButton
             app.createSlddDesignDataButton = uibutton(app.CreateMatlabSlddPanel, 'push');
@@ -3217,7 +3485,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create CreateExcelSlddPanel
             app.CreateExcelSlddPanel = uipanel(app.SlddTab);
             app.CreateExcelSlddPanel.Title = 'CreateExcelSldd';
-            app.CreateExcelSlddPanel.Position = [6 6 264 181];
+            app.CreateExcelSlddPanel.Position = [6 170 264 181];
 
             % Create AreaDropDownLabel
             app.AreaDropDownLabel = uilabel(app.CreateExcelSlddPanel);
@@ -3276,7 +3544,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create LoadSlddPanel
             app.LoadSlddPanel = uipanel(app.SlddTab);
             app.LoadSlddPanel.Title = 'LoadSldd';
-            app.LoadSlddPanel.Position = [270 186 260 184];
+            app.LoadSlddPanel.Position = [270 350 260 184];
 
             % Create LoadAllSlddButton
             app.LoadAllSlddButton = uibutton(app.LoadSlddPanel, 'push');
@@ -3301,7 +3569,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create ChangeSlddPanel
             app.ChangeSlddPanel = uipanel(app.SlddTab);
             app.ChangeSlddPanel.Title = 'ChangeSldd';
-            app.ChangeSlddPanel.Position = [271 6 259 179];
+            app.ChangeSlddPanel.Position = [271 170 259 179];
 
             % Create changeSlddTableByInitValueButton
             app.changeSlddTableByInitValueButton = uibutton(app.ChangeSlddPanel, 'push');
@@ -3324,7 +3592,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create FindDcmPanel
             app.FindDcmPanel = uipanel(app.SlddTab);
             app.FindDcmPanel.Title = 'FindDcm';
-            app.FindDcmPanel.Position = [532 188 231 181];
+            app.FindDcmPanel.Position = [532 352 231 181];
 
             % Create findDCMNamesButton
             app.findDCMNamesButton = uibutton(app.FindDcmPanel, 'push');
@@ -3347,7 +3615,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create ConfigPanel
             app.ConfigPanel = uipanel(app.SlddTab);
             app.ConfigPanel.Title = 'Config';
-            app.ConfigPanel.Position = [764 187 338 181];
+            app.ConfigPanel.Position = [764 351 338 181];
 
             % Create SubModDropDown_2Label_3
             app.SubModDropDown_2Label_3 = uilabel(app.ConfigPanel);
@@ -3394,12 +3662,12 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create NoteTextAreaLabel
             app.NoteTextAreaLabel = uilabel(app.SlddTab);
             app.NoteTextAreaLabel.HorizontalAlignment = 'right';
-            app.NoteTextAreaLabel.Position = [533 161 30 22];
+            app.NoteTextAreaLabel.Position = [533 325 30 22];
             app.NoteTextAreaLabel.Text = 'Note';
 
             % Create NoteTextArea
             app.NoteTextArea = uitextarea(app.SlddTab);
-            app.NoteTextArea.Position = [532 6 566 151];
+            app.NoteTextArea.Position = [532 170 566 151];
             app.NoteTextArea.Value = {'备注：'; '函数功能简述如下，具体使用说明，请打开帮助手册（Help -> Sript Instrcution, 快捷键 Ctrl + h）'; '-------------------------------------------------------------------------------------------------------'; 'createSldd： 创建matlab sldd 并绑定模型(Config->SubMod)'; 'createSlddDesignData: 创建matlab sldd 并绑定模型, 同时将有用的工作空间变量，导入到sldd文件中，这个脚本的前提条件是仿真需要通过'; 'findParameters：可以找出当前界面或者模型的所有标定量，可选参数是bdroot 和 gcs'; 'findSldd:  导出当前模型的所有标定量，信号量到excel 格式的sldd中'; 'openSldd： 打开已经导出的sldd excel 文件，可选参数： Config -> SlddType '; 'changeExportedSldd:  根据最新的DCM文件，对导出 的变量进行赋初值'; 'findSlddLoadVCU： 将excel  变量导入到工作空间中'; 'findSlddLoadPCMU： 将excel  变量导入到工作空间中'; 'LoadAllSldd：  导入所有子模块的变量'; 'changeSlddTableByInitValue： 根据sldd 初值，改变对应的table变量'; 'changeSlddInitValueByTable： 根据sldd table变量，改变对应的初值'; 'changeArchSldd： 根据最新的DCM文件，对汇总后的标定量进行赋初值'; 'findDCMNames： 导出DCM文件中所有的标定量'; 'findDCMNamesChanges： 比较两个不同时期的DCM 标定量变化'; 'findDCMValuesChanges： 比较两个不同时期的DCM 标定值变化'};
 
             % Create CheckTab
@@ -3411,14 +3679,14 @@ classdef smart_thermal < matlab.apps.AppBase
             app.delUselessLineButton = uibutton(app.CheckTab, 'push');
             app.delUselessLineButton.ButtonPushedFcn = createCallbackFcn(app, @delUselessLineButtonPushed, true);
             app.delUselessLineButton.Tooltip = {'删除无用连线'};
-            app.delUselessLineButton.Position = [10 340 91 23];
+            app.delUselessLineButton.Position = [10 504 91 23];
             app.delUselessLineButton.Text = 'delUselessLine';
 
             % Create findAlgebraicLoopsButton
             app.findAlgebraicLoopsButton = uibutton(app.CheckTab, 'push');
             app.findAlgebraicLoopsButton.ButtonPushedFcn = createCallbackFcn(app, @findAlgebraicLoopsButtonPushed, true);
             app.findAlgebraicLoopsButton.Tooltip = {'删除无用连线'};
-            app.findAlgebraicLoopsButton.Position = [8 302 117 23];
+            app.findAlgebraicLoopsButton.Position = [8 466 117 23];
             app.findAlgebraicLoopsButton.Text = 'findAlgebraicLoops';
 
             % Create TestTab
@@ -3431,17 +3699,17 @@ classdef smart_thermal < matlab.apps.AppBase
             app.CaseTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
             app.CaseTable.RowName = {};
             app.CaseTable.ColumnEditable = true;
-            app.CaseTable.Position = [159 3 941 185];
+            app.CaseTable.Position = [159 167 941 185];
 
             % Create CaseTreePanel
             app.CaseTreePanel = uipanel(app.TestTab);
             app.CaseTreePanel.Title = 'CaseTree';
-            app.CaseTreePanel.Position = [4 193 154 178];
+            app.CaseTreePanel.Position = [4 357 154 178];
 
             % Create HarnessHistoryParamsPanel
             app.HarnessHistoryParamsPanel = uipanel(app.TestTab);
             app.HarnessHistoryParamsPanel.Title = 'Harness History Params';
-            app.HarnessHistoryParamsPanel.Position = [4 0 156 188];
+            app.HarnessHistoryParamsPanel.Position = [4 164 156 188];
 
             % Create HarnessParamsListBox
             app.HarnessParamsListBox = uilistbox(app.HarnessHistoryParamsPanel);
@@ -3454,7 +3722,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create TestManagerPanel
             app.TestManagerPanel = uipanel(app.TestTab);
             app.TestManagerPanel.Title = 'TestManager';
-            app.TestManagerPanel.Position = [627 192 469 179];
+            app.TestManagerPanel.Position = [627 356 469 179];
 
             % Create ClearResultCheckBox
             app.ClearResultCheckBox = uicheckbox(app.TestManagerPanel);
@@ -3497,7 +3765,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create TestHarnessPanel
             app.TestHarnessPanel = uipanel(app.TestTab);
             app.TestHarnessPanel.Title = 'TestHarness';
-            app.TestHarnessPanel.Position = [162 191 462 180];
+            app.TestHarnessPanel.Position = [162 355 462 180];
 
             % Create AddCaseButton
             app.AddCaseButton = uibutton(app.TestHarnessPanel, 'push');
@@ -3561,7 +3829,7 @@ classdef smart_thermal < matlab.apps.AppBase
 
             % Create CaseListTree
             app.CaseListTree = uitree(app.TestTab);
-            app.CaseListTree.Position = [4 190 152 160];
+            app.CaseListTree.Position = [4 354 152 160];
 
             % Create IntegrationTab
             app.IntegrationTab = uitab(app.TabGroup);
@@ -3571,7 +3839,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create SingleModelProcessPanel
             app.SingleModelProcessPanel = uipanel(app.IntegrationTab);
             app.SingleModelProcessPanel.Title = 'SingleModelProcess';
-            app.SingleModelProcessPanel.Position = [546 6 540 367];
+            app.SingleModelProcessPanel.Position = [546 170 540 367];
 
             % Create SubModDropDownLabel
             app.SubModDropDownLabel = uilabel(app.SingleModelProcessPanel);
@@ -3649,7 +3917,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create PCMUIntegrationPanel
             app.PCMUIntegrationPanel = uipanel(app.IntegrationTab);
             app.PCMUIntegrationPanel.Title = 'PCMU Integration';
-            app.PCMUIntegrationPanel.Position = [10 6 534 366];
+            app.PCMUIntegrationPanel.Position = [10 170 534 366];
 
             % Create createCodePkgButton
             app.createCodePkgButton = uibutton(app.PCMUIntegrationPanel, 'push');
@@ -3731,7 +3999,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create PreferencesPanel
             app.PreferencesPanel = uipanel(app.ConfigTab);
             app.PreferencesPanel.Title = 'Preferences';
-            app.PreferencesPanel.Position = [5 3 1091 370];
+            app.PreferencesPanel.Position = [5 167 1091 370];
 
             % Create GotoWidEditFieldLabel
             app.GotoWidEditFieldLabel = uilabel(app.PreferencesPanel);
@@ -3869,7 +4137,7 @@ classdef smart_thermal < matlab.apps.AppBase
             % Create LogTextArea
             app.LogTextArea = uitextarea(app.UIFigure);
             app.LogTextArea.WordWrap = 'off';
-            app.LogTextArea.Position = [3 3 1097 299];
+            app.LogTextArea.Position = [3 3 1097 135];
             app.LogTextArea.Value = {'Welcom ! '; 'Welcom ! !'; 'Welcom ! ! !'};
 
             % Create ContextMenuCaseTab

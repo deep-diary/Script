@@ -22,16 +22,17 @@ function result = findPortFromPortsInfo(portName, varargin)
 % 输出参数:
 %   result - 含 outputProviders, inputConsumers, allMatches, excelFile, queryPortName
 %
-% 参见: FINDCOMPONENTPORTSFROMPORTSINFO, FINDPORTCONNECTIONSIGNALS,
-%        GETDEFAULTPORTSINFOEXCELPATH, GETREPOROOT
+% 参见: FINDCOMPONENTPORTSFROMPORTSINFO, FINDPORSINFOCONNECTION,
+%        FINDDEFAULTPORTSINFOEXCELPATH, GETREPOROOT
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.3
+% 版本: 1.4
 % 日期: 2026-04-10
 % 变更记录:
-%   2026-04-10 v1.3 默认 Excel 解析委托 getDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.4 默认 Excel 解析委托 findDefaultPortsInfoExcelPath。
+%   2026-04-10 v1.3 默认 Excel 解析委托 getDefaultPortsInfoExcelPath（已更名）。
 %   2026-04-10 v1.2 参见补充 FINDCOMPONENTPORTSFROMPORTSINFO。
-%   2026-04-10 v1.1 默认 Excel 查找与 findPortConnectionSignals 同步（artifacts 固定名与 *PortsInfo*.xlsx）。
+%   2026-04-10 v1.1 默认 Excel 查找与 findPorsInfoConnection 同步（artifacts 固定名与 *PortsInfo*.xlsx）。
 %   2026-04-10 v1.0 由 query 前缀更名为 find，并统一默认 Excel 解析路径。
 
 validateattributes(portName, {'char','string'}, {'scalartext'}, mfilename, 'portName');
@@ -56,7 +57,7 @@ matchMode = lower(char(p.Results.matchMode));
 ignoreCase = p.Results.ignoreCase;
 
 if isempty(excelFile)
-    excelFile = getDefaultPortsInfoExcelPath('callerId', mfilename);
+    excelFile = findDefaultPortsInfoExcelPath('callerId', mfilename);
 end
 if ~isfile(excelFile)
     error('%s: Excel 文件不存在: %s', mfilename, excelFile);
