@@ -44,4 +44,8 @@ Thumbs.db
 
 # 其他临时文件
 temp/
-tmp/ 
+tmp/
+
+# 仓库重构后的本地缓存与生成产物（根目录）
+/cache/
+/artifacts/ 
