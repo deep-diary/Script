@@ -42,9 +42,11 @@ function [portList, sigList, gotoFromList] = findNameSigRelated(Name,varargin)
         end
 
         % 找到所有信号
-        signalHandles = findResolvedSignals(bdroot);
+        signalInfo = findResolvedSignals(bdroot, 'DisplaySignals', false);
+        signalHandles = signalInfo.signalHandles;
+        signalNames = signalInfo.resolvedSignalNames;
         for i=1:length(signalHandles)
-            name = get_param(signalHandles(i),'Name');
+            name = signalNames(i);
             if contains(name, sigTail)
                 sigList(end+1) = signalHandles(i);
             end
@@ -73,11 +75,15 @@ function [portList, sigList, gotoFromList] = findNameSigRelated(Name,varargin)
         end
 
         % 找到所有信号
-        signalHandles = findResolvedSignals(gcs);
+        signalInfo = findResolvedSignals(gcs, ...
+            'IncludeDescendants', false, ...
+            'DisplaySignals', false);
+        signalHandles = signalInfo.signalHandles;
+        signalNames = signalInfo.resolvedSignalNames;
         for i=1:length(signalHandles)
-            name = get_param(signalHandles(i),'Name');
+            name = signalNames(i);
             if contains(name, sigTail)
-                sigList{end+1} = signalHandles(i);
+                sigList(end+1) = signalHandles(i);
             end
         end
         % 找到所有goto,from

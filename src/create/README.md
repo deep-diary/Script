@@ -254,14 +254,11 @@
   - `'ExcelfileName'`: Excel 文件名（默认'TmSovCtrl_DD_XCU.xlsx'）
   - `'SearchDepth'`: 搜索深度（默认 1）
 - **输出参数**:
-  - `portsInNames`: 输入端口名称列表
-  - `portsOutNames`: 输出端口名称列表
-  - `calibParams`: 标定量列表
-  - `infoText`: 信息文本
+  - `result`: 结构体，包含 `portsInNames`、`portsOutNames`、`calibInfo`、`infoText`、`modInfo` 等字段
 - **示例**:
   ```matlab
-  [inPortNames, outPortNames, params] = createSubmodInfo()
-  [inPortNames, outPortNames, params] = createSubmodInfo('DCMfileName','HY11_PCMU_Tm_OTA3_V6050327_All.DCM')
+  result = createSubmodInfo();
+  result = createSubmodInfo('DCMfileName','HY11_PCMU_Tm_OTA3_V6050327_All.DCM');
   ```
 
 ### 7. 总线管理类

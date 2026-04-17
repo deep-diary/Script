@@ -63,9 +63,11 @@ signalHandles = [];
 
 % 收集所有子系统的信号句柄
 for i = 1:length(subSysPath)
-    handles = findResolvedSignals(subSysPath{i});
+    signalInfo = findResolvedSignals(subSysPath{i}, 'DisplaySignals', false);
+    handles = signalInfo.signalHandles;
     signalHandles = [signalHandles handles];
 end
+signalHandles = unique(signalHandles, 'stable');
 
 % 获取每个项目的内部信号数据
 for i = 1:projNum

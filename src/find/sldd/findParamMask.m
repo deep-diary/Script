@@ -10,7 +10,9 @@ function maskParams = findParamMask(blockPath, varargin)
 %   开关过滤；仅当参数名为合法 MATLAB 标识符且以字母开头时才继续处理（否则跳过）。
 %   当前实现不把 Mask 参数名本身写入结果（历史上曾注释掉直接收集参数名）；若
 %   IncludeValues 为 true，则 get_param 读取该参数的取值字符串，用正则拆出疑似
-%   变量名并合并去重。IncludeValues 为 false 时通常得到空元胞（无解析来源）。
+%   变量名并合并去重。对 `Class.Member` / `Pkg.Class.Member` 这类点号成员访问
+%   （常见于枚举字面量）默认忽略，不计入标定量。IncludeValues 为 false 时通常得到
+%   空元胞（无解析来源）。
 %   用于从 Mask 对话框表达式中粗提与标定相关的符号（非完整语义解析）。
 %
 % 输入参数:
@@ -53,9 +55,11 @@ function maskParams = findParamMask(blockPath, varargin)
 % 参见: SIMULINK.MASK.GET, GET_PARAM, FINDCALIBPARAMSTRADITIONAL
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.1
+% 版本: 1.3
 % 日期: 2026-04-10
 % 变更记录:
+%   2026-04-10 v1.3 忽略 Bitwise Operator 掩码常见表达式 bin2dec(...)，避免误识别为标定量。
+%   2026-04-10 v1.2 忽略点号成员访问表达式（如 EnumType.Member），避免误拆分为两个标定量。
 %   2026-04-10 v1.1 按项目规则重写帮助文档；修正 FilterEditable 默认值与代码一致；
 %                  说明 IncludeValues/输出与实现一致；warning/error 带函数名；本地子函数更名为 i_addCalibParam。
 %   2025-03-12 v1.0 初版。
@@ -188,16 +192,28 @@ function calibParams = i_addCalibParam(calibParams, value)
     % 从参数字符串中提取疑似变量名并追加到元胞列表（本地子函数）
     if ischar(value) && ~isempty(regexp(value, '^[A-Za-z]', 'once')) && ...
        ~any(strcmp(value, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin'}))
+        valueTrim = strtrim(value);
+
+        % 排除枚举/成员访问字面量（例如 EnumType.Member 或 Pkg.EnumType.Member）
+        if ~isempty(regexp(valueTrim, '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$', 'once'))
+            return;
+        end
         
+        % Bitwise Operator 常见掩码表达式（如 bin2dec('0101')）不视为标定量来源
+        if ~isempty(regexp(valueTrim, '^\s*bin2dec\s*\(', 'once'))
+            return;
+        end
+
         % 处理可能包含多个变量的表达式
         % 例如 "a*b + c" 应该提取 a, b, c
-        tokens = regexp(value, '[A-Za-z][A-Za-z0-9_]*', 'match');
+        tokens = regexp(valueTrim, '[A-Za-z][A-Za-z0-9_]*', 'match');
         
         for i = 1:length(tokens)
             token = tokens{i};
             
             % 排除MATLAB内置函数和运算符
             if ~any(strcmp(token, {'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', ...
+                    'bin2dec', 'dec2bin', ...
                     'min', 'max', 'round', 'floor', 'ceil', 'mod', 'rem', ...
                     'and', 'or', 'not', 'xor', 'if', 'else', 'elseif', 'end', ...
                     'for', 'while', 'switch', 'case', 'otherwise', 'break', 'continue'}))

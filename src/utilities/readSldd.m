@@ -8,7 +8,7 @@ function dataTable = readSldd(path, varargin)
 % 作者： Blue.ge
 % 日期： 20240201
 %% 
-    clc
+    
     %% 输入参数处理
     p = inputParser;            % 函数的输入解析器
     addParameter(p,'eclude',{'Inport'});      % 设置变量名和默认参数

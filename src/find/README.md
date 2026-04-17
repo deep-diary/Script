@@ -219,11 +219,12 @@
     - `'SkipMask'`: 是否跳过 Mask 子系统内部（默认 true）
     - `'SkipLib'`: 是否跳过库链接（默认 true）
 - **输出参数**:
-  - `calibParams`: 找到的标定量列表（元胞数组）
+  - `result`: 结构体，包含 `allParams`、`paramsFromFindVars`、`traditional`，以及 `table` 视图（`ParamName/SourceCategory/SourceMethod`）
 - **示例**:
   ```matlab
-  params = findCalibParams(gcs)
-  params = findCalibParams(gcs, 'SearchDepth', 'all')
+  result = findCalibParams(gcs);
+  params = result.allParams;
+  result = findCalibParams(gcs, 'SearchDepth', 'all');
   ```
 
 #### findParamMask.m
