@@ -94,20 +94,21 @@ end
 paramsFromFindVars = {};
 
 try
-    if ~verLessThan('matlab', '9.1') && ((ischar(searchDepth) || isstring(searchDepth)) && strcmpi(char(searchDepth), 'all'))
-        vars = Simulink.findVars(path, 'SourceType', 'base workspace');
-        for i = 1:length(vars)
-            try
-                varName = vars(i).Name;
-                if ~any(strcmp(varName, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin', 'const'})) && ...
-                        isvarname(varName) && ~isempty(regexp(varName, '^[A-Za-z]', 'once'))
-                    paramsFromFindVars{end+1} = varName; %#ok<AGROW>
-                end
-            catch
-            end
-        end
-        paramsFromFindVars = unique(paramsFromFindVars, 'stable');
-    end
+    % 使用 Simulink.findVars 查找标定量， 暂时屏蔽放弃使用
+    % if ~verLessThan('matlab', '9.1') && ((ischar(searchDepth) || isstring(searchDepth)) && strcmpi(char(searchDepth), 'all'))
+    %     vars = Simulink.findVars(path, 'SourceType', 'base workspace');
+    %     for i = 1:length(vars)
+    %         try
+    %             varName = vars(i).Name;
+    %             if ~any(strcmp(varName, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin', 'const'})) && ...
+    %                     isvarname(varName) && ~isempty(regexp(varName, '^[A-Za-z]', 'once'))
+    %                 paramsFromFindVars{end+1} = varName; %#ok<AGROW>
+    %             end
+    %         catch
+    %         end
+    %     end
+    %     paramsFromFindVars = unique(paramsFromFindVars, 'stable');
+    % end
 
     traditional = findCalibParamsTraditional(path, ...
         'SearchDepth', searchDepth, ...

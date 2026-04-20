@@ -41,9 +41,12 @@ function result = findCalibParamsTraditional(path, varargin)
 % 参见: FIND_SYSTEM, GET_PARAM, FINDPARAMMASK
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 2.1
-% 日期: 2026-04-10
+% 版本: 2.3
+% 日期: 2026-04-20
 % 变更记录:
+%   2026-04-20 v2.3 i_extractCalibTokens：过滤逻辑字面量 true/false，不当作标定量。
+%   2026-04-20 v2.2 i_extractCalibTokens：剥离 Simulink 枚举等 Type.Member 链，
+%                    避免拆成多个伪标定名（如 LockSt3.LockLockd → LockSt3、LockLockd）。
 %   2026-04-10 v2.1 新增 result.table 视图，便于 GUI 显示与导出。
 %   2026-04-10 v2.0 结构体分类返回，保留传统扫描逻辑并补齐规范文档。
 %   2025-03-12 v1.4 传统实现。
@@ -228,18 +231,46 @@ if ~(ischar(value) && ~isempty(value))
     return;
 end
 
-if isempty(regexp(value, '^[A-Za-z]', 'once')) || ...
-        any(strcmp(value, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin'}))
+value = strtrim(value);
+if isempty(value)
     return;
 end
 
-raw = regexp(value, '[A-Za-z][A-Za-z0-9_]*', 'match');
+if any(strcmpi(value, {'pi', 'inf', 'nan', 'eps', 'realmax', 'realmin', 'true', 'false'}))
+    return;
+end
+
+% 整条表达式仅为枚举/限域字面量：Ident(.Ident)+，不产生工作区式标定名
+if ~isempty(regexp(value, '^[A-Za-z][A-Za-z0-9_]*(?:\s*\.\s*[A-Za-z][A-Za-z0-9_]*)+$', 'once'))
+    return;
+end
+
+% 去掉 Type.Member(.Member)* 片段，避免把枚举成员误当作独立标定量
+scrubbed = regexprep(value, '[A-Za-z][A-Za-z0-9_]*(?:\s*\.\s*[A-Za-z][A-Za-z0-9_]*)+', ' ');
+scrubbed = strtrim(scrubbed);
+if isempty(scrubbed)
+    return;
+end
+
+% 去掉限域后仅剩纯数值字面量
+if ~isnan(str2double(scrubbed))
+    return;
+end
+
+if isempty(regexp(scrubbed, '[A-Za-z]', 'once'))
+    return;
+end
+
+raw = regexp(scrubbed, '[A-Za-z][A-Za-z0-9_]*', 'match');
 if isempty(raw)
     return;
 end
 
 for i = 1:numel(raw)
     token = raw{i};
+    if strcmpi(token, 'true') || strcmpi(token, 'false')
+        continue;
+    end
     if ~any(strcmp(token, {'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', ...
             'min', 'max', 'round', 'floor', 'ceil', 'mod', 'rem', ...
             'and', 'or', 'not', 'xor', 'if', 'else', 'elseif', 'end', ...
