@@ -1,0 +1,32 @@
+{
+  "stage": "23N7",
+  "vername": "VcThermal_23N7_V136_7080519",
+  "dcm_name": "HB11_CCM_VP_V2.02_20260413_change.DCM",
+  "soft_version": "7080519",
+  "dcm_file": "HB11_CCM_VP_V2.02_20260413_change.DCM",
+  "interface_version": "V136",
+  "com_used_model": [
+    "model1",
+    "model2",
+    "model3"
+  ],
+  "com_used_controllers": [
+    "PCMU",
+    "VCU"
+  ],
+  "active_controller": "PCMU",
+  "template_file": "Template.xlsx",
+  "GotoWid": [
+    "30"
+  ],
+  "GotoHeight": "14",
+  "GotoColor": "green",
+  "FromColor": "red",
+  "PortWid": "35",
+  "PortHeight": "14",
+  "InportColor": "blue",
+  "OutportColor": "magenta",
+  "test_key": "test_value",
+  "this_is_newkey": "blue",
+  "SubmodelPath": "D:\\Climate\\Climate_HX11_27MY\\SVN_syn\\CCMAppl"
+}

@@ -27,12 +27,21 @@ function g = findPortsInfoToGjson(varargin)
 %                    默认: 'PortName'
 %   'ignoreCase'   - 信号匹配时是否忽略大小写 (logical)
 %                    默认: true
+%   'PrettyPrint'  - 写入 .gjson 时是否尽量使用缩进换行 (logical)
+%                    默认: true（R2021a+ 支持 jsonencode PrettyPrint；否则自动回退为紧凑 JSON）
 %
 % 输出参数:
-%   g              - gjson 结构体，字段包括:
-%                    g.categories.component = '组件'
-%                    g.data.nodes           = 节点数组
-%                    g.data.edges           = 连线数组
+%   g              - 结果结构体，字段包括:
+%                    g.categories         - 图类别（component）
+%                    g.data.nodes         - 节点数组
+%                    g.data.edges         - 连线数组
+%                    g.paths.excelFile    - Excel 绝对路径（若可解析）
+%                    g.paths.outputFile   - 输出 .gjson 绝对路径（若可解析）
+%                    g.options            - 本次调用选项快照（sheet、列名、ignoreCase、prettyPrint 等）
+%                    g.stats              - nodeCount / edgeCount / matchedSignals
+%                    g.summaryText        - 可直接用于 UI 日志展示的摘要文本
+%
+%   写入磁盘的 .gjson 仅包含 categories 与 data，便于可视化工具消费；路径与统计仅在返回结构体中。
 %
 % 异常与边界行为:
 %   - Excel 文件不存在时抛出 error。
@@ -55,9 +64,11 @@ function g = findPortsInfoToGjson(varargin)
 % 参见: READTABLE, DETECTIMPORTOPTIONS, JSONENCODE, FINDDEFAULTPORTSINFOEXCELPATH
 %
 % 作者: blue.ge(葛维冬@Smart)
-% 版本: 1.4
-% 日期: 2026-04-10
+% 版本: 1.6
+% 日期: 2026-04-17
 % 变更记录:
+%   2026-04-17 v1.6  新增 summaryText，便于 GUI 日志直接显示生成结果摘要。
+%   2026-04-17 v1.5  写入 JSON 支持 PrettyPrint（若版本支持）；返回 paths/options/stats；文件内容仍为纯图数据。
 %   2026-04-10 v1.4  默认 Excel 解析委托 findDefaultPortsInfoExcelPath。
 %   2026-04-10 v1.3  默认 Excel 解析委托 getDefaultPortsInfoExcelPath（已更名）。
 %   2026-04-10 v1.2  默认 Excel：支持 artifacts 下 CCM_Internal_swc_PortsInfo.xlsx 与 *PortsInfo*.xlsx（与 exportPorts 命名一致）。
@@ -72,6 +83,7 @@ addParameter(p, 'componentCol', 'ComponentName', @(x) ischar(x) || isstring(x));
 addParameter(p, 'directionCol', 'PortDirection', @(x) ischar(x) || isstring(x));
 addParameter(p, 'portCol', 'PortName', @(x) ischar(x) || isstring(x));
 addParameter(p, 'ignoreCase', true, @islogical);
+addParameter(p, 'PrettyPrint', true, @islogical);
 parse(p, varargin{:});
 
 excelFile = char(p.Results.excelFile);
@@ -81,6 +93,7 @@ componentCol = char(p.Results.componentCol);
 directionCol = char(p.Results.directionCol);
 portCol = char(p.Results.portCol);
 ignoreCase = p.Results.ignoreCase;
+wantPretty = p.Results.PrettyPrint;
 
 if isempty(excelFile)
     excelFile = findDefaultPortsInfoExcelPath('callerId', mfilename);
@@ -189,8 +202,24 @@ end
 g = struct();
 g.categories = struct('component', '组件');
 g.data = struct('nodes', {nodes}, 'edges', {edges});
+g.paths = struct('excelFile', i_canonicalPath(excelFile), 'outputFile', i_canonicalPath(outputFile));
+g.options = struct( ...
+    'sheet', sheetArg, ...
+    'componentCol', componentCol, ...
+    'directionCol', directionCol, ...
+    'portCol', portCol, ...
+    'ignoreCase', ignoreCase, ...
+    'prettyPrintRequested', wantPretty, ...
+    'prettyPrintApplied', false);
+g.stats = struct('nodeCount', numel(nodes), 'edgeCount', numel(edges), 'matchedSignals', numel(sigKeys));
 
-jsonText = jsonencode(g);
+payload = struct('categories', g.categories, 'data', g.data);
+jsonText = i_jsonEncodePayload(payload, wantPretty);
+g.options.prettyPrintApplied = i_jsonPrettyPrintWasApplied(jsonText, wantPretty);
+if wantPretty && ~g.options.prettyPrintApplied
+    warning('%s: 未能生成格式化 JSON（当前版本可能不支持 jsonencode PrettyPrint），已输出紧凑 JSON。', mfilename);
+end
+
 fid = fopen(outputFile, 'w');
 if fid < 0
     error('%s: 无法写入文件: %s', mfilename, outputFile);
@@ -199,7 +228,59 @@ cleanupObj = onCleanup(@() fclose(fid));
 fwrite(fid, jsonText, 'char');
 clear cleanupObj;
 
-fprintf('gjson 已生成: %s\n', outputFile);
-fprintf('nodes=%d, edges=%d\n', numel(nodes), numel(edges));
+g.paths.outputFile = i_canonicalPath(outputFile);
+g.summaryText = i_buildSummaryText(g);
 
+fprintf('gjson 已生成: %s\n', g.paths.outputFile);
+fprintf('nodes=%d, edges=%d\n', g.stats.nodeCount, g.stats.edgeCount);
+
+end
+
+function jsonText = i_jsonEncodePayload(payload, wantPretty)
+jsonText = '';
+if wantPretty
+    try
+        jsonText = jsonencode(payload, 'PrettyPrint', true);
+    catch
+        jsonText = '';
+    end
+end
+if isempty(jsonText)
+    jsonText = jsonencode(payload);
+end
+end
+
+function tf = i_jsonPrettyPrintWasApplied(jsonText, wantPretty)
+tf = false;
+if ~wantPretty || isempty(jsonText)
+    return;
+end
+tf = contains(jsonText, newline) || contains(jsonText, sprintf('\r\n'));
+end
+
+function p = i_canonicalPath(p)
+p = char(strtrim(string(p)));
+if isempty(p)
+    return;
+end
+[ok, info] = fileattrib(p);
+if ok
+    p = char(info.Name);
+end
+end
+
+function txt = i_buildSummaryText(g)
+sheetStr = char(string(g.options.sheet));
+txt = '';
+txt = [txt '[findPortsInfoToGjson] 生成完成' newline];
+txt = [txt sprintf('输入Excel: %s', g.paths.excelFile) newline];
+txt = [txt sprintf('输出GJSON: %s', g.paths.outputFile) newline];
+txt = [txt sprintf('Sheet: %s | 组件列: %s | 方向列: %s | 端口列: %s', ...
+    sheetStr, g.options.componentCol, g.options.directionCol, g.options.portCol) newline];
+txt = [txt sprintf('节点数: %d | 连线数: %d | 匹配信号数: %d', ...
+    g.stats.nodeCount, g.stats.edgeCount, g.stats.matchedSignals) newline];
+txt = [txt sprintf('IgnoreCase: %s | PrettyPrint: 请求=%s, 生效=%s', ...
+    mat2str(g.options.ignoreCase), ...
+    mat2str(g.options.prettyPrintRequested), ...
+    mat2str(g.options.prettyPrintApplied))];
 end

@@ -56,9 +56,10 @@ function result = createSubmodInfo(varargin)
 %   参见: FINDMODINFO, FINDMODPORTS, ADD_BLOCK, GET_PARAM, SET_PARAM, FINDANNOTATION
 %
 %   作者: blue.ge(葛维冬@Smart)
-%   版本: 2.5
+%   版本: 2.6
 %   日期: 2026-04-17
 %   变更记录:
+%      2026-04-17 v2.6 端口/标定量/观测量主体改为复用 `findModInfo.summaryText`，与 GUI 汇总口径一致。
 %      2026-04-17 v2.5 目的/方法/SWRS 区块无参数时也输出标题与占位行，便于在 Note 内补写。
 %      2026-04-17 v2.4 新增 PurposeText/MethodText/SwrsText，可在注释中输出模块信息。
 %      2026-04-17 v2.3 标定量区块显示 DCM/Excel 文件名与加载状态；仅当请求的数据源均未加载成功时再显示“注”。
@@ -133,7 +134,8 @@ function result = createSubmodInfo(varargin)
             'IncludeResolvedSignals', true, ...
             'DCMfileName', DCMfileName, ...
             'ExcelfileName', ExcelfileName, ...
-            'ResolveFilesByWhich', true);
+            'ResolveFilesByWhich', true, ...
+            'SummaryIncludeCnt', includeCnt);
 
         modelName = modInfo.modelName;
         portsInNames = modInfo.portsInNames;
@@ -158,7 +160,7 @@ function result = createSubmodInfo(varargin)
             removeExistingAnnotation(path, annotationName, userData);
             
             % 生成信息文本
-            infoText = generateInfoText(modelName, modInfo.portsInTable, modInfo.portsOutTable, calibInfo, observedSignals, includeCnt, purposeText, methodText, swrsText);
+            infoText = generateInfoText(modelName, modInfo.summaryText, purposeText, methodText, swrsText);
             result.infoText = infoText;
             
             % 创建或更新注释模块
@@ -168,7 +170,7 @@ function result = createSubmodInfo(varargin)
             disp(infoText)
             disp(['已创建子模型信息注释: ' modelName]);
         else
-            result.infoText = generateInfoText(modelName, modInfo.portsInTable, modInfo.portsOutTable, calibInfo, observedSignals, includeCnt, purposeText, methodText, swrsText);
+            result.infoText = generateInfoText(modelName, modInfo.summaryText, purposeText, methodText, swrsText);
         end
     catch ME
         warning(ME.identifier, '%s', ME.message);
@@ -196,169 +198,24 @@ function removeExistingAnnotation(path, annotationName, userData)
     end
 end
 
-function infoText = generateInfoText(modelName, portsInTable, portsOutTable, calibInfo, observedSignals, includeCnt, purposeText, methodText, swrsText)
-    % 生成信息文本（标定数值来自 calibInfo.calibValues，由 findCalibParams 填充）
-    if isempty(observedSignals)
-        observedSignals = {};
-    end
-    params = setdiff(calibInfo.allParams, observedSignals, 'stable');
-    sigs = observedSignals;
-    portN = height(portsInTable) + height(portsOutTable);
-    infoText = ['<模型信息: ' modelName '>' newline];
-    infoText = [infoText sprintf('<接口 %d | 标定量 %d | 观测量 %d>', portN, numel(params), numel(sigs)) newline newline];
+function infoText = generateInfoText(modelName, summaryText, purposeText, methodText, swrsText)
+    % 生成信息文本（输入/输出/标定量/观测量主体复用 findModInfo.summaryText）
+    infoText = ['<模型信息: ' modelName '>' newline newline];
 
-    % 添加模块信息区块（可选）
+    % 添加模块信息区块（始终输出标题）
     infoText = i_appendInfoSection(infoText, '目的', purposeText);
     infoText = i_appendInfoSection(infoText, '方法及具体实现', methodText);
     infoText = i_appendInfoSection(infoText, 'SWRS号', swrsText);
-    
-    % 添加输入端口信息
-    infoText = [infoText newline sprintf('【输入端口】(%d)', height(portsInTable)) newline];
-    if ~isempty(portsInTable)
-        for i = 1:height(portsInTable)
-            portText = i_formatPortDisplay(portsInTable.Name{i}, portsInTable.DataType{i});
-            if includeCnt
-                infoText = [infoText num2str(i) '. ' portText newline];
-            else
-                infoText = [infoText portText newline];
-            end
-        end
-    else
-        infoText = [infoText '无输入端口' newline];
-    end
-    
-    % 添加输出端口信息
-    infoText = [infoText newline sprintf('【输出端口】(%d)', height(portsOutTable)) newline];
-    if ~isempty(portsOutTable)
-        for i = 1:height(portsOutTable)
-            portText = i_formatPortDisplay(portsOutTable.Name{i}, portsOutTable.DataType{i});
-            if includeCnt
-                infoText = [infoText num2str(i) '. ' portText newline];
-            else
-                infoText = [infoText portText newline];
-            end
-        end
-    else
-        infoText = [infoText '无输出端口' newline];
+
+    % 汇总主体文本由 findModInfo 统一生成，便于 GUI/Note 复用同一来源
+    summaryText = char(strtrim(string(summaryText)));
+    if ~isempty(summaryText)
+        infoText = [infoText summaryText newline];
     end
 
-    % 添加标定量信息
-    infoText = [infoText newline sprintf('【标定量】(%d)', numel(params)) newline];
-    cv = struct();
-    if isfield(calibInfo, 'calibValues')
-        cv = calibInfo.calibValues;
-    end
-    if isfield(cv, 'requested') && cv.requested
-        wantDcm = false;
-        wantXls = false;
-        if isfield(calibInfo, 'options')
-            wantDcm = ~isempty(strtrim(char(string(calibInfo.options.DCMfileName))));
-            wantXls = ~isempty(strtrim(char(string(calibInfo.options.ExcelfileName))));
-        end
-        if wantDcm
-            dcmDisp = i_infoTextBasename(cv.dcmPath);
-            if isempty(dcmDisp)
-                dcmDisp = char(string(calibInfo.options.DCMfileName));
-            end
-            infoText = [infoText sprintf('数据来源 · DCM: %s%s', dcmDisp, i_dataSourceStatusTag(cv.hasDcmData)) newline];
-        end
-        if wantXls
-            xlsDisp = i_infoTextBasename(cv.excelPath);
-            if isempty(xlsDisp)
-                xlsDisp = char(string(calibInfo.options.ExcelfileName));
-            end
-            infoText = [infoText sprintf('数据来源 · Excel: %s%s', xlsDisp, i_dataSourceStatusTag(cv.hasExcelData)) newline];
-        end
-        hasAnySource = cv.hasDcmData || cv.hasExcelData;
-        if ~hasAnySource
-            if wantDcm && wantXls
-                infoText = [infoText '注: DCM 与本地参数表均未成功加载，无法补充标定量数值。' newline];
-            elseif wantXls
-                infoText = [infoText '注: 本地参数表未找到或读取失败，无法补充标定量数值。' newline];
-            elseif wantDcm
-                infoText = [infoText '注: DCM 文件未找到或读取失败，无法补充标定量数值。' newline];
-            end
-        end
-    end
-
-    if ~isempty(params)
-        for i = 1:length(params)
-            ParamName = params{i};
-            ParamValue = i_lookupCalibCellValue(cv, ParamName);
-
-            if includeCnt
-                infoText = [infoText num2str(i) '. ' i_formatParamLine(ParamName, ParamValue) newline];
-            else
-                infoText = [infoText i_formatParamLine(ParamName, ParamValue) newline];
-            end
-        end
-    else
-        infoText = [infoText '无标定量' newline];
-    end
-
-    % 添加观测量信息
-    infoText = [infoText newline sprintf('【观测量】(%d)', numel(sigs)) newline];
-    if ~isempty(sigs)
-        for i = 1:length(sigs)
-            sig = sigs{i};
-            if includeCnt
-                infoText = [infoText num2str(i) '. ' sig  newline];
-            else
-                infoText = [infoText sig  newline];
-            end           
-        end
-    else
-        infoText = [infoText '无观测量' newline];
-    end
-    
     % 添加创建时间与作者
     infoText = [infoText newline '创建时间: ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
     infoText = [infoText newline '作者: blue.ge(葛维冬@Smart)'];
-end
-
-function lineText = i_formatParamLine(paramName, paramValue)
-if isempty(paramValue)
-    lineText = paramName;
-elseif (ischar(paramValue) || isstring(paramValue)) && strlength(strtrim(string(paramValue))) == 0
-    lineText = paramName;
-elseif isnumeric(paramValue) && isscalar(paramValue)
-    lineText = [paramName '=' num2str(paramValue)];
-else
-    lineText = [paramName '=' char(strtrim(string(paramValue)))];
-end
-end
-
-function v = i_lookupCalibCellValue(cv, paramName)
-v = [];
-if isempty(cv) || ~isfield(cv, 'table') || isempty(cv.table) || height(cv.table) == 0
-    return;
-end
-idx = strcmp(string(cv.table.ParamName), string(paramName));
-if any(idx)
-    v = cv.table.Value{find(idx, 1)};
-end
-end
-
-function s = i_dataSourceStatusTag(ok)
-if ok
-    s = '（已加载）';
-else
-    s = '（未成功加载）';
-end
-end
-
-function bn = i_infoTextBasename(p)
-p = char(strtrim(string(p)));
-if isempty(p)
-    bn = '';
-    return;
-end
-[~, n, e] = fileparts(p);
-if isempty(n) && isempty(e)
-    bn = p;
-else
-    bn = [n e];
-end
 end
 
 function infoText = i_appendInfoSection(infoText, sectionTitle, sectionText)
@@ -370,21 +227,6 @@ if isempty(sectionText)
     sectionText = placeholder;
 end
 infoText = [infoText sectionText newline newline];
-end
-
-function portText = i_formatPortDisplay(portName, dataType)
-portText = portName;
-if isempty(dataType)
-    return;
-end
-dataType = strtrim(char(string(dataType)));
-if isempty(dataType)
-    return;
-end
-if startsWith(lower(dataType), 'inherit')
-    return;
-end
-portText = sprintf('%s (%s)', portName, dataType);
 end
 
 function createAnnotationBlock(path, infoText, position, fontSize, fgColor, bgColor, annotationName, userData)
